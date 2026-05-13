@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bolão Copa do Mundo 2026 🏆</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <div id="toast" class="toast" aria-live="polite"></div>
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- ======================== AUTH SCREEN ======================== -->
+  <section id="auth-screen" class="screen">
+    <div class="auth-container">
+      <div class="auth-header">
+        <div class="auth-logo">🏆</div>
+        <h1>Bolão Copa 2026</h1>
+        <p>Aposte nos jogos e dispute com seus amigos!</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Entrar</button>
+        <button class="auth-tab" data-tab="register">Cadastrar</button>
+      </div>
+
+      <form id="auth-form" novalidate>
+        <div id="field-name" class="form-group hidden">
+          <label for="inp-name">Nome completo</label>
+          <input type="text" id="inp-name" placeholder="Seu nome" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label for="inp-email">E-mail</label>
+          <input type="email" id="inp-email" placeholder="seu@email.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="inp-password">Senha</label>
+          <input type="password" id="inp-password" placeholder="Mínimo 6 caracteres" required autocomplete="current-password">
+        </div>
+        <p id="auth-error" class="error-msg hidden"></p>
+        <button type="submit" id="auth-submit" class="btn btn-primary btn-full">Entrar</button>
+      </form>
+
+      <div class="public-ranking-box">
+        <h2>🏅 Ranking</h2>
+        <div id="public-ranking-list"><p class="muted">Carregando…</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================== DASHBOARD SCREEN ======================== -->
+  <section id="dashboard-screen" class="screen hidden">
+
+    <header class="app-header">
+      <div class="header-inner">
+        <span class="header-title">🏆 Copa 2026</span>
+        <div class="header-right">
+          <div class="user-info">
+            <span id="hdr-username" class="hdr-username"></span>
+            <span id="hdr-score" class="score-pill">0 pts</span>
+          </div>
+          <button id="btn-logout" class="btn btn-ghost btn-sm">Sair</button>
+        </div>
+      </div>
+      <nav class="nav-tabs" role="tablist">
+        <button class="nav-tab active" data-section="groups" role="tab">⚽ Grupos</button>
+        <button class="nav-tab" data-section="knockout" role="tab">⚡ Mata-Mata</button>
+        <button class="nav-tab" data-section="ranking" role="tab">🏅 Ranking</button>
+      </nav>
+    </header>
+
+    <!-- ---- GROUP STAGE ---- -->
+    <section id="section-groups" class="content-section">
+      <div class="section-header">
+        <h2>Fase de Grupos</h2>
+        <p>Preencha o placar de cada partida (72 jogos, 12 grupos)</p>
+      </div>
+
+      <div id="group-tabs" class="group-tabs" role="tablist"></div>
+      <div id="group-panel" class="group-panel"></div>
+
+      <div class="save-bar">
+        <button id="btn-save-groups" class="btn btn-primary btn-full">
+          💾 Salvar Palpites dos Grupos
+        </button>
+      </div>
+    </section>
+
+    <!-- ---- KNOCKOUT ---- -->
+    <section id="section-knockout" class="content-section hidden">
+      <div class="section-header">
+        <h2>Mata-Mata</h2>
+        <p>Escolha os vencedores de cada jogo. Times baseados nos seus palpites de grupos.</p>
+      </div>
+
+      <div class="ko-toolbar">
+        <button id="btn-simulate" class="btn btn-secondary">
+          🔄 Simular a partir dos meus grupos
+        </button>
+        <span id="ko-status" class="ko-status"></span>
+      </div>
+
+      <div id="knockout-bracket" class="knockout-bracket"></div>
+
+      <div class="save-bar">
+        <button id="btn-save-knockout" class="btn btn-primary btn-full">
+          💾 Salvar Palpites do Mata-Mata
+        </button>
+      </div>
+    </section>
+
+    <!-- ---- RANKING ---- -->
+    <section id="section-ranking" class="content-section hidden">
+      <div class="section-header">
+        <h2>Ranking Completo</h2>
+        <p>Pontuação baseada nos resultados reais após cada jogo</p>
+      </div>
+      <div id="ranking-content"></div>
+
+      <div class="scoring-legend card">
+        <h3>📋 Regras de Pontuação</h3>
+        <ul>
+          <li><strong>+3 pts</strong> — Placar exato (grupos)</li>
+          <li><strong>+1 pt</strong> — Resultado correto, placar errado (grupos)</li>
+          <li><strong>+2 pts</strong> — Vencedor correto (mata-mata)</li>
+          <li><strong>+5 pts</strong> — Bônus: acertar o campeão</li>
+        </ul>
+      </div>
+    </section>
+
+  </section><!-- /dashboard -->
+
+  <!-- Firebase compat SDK v10 -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/groupStage.js"></script>
+  <script src="js/knockout.js"></script>
+  <script src="js/ranking.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

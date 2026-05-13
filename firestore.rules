@@ -1,0 +1,44 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --------------------------------------------------------
+    // USERS — each user owns their own subtree
+    // --------------------------------------------------------
+    match /users/{uid} {
+      // Profile: owner can read/write; others cannot
+      match /profile/{doc} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+
+      // Bets: owner can read/write; others cannot
+      match /bets/{doc} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // --------------------------------------------------------
+    // RESULTS — public read (admin writes via Firebase Console
+    //           or a trusted server/Cloud Function)
+    // --------------------------------------------------------
+    match /results/{doc} {
+      allow read:  if request.auth != null;
+      allow write: if false; // only via Firebase Console or Admin SDK
+    }
+
+    // --------------------------------------------------------
+    // RANKING — aggregated leaderboard, public read
+    //           written by admin or Cloud Function
+    // --------------------------------------------------------
+    match /ranking/{doc} {
+      allow read:  if request.auth != null;
+      allow write: if false;
+    }
+
+    // Deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
