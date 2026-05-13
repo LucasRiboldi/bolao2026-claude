@@ -4,12 +4,12 @@
 // from: Firebase Console → Project Settings → Your apps
 // ============================================================
 const FIREBASE_CONFIG = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId:             "YOUR_APP_ID"
+  apiKey:            "AIzaSyAjgJ0H4I4Np12Q9OB1ptNKM-MjB_sKMMg",
+  authDomain:        "bolao2026-a76c7.firebaseapp.com",
+  projectId:         "bolao2026-a76c7",
+  storageBucket:     "bolao2026-a76c7.firebasestorage.app",
+  messagingSenderId: "645283705207",
+  appId:             "1:645283705207:web:66db84cbf24cdb52e27172"
 };
 
 firebase.initializeApp(FIREBASE_CONFIG);
