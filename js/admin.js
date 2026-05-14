@@ -25,6 +25,11 @@ async function initAdminPanel() {
   // Carregar select de desbloqueio rápido
   adminLoadUnlockSelect();
 
+  // Inicializa o painel de resultados oficiais (results.js)
+  if (typeof initResultsPanel === 'function') {
+    initResultsPanel();
+  }
+
   try {
     const users = await loadAdminUserList();
     _renderAdminUsers(users, container);

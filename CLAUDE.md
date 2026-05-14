@@ -32,6 +32,7 @@ Bolão de palpites da Copa do Mundo FIFA 2026.
 | `js/standings.js` | Busca classificação oficial em API externa. `initStandings()`. |
 | `js/ranking.js` | `calculateScore(groupBets, knockoutBets, results)` → `{pts, breakdown}`. `initRanking(uid)`, `loadPublicRanking()`, `_computeRankingClient()`. |
 | `js/admin.js` | `isAdmin()`, `initAdminUI()`, `initAdminPanel()`, `adminToggleLock(uid, lock, btn)`, `openBetHistory(uid, name)`, `closeBetHistory()`, `_renderBetHistory(...)`. ADMIN_EMAIL = 'lucasriboldi.dev@gmail.com' |
+| `js/results.js` | **Admin only.** `initResultsPanel()` — painel com tabs ⚽ Grupos / ⚡ Mata-Mata para lançar resultados oficiais. Escreve em `results/groupStage` e `results/knockout` via merge. 100% independente de standings.js (API). Usa `FieldValue.delete()` para limpar entradas individualmente. |
 | `js/app.js` | Entry point. `_onLogin(user)`, `_onLogout()`, `_refreshUserScore(uid)`. Orquestra navegação entre seções. |
 | `firestore.rules` | `isAdmin()` verifica `request.auth.token.email`. Bets são public-read para bolão transparente. |
 | `seed-server.js` | Servidor HTTP porta 3001 com SSE. Usa firebase-admin (Admin SDK). Rotas: `/api/ping`, `/api/seed`, `/api/clear` |
