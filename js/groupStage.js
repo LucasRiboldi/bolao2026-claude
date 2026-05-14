@@ -1,7 +1,8 @@
 // ---- Group Stage module — lista compacta + steppers horizontais ----
 
-let _groupBets = {};
-let _gsLocked  = false;
+let _groupBets      = {};
+let _gsLocked       = false;
+let _officialResults = {}; // resultados oficiais carregados do Firestore
 
 // Paleta de cores por grupo (A-L) — border-left da seção
 const GROUP_COLORS = {
@@ -26,32 +27,59 @@ function _renderAllGroups() {
     const games = generateGroupGames(gId);
     const color = GROUP_COLORS[gId] || '#888';
 
+    // Agrupa jogos por rodada
+    const byRound = { 1: [], 2: [], 3: [] };
+    for (const g of games) byRound[g.round].push(g);
+
     html += `<div class="group-section" id="gs-${gId}" data-group="${gId}" style="border-left:3px solid ${color}">
       <div class="group-section-header" style="border-left:none">
         <span class="group-label" style="color:${color}">Grupo ${gId}</span>
         <div class="group-teams-row">
-          ${teams.map(t => `<span class="team-badge"><span class="fi fi-${TEAMS[t].iso}"></span> ${TEAMS[t].short}</span>`).join('')}
+          ${teams.map(t => `<span class="team-badge"><span class="fi fi-${TEAMS[t].iso}"></span>
+            <span class="team-badge-full">${TEAMS[t].name}</span>
+            <span class="team-badge-short">${TEAMS[t].short}</span>
+          </span>`).join('')}
         </div>
       </div>`;
 
-    for (const g of games) {
-      const bet = _groupBets[g.id] || {};
-      const hv  = (bet.homeGoals !== undefined && bet.homeGoals !== '') ? parseInt(bet.homeGoals, 10) : null;
-      const av  = (bet.awayGoals !== undefined && bet.awayGoals !== '') ? parseInt(bet.awayGoals, 10) : null;
-
-      html += `<div class="game-row" data-game="${g.id}">
-        <div class="team-cell">
-          <span class="fi fi-${TEAMS[g.home].iso} team-flag-icon"></span>
-          <span class="team-name">${TEAMS[g.home].short}</span>
-        </div>
-        ${_stepperHtml(g.id, 'home', hv)}
-        <span class="score-sep">×</span>
-        ${_stepperHtml(g.id, 'away', av)}
-        <div class="team-cell away">
-          <span class="team-name">${TEAMS[g.away].short}</span>
-          <span class="fi fi-${TEAMS[g.away].iso} team-flag-icon"></span>
-        </div>
+    for (let round = 1; round <= 3; round++) {
+      const roundGames = byRound[round];
+      const dateStr = ROUND_DATES[round] || '';
+      html += `<div class="round-divider">
+        <span class="round-label">Rodada ${round}</span>
+        <span class="round-date">${dateStr}</span>
       </div>`;
+
+      for (const g of roundGames) {
+        const bet = _groupBets[g.id] || {};
+        const hv  = (bet.homeGoals !== undefined && bet.homeGoals !== '') ? parseInt(bet.homeGoals, 10) : null;
+        const av  = (bet.awayGoals !== undefined && bet.awayGoals !== '') ? parseInt(bet.awayGoals, 10) : null;
+
+        // Resultado oficial (se existir)
+        const res = _officialResults[g.id];
+        const resBadge = res
+          ? `<span class="official-result-badge" title="Resultado oficial">
+               ${res.homeGoals}–${res.awayGoals}
+             </span>`
+          : '';
+
+        html += `<div class="game-row" data-game="${g.id}">
+          <div class="team-cell">
+            <span class="fi fi-${TEAMS[g.home].iso} team-flag-icon"></span>
+            <span class="team-name team-name-full">${TEAMS[g.home].name}</span>
+            <span class="team-name team-name-short">${TEAMS[g.home].short}</span>
+          </div>
+          ${_stepperHtml(g.id, 'home', hv)}
+          <span class="score-sep">×</span>
+          ${_stepperHtml(g.id, 'away', av)}
+          ${resBadge}
+          <div class="team-cell away">
+            <span class="team-name team-name-full">${TEAMS[g.away].name}</span>
+            <span class="team-name team-name-short">${TEAMS[g.away].short}</span>
+            <span class="fi fi-${TEAMS[g.away].iso} team-flag-icon"></span>
+          </div>
+        </div>`;
+      }
     }
 
     html += `</div>`;
@@ -100,7 +128,6 @@ function _bindSteppers() {
         span.classList.toggle('filled', val !== null);
       }
 
-      // Verifica se todos os grupos estão completos → auto-simula
       _checkAutoSimulate();
     });
   });
@@ -118,7 +145,6 @@ function _checkAutoSimulate() {
     }
   }
   if (filled === totalGames) {
-    // Todos preenchidos: simula o bracket
     if (typeof _simulate === 'function') _simulate();
     const status = document.getElementById('ko-status');
     if (status) status.textContent = '✅ Grupos completos! Bracket gerado automaticamente.';
@@ -137,7 +163,6 @@ function _applyLockUI(locked) {
   if (banner)  banner.classList.toggle('hidden', !locked);
 }
 
-// ---- Exposto: admin chama para (des)bloquear na UI --------------
 function setGroupStageLocked(locked) {
   _gsLocked = locked;
   _applyLockUI(locked);
@@ -145,7 +170,14 @@ function setGroupStageLocked(locked) {
 }
 
 async function loadGroupBetsUI(uid) {
-  _groupBets = await loadGroupBets(uid);
+  // Carrega apostas e resultados oficiais em paralelo
+  const [bets, results] = await Promise.all([
+    loadGroupBets(uid),
+    loadResults(),
+  ]);
+
+  _groupBets = bets;
+  _officialResults = results.groupStage || {};
 
   // Pré-preenche jogos sem aposta com 0×0
   for (const gId of Object.keys(GROUPS)) {
@@ -158,6 +190,13 @@ async function loadGroupBetsUI(uid) {
 
   const profile = await loadProfile(uid);
   _gsLocked = profile.betsLocked === true;
+  _renderAllGroups();
+}
+
+// Recarrega resultados oficiais e re-renderiza (chamado quando admin lança resultado)
+async function refreshGroupResults() {
+  const results = await loadResults(true);
+  _officialResults = results.groupStage || {};
   _renderAllGroups();
 }
 
@@ -174,7 +213,6 @@ async function _saveAll() {
         await saveKnockoutBets(uid, koBets);
       }
     }
-    // Trava após salvar
     await lockBets(uid);
     _gsLocked = true;
     _applyLockUI(true);
@@ -203,11 +241,11 @@ function _exportBets() {
       const hGoal = bet.homeGoals !== undefined ? bet.homeGoals : '–';
       const aGoal = bet.awayGoals !== undefined ? bet.awayGoals : '–';
       rows += `<tr>
-        <td style="padding:5px 10px;text-align:right">${TEAMS[g.home]?.short || g.home}</td>
+        <td style="padding:5px 10px;text-align:right">${TEAMS[g.home]?.name || g.home}</td>
         <td style="padding:5px 10px;text-align:center;font-weight:700">${hGoal}</td>
         <td style="padding:5px 10px;text-align:center;color:#888">×</td>
         <td style="padding:5px 10px;text-align:center;font-weight:700">${aGoal}</td>
-        <td style="padding:5px 10px">${TEAMS[g.away]?.short || g.away}</td>
+        <td style="padding:5px 10px">${TEAMS[g.away]?.name || g.away}</td>
       </tr>`;
     }
   }
@@ -246,7 +284,7 @@ function _exportBets() {
 <body>
   <h1>🏆 Bolão Copa 2026 — Apostas de ${userName}</h1>
   <p style="color:#888;font-size:.85rem">Gerado em ${new Date().toLocaleString('pt-BR')}</p>
-  <button onclick="window.print()" style="padding:8px 16px;background:#238636;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-bottom:16px">🖨️ Imprimir</button>
+  <button onclick="window.print()" style="padding:8px 16px;background:#238636;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-bottom:16px">🖨️ Imprimir / Salvar PDF</button>
 
   <h2>⚽ Fase de Grupos</h2>
   <table>${rows}</table>

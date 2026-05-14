@@ -91,6 +91,14 @@ const GROUPS = {
   L: ['england','croatia','ghana','panama'],
 };
 
+// ---- Datas das rodadas da fase de grupos (Copa 2026) ---------
+// Rodada 1: 11–15 jun · Rodada 2: 16–20 jun · Rodada 3: 24–25 jun
+const ROUND_DATES = {
+  1: '11–15 jun',
+  2: '16–20 jun',
+  3: '24–25 jun',
+};
+
 // ---- Generate 6 round-robin games per group -----------------
 // Standard schedule: [t0 vs t1], [t2 vs t3], [t0 vs t2], [t1 vs t3], [t0 vs t3], [t1 vs t2]
 function generateGroupGames(groupId) {

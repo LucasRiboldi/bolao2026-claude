@@ -49,7 +49,11 @@ async function initRanking(currentUid) {
     }
     _renderRanking(entries, currentUid, container);
   } catch (e) {
-    container.innerHTML = `<p class="muted" style="padding:20px">Erro ao carregar ranking.</p>`;
+    container.innerHTML = `
+      <div class="ranking-error">
+        <p class="muted">Erro ao carregar ranking.</p>
+        <button class="btn btn-ghost btn-sm" onclick="initRanking('${currentUid}')">🔄 Tentar novamente</button>
+      </div>`;
   }
 }
 
@@ -60,7 +64,15 @@ async function _computeRankingClient() {
     const { pts, breakdown } = calculateScore(u.groupBets, u.knockoutBets, results);
     return { uid: u.uid, name: u.profile.name || 'Sem nome', pts, breakdown };
   });
-  entries.sort((a, b) => b.pts - a.pts);
+
+  // Critério de desempate: pts > exatos > resultados certos > mata-mata > nome
+  entries.sort((a, b) =>
+    b.pts - a.pts ||
+    (b.breakdown?.exact  || 0) - (a.breakdown?.exact  || 0) ||
+    (b.breakdown?.result || 0) - (a.breakdown?.result || 0) ||
+    (b.breakdown?.ko     || 0) - (a.breakdown?.ko     || 0) ||
+    (a.name || '').localeCompare(b.name || '')
+  );
   return entries;
 }
 
@@ -82,10 +94,10 @@ function _renderRanking(entries, currentUid, container) {
       <div class="ranking-info">
         <div class="name">${e.name}${isMe ? ' <em style="color:var(--accent);font-size:.8rem">(você)</em>' : ''}</div>
         ${e.breakdown ? `<div class="ranking-breakdown">
-          <span class="breakdown-item">⚽ ${e.breakdown.exact}</span>
-          <span class="breakdown-item">✓ ${e.breakdown.result}</span>
-          <span class="breakdown-item">⚡ ${e.breakdown.ko}</span>
-          ${e.breakdown.bonus ? `<span class="breakdown-item" style="color:var(--gold)">🏆 +${e.breakdown.bonus}</span>` : ''}
+          <span class="breakdown-item" title="Placares exatos">⚽ ${e.breakdown.exact}</span>
+          <span class="breakdown-item" title="Resultados corretos">✓ ${e.breakdown.result}</span>
+          <span class="breakdown-item" title="Mata-mata">⚡ ${e.breakdown.ko}</span>
+          ${e.breakdown.bonus ? `<span class="breakdown-item" style="color:var(--gold)" title="Bônus campeão">🏆 +${e.breakdown.bonus}</span>` : ''}
         </div>` : ''}
       </div>
       <div class="ranking-right">
@@ -98,11 +110,10 @@ function _renderRanking(entries, currentUid, container) {
   container.innerHTML = html;
 }
 
-// ---- Public ranking on auth screen — sempre calcula ao vivo ----
+// ---- Public ranking on auth screen — com retry automático ----
 async function loadPublicRanking() {
   const el = document.getElementById('public-ranking-list');
   try {
-    // Tenta primeiro o ranking pré-computado (admin); se vazio, calcula ao vivo
     let entries = await loadRanking();
     if (entries.length === 0) {
       entries = await _computeRankingClient();
@@ -122,6 +133,9 @@ async function loadPublicRanking() {
       </div>`;
     }).join('');
   } catch {
-    el.innerHTML = '<p class="muted">Não foi possível carregar.</p>';
+    el.innerHTML = `<div class="rank-error">
+      <p class="muted" style="font-size:.82rem">Não foi possível carregar.</p>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="loadPublicRanking()">🔄 Tentar novamente</button>
+    </div>`;
   }
 }

@@ -845,21 +845,42 @@ body {
 /* =============================================
    RESPONSIVE — Mobile
    ============================================= */
-@media (max-width: 480px) {
+
+/* Por padrão (desktop): nome completo visível, abreviado oculto */
+.team-name-full  { display: inline; }
+.team-name-short { display: none; }
+
+/* Badge no header do grupo: nome completo visível por padrão */
+.team-badge-full  { display: inline; }
+.team-badge-short { display: none; }
+
+@media (max-width: 540px) {
+  /* Em mobile: mostra abreviado, oculta nome completo */
   .team-name-full  { display: none; }
-  .team-name-short { display: block; white-space: nowrap; }
+  .team-name-short { display: inline; white-space: nowrap; }
 
-  .game-row { padding: 8px 10px; gap: 5px; }
+  .team-badge-full  { display: none; }
+  .team-badge-short { display: inline; }
 
-  .step-btn  { width: 40px; height: 26px; font-size: .7rem; }
-  .score-val { width: 40px; height: 34px; font-size: 1rem; }
+  .game-row { padding: 6px 8px; gap: 4px; }
+
+  /* Steppers maiores para toque fácil */
+  .step-btn  { width: 36px; height: 38px; font-size: 1rem; }
+  .score-val { width: 34px; height: 38px; font-size: 1rem; }
 
   .header-title  { font-size: 1rem; }
   .hdr-username  { max-width: 70px; }
-  .bracket-round { min-width: 160px; }
-  .bracket-team  { font-size: .8rem; padding: 8px; }
+  .bracket-round { min-width: 140px; }
+  .bracket-team  { font-size: .78rem; padding: 7px 5px; }
 
   .team-name-st  { max-width: 90px; }
+
+  /* Modal apostas — empilha em mobile */
+  .bh-game-card  { flex-wrap: wrap; }
+  .bh-teams-row  { flex-wrap: wrap; gap: 4px; }
+  .bh-team-name  { font-size: .8rem; }
+
+  .bh-ko-card    { flex-wrap: wrap; }
 }
 
 /* =============================================
@@ -1384,5 +1405,242 @@ body {
 /* Loading message */
 .res-loading {
   padding: 20px;
+  text-align: center;
+}
+
+/* =============================================
+   GRUPOS — divisor de rodada
+   ============================================= */
+.round-divider {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+.round-label {
+  font-size: .7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.round-date {
+  font-size: .68rem;
+  color: var(--text-muted);
+  opacity: .7;
+}
+
+/* Resultado oficial inline no game-row */
+.official-result-badge {
+  font-size: .72rem;
+  font-weight: 800;
+  color: var(--accent);
+  background: rgba(35,134,54,.12);
+  border: 1px solid rgba(35,134,54,.3);
+  border-radius: 999px;
+  padding: 2px 7px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* =============================================
+   APOSTAS — modal redesenhado (bh-game-card)
+   ============================================= */
+
+/* Bloco de grupo com cor na borda */
+.bh-group-block {
+  margin-bottom: 10px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+/* Card de jogo (nova estrutura) */
+.bh-game-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+  font-size: .82rem;
+  min-height: 44px;
+  position: relative;
+  transition: background var(--transition);
+}
+.bh-exact   .bh-game-card,
+.bh-game-card.bh-exact   { background: rgba(35,134,54,.10); border-left: 3px solid var(--accent); }
+.bh-game-card.bh-correct { background: rgba(56,139,253,.08); border-left: 3px solid #388bfd; }
+.bh-game-card.bh-wrong   { background: rgba(218,54,51,.07); border-left: 3px solid var(--red); }
+.bh-game-card.bh-placed  { background: var(--surface2); }
+.bh-game-card.bh-pending { opacity: .65; }
+.bh-game-card.bh-bonus   { background: rgba(240,192,64,.10); border-left: 3px solid var(--gold); }
+
+/* Linha de times */
+.bh-teams-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+.bh-team {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.bh-team-home { flex: 1; justify-content: flex-end; }
+.bh-team-away { flex: 1; justify-content: flex-start; }
+
+.bh-team-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: .82rem;
+}
+
+/* Bloco central: aposta + resultado */
+.bh-score-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+
+.bh-bet-score {
+  font-weight: 800;
+  font-size: .9rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.bh-real-score {
+  font-size: .7rem;
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.bh-waiting {
+  font-size: .68rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-style: italic;
+}
+
+/* Pontuação */
+.bh-pts {
+  margin-left: 2px;
+  font-weight: 800;
+  color: var(--accent);
+  font-size: .85rem;
+  white-space: nowrap;
+  min-width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.bh-pts-empty { min-width: 32px; }
+
+/* =============================================
+   APOSTAS MATA-MATA — cards KO
+   ============================================= */
+.bh-ko-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.bh-ko-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  font-size: .82rem;
+  min-height: 40px;
+}
+.bh-ko-card.bh-exact   { background: rgba(35,134,54,.10); border-color: rgba(35,134,54,.3); }
+.bh-ko-card.bh-correct { background: rgba(56,139,253,.08); border-color: rgba(56,139,253,.3); }
+.bh-ko-card.bh-wrong   { background: rgba(218,54,51,.07); border-color: rgba(218,54,51,.3); }
+.bh-ko-card.bh-placed  { background: var(--surface2); }
+.bh-ko-card.bh-bonus   { background: rgba(240,192,64,.10); border-color: rgba(240,192,64,.3); }
+
+.bh-ko-pick {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+
+.bh-ko-real {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* =============================================
+   APOSTAS — resumo redesenhado
+   ============================================= */
+.bh-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  margin-top: 16px;
+  background: var(--surface2);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.bh-summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: .84rem;
+  color: var(--text-muted);
+}
+.bh-summary-item strong { color: var(--text); font-weight: 700; }
+.bh-summary-item em { color: var(--accent); font-style: normal; font-size: .78rem; }
+.bh-sum-lbl { font-weight: 500; }
+
+.bh-summary-total {
+  display: flex;
+  justify-content: flex-end;
+  font-size: .95rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+.bh-summary-total strong {
+  color: var(--gold);
+  font-size: 1.1rem;
+  margin-left: 6px;
+}
+
+/* =============================================
+   RANKING — erro com retry
+   ============================================= */
+.ranking-error, .rank-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 20px;
   text-align: center;
 }

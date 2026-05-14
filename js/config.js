@@ -1,8 +1,3 @@
-// ============================================================
-// CONFIGURE YOUR FIREBASE PROJECT HERE
-// Replace all placeholder values with your real credentials
-// from: Firebase Console → Project Settings → Your apps
-// ============================================================
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyAjgJ0H4I4Np12Q9OB1ptNKM-MjB_sKMMg",
   authDomain:        "bolao2026-a76c7.firebaseapp.com",
