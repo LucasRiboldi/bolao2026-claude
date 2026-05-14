@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧪 Seed de Teste — Bolão 2026</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d1117; color: #e6edf3;
+      min-height: 100vh; padding: 20px;
+    }
+    .wrap { max-width: 820px; margin: 0 auto; }
+
+    /* ---- banner ---- */
+    .banner {
+      background: #ff9800; color: #000;
+      border-radius: 10px; padding: 12px 18px; margin-bottom: 22px;
+      font-weight: 700; font-size: .9rem;
+    }
+    .banner p { font-weight: 400; font-size: .82rem; margin-top: 4px; }
+
+    h1 { font-size: 1.45rem; margin-bottom: 4px; }
+    .subtitle { color: #8b949e; font-size: .88rem; margin-bottom: 22px; }
+
+    /* ---- server status ---- */
+    .server-bar {
+      display: flex; align-items: center; gap: 10px;
+      background: #161b22; border: 1px solid #30363d;
+      border-radius: 10px; padding: 12px 18px; margin-bottom: 16px;
+    }
+    .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #8b949e; flex-shrink: 0;
+      transition: background .3s;
+    }
+    .dot.green  { background: #3fb950; box-shadow: 0 0 6px #3fb950; }
+    .dot.red    { background: #f85149; }
+    .dot.pulse  { animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    #server-label { font-size: .85rem; color: #8b949e; }
+    #server-label strong { color: #e6edf3; }
+
+    /* ---- card ---- */
+    .card {
+      background: #161b22; border: 1px solid #30363d;
+      border-radius: 10px; padding: 18px; margin-bottom: 16px;
+    }
+    .card-title { font-size: .9rem; font-weight: 700; color: #58a6ff; margin-bottom: 14px; }
+
+    /* ---- users grid ---- */
+    .users-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 8px; margin-bottom: 16px;
+    }
+    .urow {
+      background: #0d1117; border: 1px solid #30363d;
+      border-radius: 8px; padding: 9px 13px;
+      display: flex; align-items: center; gap: 8px; font-size: .8rem;
+      transition: border-color .25s;
+    }
+    .urow.ok   { border-color: #238636; }
+    .urow.err  { border-color: #f85149; }
+    .urow.busy { border-color: #d29922; }
+    .uicon { font-size: 1rem; flex-shrink: 0; width: 20px; text-align: center; }
+    .uname { font-weight: 600; color: #e6edf3; }
+    .uemail { color: #8b949e; font-size: .73rem; }
+    .upts  { margin-left: auto; font-weight: 700; color: #3fb950; white-space: nowrap; }
+
+    /* ---- buttons ---- */
+    .btns { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 0; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 20px; border: none; border-radius: 8px;
+      font-size: .9rem; font-weight: 700; cursor: pointer; transition: opacity .15s;
+    }
+    .btn:disabled { opacity: .35; cursor: not-allowed; }
+    .btn-run   { background: #238636; color: #fff; }
+    .btn-run:hover:not(:disabled)   { background: #2ea043; }
+    .btn-clear { background: #da3633; color: #fff; }
+    .btn-clear:hover:not(:disabled) { background: #f85149; }
+
+    /* ---- progress ---- */
+    .prog-wrap { margin-top: 14px; display: none; }
+    .prog-bg { background: #30363d; border-radius: 999px; height: 7px; overflow: hidden; }
+    .prog-fill { background: #238636; height: 100%; border-radius: 999px; width: 0%; transition: width .4s ease; }
+    .prog-label { font-size: .78rem; color: #8b949e; margin-top: 5px; }
+
+    /* ---- log ---- */
+    .log-box {
+      background: #0d1117; border: 1px solid #30363d; border-radius: 8px;
+      padding: 12px 14px; max-height: 240px; overflow-y: auto;
+      font-family: 'Cascadia Code','Fira Code',monospace; font-size: .76rem; line-height: 1.8;
+    }
+    .ll { display: flex; gap: 8px; }
+    .lt { color: #8b949e; flex-shrink: 0; }
+    .lk  { color: #3fb950; }  /* ok */
+    .le  { color: #f85149; }  /* err */
+    .li  { color: #58a6ff; }  /* info */
+    .lw  { color: #d29922; }  /* warn */
+
+    /* ---- results ---- */
+    .results { display: none; margin-top: 20px; }
+    .results h2 { font-size: 1rem; color: #58a6ff; margin-bottom: 12px; }
+
+    .champ-row {
+      background: #1c2a1c; border: 1px solid #238636;
+      border-radius: 8px; padding: 12px 18px; margin-bottom: 14px;
+      display: flex; gap: 24px; flex-wrap: wrap; align-items: center;
+    }
+    .cl { font-size: .76rem; color: #8b949e; }
+    .cv { font-weight: 700; font-size: .95rem; margin-top: 2px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    th { background: #21262d; padding: 8px 12px; text-align: left; color: #8b949e; font-weight: 600; border-bottom: 1px solid #30363d; }
+    td { padding: 8px 12px; border-bottom: 1px solid #21262d; }
+    tr:last-child td { border-bottom: none; }
+    .p1 { color: #f0e040; font-weight: 800; }
+    .p2 { color: #c0c0c0; font-weight: 700; }
+    .p3 { color: #cd7f32; font-weight: 700; }
+    .pts-badge {
+      background: #238636; color: #fff;
+      border-radius: 999px; padding: 2px 10px; font-weight: 700; font-size: .78rem;
+    }
+
+    /* ---- instructions ---- */
+    .instructions {
+      background: #161b22; border: 1px solid #388bfd;
+      border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; font-size: .84rem;
+    }
+    .instructions h3 { color: #58a6ff; margin-bottom: 10px; font-size: .9rem; }
+    .instructions ol { padding-left: 20px; }
+    .instructions li { margin-bottom: 6px; line-height: 1.5; }
+    .instructions code {
+      background: #0d1117; border: 1px solid #30363d;
+      border-radius: 4px; padding: 1px 7px; font-family: monospace; font-size: .85em;
+    }
+    .instructions .note { color: #8b949e; font-size: .8rem; margin-top: 10px; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="banner">
+    ⚠️ PÁGINA DE TESTE — Apenas em ambiente de desenvolvimento
+    <p>Cria 10 usuários fictícios, simula palpites e resultados da Copa, e grava no Firestore via Admin SDK.</p>
+  </div>
+
+  <h1>🧪 Seed de Teste — Bolão Copa 2026</h1>
+  <p class="subtitle">10 usuários · palpites aleatórios · resultados simulados · cálculo de pontos</p>
+
+  <!-- Status do servidor local -->
+  <div class="server-bar">
+    <div class="dot pulse" id="dot"></div>
+    <div id="server-label"><strong>Verificando servidor local…</strong> Conectando a localhost:3001</div>
+    <button class="btn btn-run" style="margin-left:auto;padding:6px 14px;font-size:.8rem" onclick="checkServer()">🔄 Verificar</button>
+  </div>
+
+  <!-- Instruções (visíveis quando servidor está offline) -->
+  <div class="instructions" id="instructions">
+    <h3>📋 Como iniciar o servidor local</h3>
+    <ol>
+      <li>Abra um terminal na pasta do projeto</li>
+      <li>Instale as dependências (apenas uma vez): <code>npm install</code></li>
+      <li>Inicie o servidor: <code>node seed-server.js</code></li>
+      <li>Deixe o terminal aberto e recarregue esta página</li>
+    </ol>
+    <p class="note">O servidor roda em http://localhost:3001 e usa o Admin SDK para gravar diretamente no Firestore sem depender das regras de segurança.</p>
+  </div>
+
+  <!-- Usuários -->
+  <div class="card">
+    <div class="card-title">👥 Usuários de Teste</div>
+    <div class="users-grid" id="users-grid"></div>
+    <div class="btns">
+      <button class="btn btn-run" id="btn-run" onclick="runSeed()" disabled>▶ Executar Simulação</button>
+      <button class="btn btn-clear" id="btn-clear" onclick="clearSeed()" disabled>🗑 Limpar Dados</button>
+    </div>
+    <div class="prog-wrap" id="prog-wrap">
+      <div class="prog-bg"><div class="prog-fill" id="prog-fill"></div></div>
+      <div class="prog-label" id="prog-label">Iniciando…</div>
+    </div>
+  </div>
+
+  <!-- Log -->
+  <div class="card">
+    <div class="card-title">📋 Log de Execução</div>
+    <div class="log-box" id="log-box"><div class="ll li"><span class="lt"></span><span>Aguardando servidor local em localhost:3001…</span></div></div>
+  </div>
+
+  <!-- Resultados -->
+  <div class="results" id="results">
+    <h2>🏆 Ranking Simulado</h2>
+    <div class="champ-row" id="champ-row"></div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Usuário</th>
+          <th title="Placar exato (+3 pts cada)">⚽ Exatos</th>
+          <th title="Resultado correto (+1 pt cada)">✓ Resultados</th>
+          <th title="Vencedor mata-mata (+2 pts cada)">⚡ Mata-Mata</th>
+          <th title="Acertou o campeão (+5 pts)">🏆 Campeão</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="ranking-body"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+const SERVER = 'http://localhost:3001';
+const NUM_USERS   = 10;
+const TEST_DOMAIN = 'teste.com.br';
+const TEST_NAMES  = [
+  'Teste Alpha','Teste Bravo','Teste Charlie','Teste Delta','Teste Echo',
+  'Teste Foxtrot','Teste Golf','Teste Hotel','Teste India','Teste Juliet',
+];
+
+// ---- build users grid ----
+(function() {
+  const grid = document.getElementById('users-grid');
+  for (let i = 1; i <= NUM_USERS; i++) {
+    const d = document.createElement('div');
+    d.className = 'urow'; d.id = `urow-${i}`;
+    d.innerHTML = `<span class="uicon" id="uicon-${i}">⏸</span>
+      <div>
+        <div class="uname">${TEST_NAMES[i-1]}</div>
+        <div class="uemail">teste${i}@${TEST_DOMAIN}</div>
+      </div>
+      <div class="upts hidden" id="upts-${i}"></div>`;
+    grid.appendChild(d);
+  }
+})();
+
+// ---- server check ----
+let _serverOk = false;
+async function checkServer() {
+  const dot   = document.getElementById('dot');
+  const label = document.getElementById('server-label');
+  dot.className = 'dot pulse';
+  label.innerHTML = '<strong>Verificando…</strong>';
+  try {
+    const r = await fetch(`${SERVER}/api/ping`, { signal: AbortSignal.timeout(3000) });
+    const j = await r.json();
+    if (j.ok) {
+      dot.className = 'dot green';
+      label.innerHTML = `<strong>Servidor online</strong> · projeto: ${j.project}`;
+      document.getElementById('instructions').classList.add('hidden');
+      document.getElementById('btn-run').disabled   = false;
+      document.getElementById('btn-clear').disabled = false;
+      _serverOk = true;
+    }
+  } catch {
+    dot.className = 'dot red';
+    label.innerHTML = '<strong>Servidor offline</strong> · execute <code style="background:#0d1117;border:1px solid #30363d;border-radius:4px;padding:1px 6px;font-family:monospace">node seed-server.js</code> no terminal';
+    document.getElementById('instructions').classList.remove('hidden');
+    document.getElementById('btn-run').disabled   = true;
+    document.getElementById('btn-clear').disabled = true;
+    _serverOk = false;
+  }
+}
+
+// Poll every 3s until server is up
+const _poll = setInterval(async () => { await checkServer(); if (_serverOk) clearInterval(_poll); }, 3000);
+checkServer();
+
+// ---- logging ----
+function addLog(msg, type = 'i') {
+  const box  = document.getElementById('log-box');
+  const now  = new Date().toLocaleTimeString('pt-BR');
+  const line = document.createElement('div');
+  line.className = 'll';
+  line.innerHTML = `<span class="lt">[${now}]</span><span class="l${type}">${msg}</span>`;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+function clearLog() { document.getElementById('log-box').innerHTML = ''; }
+
+function setProgress(pct, label) {
+  document.getElementById('prog-wrap').style.display = 'block';
+  document.getElementById('prog-fill').style.width   = pct + '%';
+  document.getElementById('prog-label').textContent  = label || `${pct}%`;
+}
+
+function setButtons(disabled) {
+  document.getElementById('btn-run').disabled   = disabled || !_serverOk;
+  document.getElementById('btn-clear').disabled = disabled || !_serverOk;
+}
+
+function setUserStatus(i, icon, cls = '', pts = null) {
+  const row  = document.getElementById(`urow-${i}`);
+  const ic   = document.getElementById(`uicon-${i}`);
+  const ptel = document.getElementById(`upts-${i}`);
+  if (ic)  ic.textContent = icon;
+  if (row) { row.className = `urow${cls ? ' '+cls : ''}`; }
+  if (ptel && pts !== null) {
+    ptel.textContent = pts + ' pts';
+    ptel.classList.remove('hidden');
+  }
+}
+
+// ---- SSE stream runner ----
+function runStream(endpoint, onDone) {
+  clearLog();
+  setButtons(true);
+  // Reset user rows
+  for (let i = 1; i <= NUM_USERS; i++) setUserStatus(i, '⏸', '');
+  document.getElementById('results').style.display = 'none';
+
+  const es = new EventSource(`${SERVER}${endpoint}`);
+
+  es.onmessage = (e) => {
+    const d = JSON.parse(e.data);
+
+    switch (d.type) {
+      case 'log':
+        addLog(d.msg, d.level === 'ok' ? 'k' : d.level === 'err' ? 'e' : d.level === 'warn' ? 'w' : 'i');
+        break;
+      case 'progress':
+        setProgress(d.pct, `Processando… ${d.pct}%`);
+        break;
+      case 'champion':
+        // handled in 'done'
+        break;
+      case 'user_start':
+        setUserStatus(d.index, '⏳', 'busy');
+        break;
+      case 'user_done':
+        if (d.cleared) {
+          setUserStatus(d.index, '✅', 'ok');
+        } else if (d.pts !== undefined) {
+          setUserStatus(d.index, '✅', 'ok', d.pts);
+        }
+        break;
+      case 'user_err':
+        setUserStatus(d.index, '❌', 'err');
+        break;
+      case 'error':
+        addLog(`❌ Erro: ${d.msg}`, 'e');
+        es.close();
+        setButtons(false);
+        setProgress(0, 'Erro');
+        break;
+      case 'done':
+        es.close();
+        setButtons(false);
+        setProgress(100, 'Concluído! ✅');
+        if (onDone) onDone(d);
+        break;
+    }
+  };
+
+  es.onerror = () => {
+    addLog('❌ Conexão com o servidor perdida', 'e');
+    es.close();
+    setButtons(false);
+    checkServer();
+  };
+}
+
+// ---- run seed ----
+function runSeed() {
+  if (!_serverOk) { alert('O servidor local não está disponível. Execute: node seed-server.js'); return; }
+
+  runStream('/api/seed', ({ ranking, champion, name: champName }) => {
+    if (ranking) renderResults(ranking);
+  });
+}
+
+// ---- clear seed ----
+function clearSeed() {
+  if (!_serverOk) { alert('O servidor local não está disponível.'); return; }
+  if (!confirm('⚠️ Apagar todos os dados de teste (usuários, palpites, resultados e ranking)?')) return;
+  runStream('/api/clear', () => {
+    addLog('✅ Limpeza concluída! Os usuários foram removidos do Firebase Auth também.', 'k');
+  });
+}
+
+// ---- render results ----
+function renderResults(ranking) {
+  const section = document.getElementById('results');
+  section.style.display = 'block';
+
+  // Champion info
+  const champ = ranking[0]; // highest scorer might not be champion — but we show stats
+  const total = ranking.length;
+  const totalPts = ranking.reduce((s, e) => s + e.pts, 0);
+  const avg = (totalPts / total).toFixed(1);
+  const top = ranking[0];
+
+  document.getElementById('champ-row').innerHTML = `
+    <div><div class="cl">👥 Usuários Simulados</div><div class="cv">${total}</div></div>
+    <div><div class="cl">🏆 Maior Pontuação</div><div class="cv">${top.name} · ${top.pts} pts</div></div>
+    <div><div class="cl">📊 Média de Pontos</div><div class="cv">${avg} pts</div></div>
+    <div><div class="cl">⚽ Exatos (melhor)</div><div class="cv">${Math.max(...ranking.map(e=>e.breakdown.exact))} acertos</div></div>
+  `;
+
+  const medals = ['🥇','🥈','🥉'];
+  const body = document.getElementById('ranking-body');
+  body.innerHTML = ranking.map((e, i) => {
+    const pos = medals[i] || `${i+1}º`;
+    const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
+    const champBadge = e.breakdown.bonus > 0
+      ? `<span style="color:#f0e040;font-weight:700">✅ +${e.breakdown.bonus} pts</span>`
+      : '—';
+    return `<tr>
+      <td class="${cls}">${pos}</td>
+      <td>
+        <div style="font-weight:600">${e.name}</div>
+        <div style="color:#8b949e;font-size:.73rem">${e.email}</div>
+      </td>
+      <td>${e.breakdown.exact} × <span style="color:#8b949e">3</span> = <strong>${e.breakdown.exact * 3} pts</strong></td>
+      <td>${e.breakdown.result} × <span style="color:#8b949e">1</span> = <strong>${e.breakdown.result} pts</strong></td>
+      <td>${e.breakdown.ko} × <span style="color:#8b949e">2</span> = <strong>${e.breakdown.ko * 2} pts</strong></td>
+      <td>${champBadge}</td>
+      <td><span class="pts-badge">${e.pts} pts</span></td>
+    </tr>`;
+  }).join('');
+
+  section.scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+</body>
+</html>

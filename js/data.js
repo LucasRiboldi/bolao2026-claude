@@ -11,67 +11,68 @@ const SCORING = {
 };
 
 // ---- 48 teams -----------------------------------------------
+// flag = emoji fallback · iso = flag-icons CSS class (fi fi-{iso})
 const TEAMS = {
   // GROUP A
-  'mexico':      { name: 'México',           short: 'MEX', flag: '🇲🇽' },
-  'southafrica': { name: 'África do Sul',    short: 'RSA', flag: '🇿🇦' },
-  'southkorea':  { name: 'Coreia do Sul',    short: 'KOR', flag: '🇰🇷' },
-  'czechia':     { name: 'Tchéquia',         short: 'CZE', flag: '🇨🇿' },
+  'mexico':      { name: 'México',           short: 'MEX', flag: '🇲🇽', iso: 'mx' },
+  'southafrica': { name: 'África do Sul',    short: 'RSA', flag: '🇿🇦', iso: 'za' },
+  'southkorea':  { name: 'Coreia do Sul',    short: 'KOR', flag: '🇰🇷', iso: 'kr' },
+  'czechia':     { name: 'Tchéquia',         short: 'CZE', flag: '🇨🇿', iso: 'cz' },
   // GROUP B
-  'canada':      { name: 'Canadá',           short: 'CAN', flag: '🇨🇦' },
-  'switzerland': { name: 'Suíça',            short: 'SUI', flag: '🇨🇭' },
-  'qatar':       { name: 'Catar',            short: 'QAT', flag: '🇶🇦' },
-  'bosnia':      { name: 'Bósnia e Herz.',   short: 'BIH', flag: '🇧🇦' },
+  'canada':      { name: 'Canadá',           short: 'CAN', flag: '🇨🇦', iso: 'ca' },
+  'switzerland': { name: 'Suíça',            short: 'SUI', flag: '🇨🇭', iso: 'ch' },
+  'qatar':       { name: 'Catar',            short: 'QAT', flag: '🇶🇦', iso: 'qa' },
+  'bosnia':      { name: 'Bósnia e Herz.',   short: 'BIH', flag: '🇧🇦', iso: 'ba' },
   // GROUP C
-  'brazil':      { name: 'Brasil',           short: 'BRA', flag: '🇧🇷' },
-  'morocco':     { name: 'Marrocos',         short: 'MAR', flag: '🇲🇦' },
-  'haiti':       { name: 'Haiti',            short: 'HAI', flag: '🇭🇹' },
-  'scotland':    { name: 'Escócia',          short: 'SCO', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿' },
+  'brazil':      { name: 'Brasil',           short: 'BRA', flag: '🇧🇷', iso: 'br' },
+  'morocco':     { name: 'Marrocos',         short: 'MAR', flag: '🇲🇦', iso: 'ma' },
+  'haiti':       { name: 'Haiti',            short: 'HAI', flag: '🇭🇹', iso: 'ht' },
+  'scotland':    { name: 'Escócia',          short: 'SCO', flag: '🏴',   iso: 'gb-sct' },
   // GROUP D
-  'usa':         { name: 'Estados Unidos',   short: 'USA', flag: '🇺🇸' },
-  'paraguay':    { name: 'Paraguai',         short: 'PAR', flag: '🇵🇾' },
-  'australia':   { name: 'Austrália',        short: 'AUS', flag: '🇦🇺' },
-  'turkey':      { name: 'Turquia',          short: 'TUR', flag: '🇹🇷' },
+  'usa':         { name: 'Estados Unidos',   short: 'USA', flag: '🇺🇸', iso: 'us' },
+  'paraguay':    { name: 'Paraguai',         short: 'PAR', flag: '🇵🇾', iso: 'py' },
+  'australia':   { name: 'Austrália',        short: 'AUS', flag: '🇦🇺', iso: 'au' },
+  'turkey':      { name: 'Turquia',          short: 'TUR', flag: '🇹🇷', iso: 'tr' },
   // GROUP E
-  'germany':     { name: 'Alemanha',         short: 'GER', flag: '🇩🇪' },
-  'curacao':     { name: 'Curaçao',          short: 'CUW', flag: '🇨🇼' },
-  'ivorycoast':  { name: 'Costa do Marfim',  short: 'CIV', flag: '🇨🇮' },
-  'ecuador':     { name: 'Equador',          short: 'ECU', flag: '🇪🇨' },
+  'germany':     { name: 'Alemanha',         short: 'GER', flag: '🇩🇪', iso: 'de' },
+  'curacao':     { name: 'Curaçao',          short: 'CUW', flag: '🇨🇼', iso: 'cw' },
+  'ivorycoast':  { name: 'Costa do Marfim',  short: 'CIV', flag: '🇨🇮', iso: 'ci' },
+  'ecuador':     { name: 'Equador',          short: 'ECU', flag: '🇪🇨', iso: 'ec' },
   // GROUP F
-  'netherlands': { name: 'Holanda',          short: 'NED', flag: '🇳🇱' },
-  'japan':       { name: 'Japão',            short: 'JPN', flag: '🇯🇵' },
-  'tunisia':     { name: 'Tunísia',          short: 'TUN', flag: '🇹🇳' },
-  'sweden':      { name: 'Suécia',           short: 'SWE', flag: '🇸🇪' },
+  'netherlands': { name: 'Holanda',          short: 'NED', flag: '🇳🇱', iso: 'nl' },
+  'japan':       { name: 'Japão',            short: 'JPN', flag: '🇯🇵', iso: 'jp' },
+  'tunisia':     { name: 'Tunísia',          short: 'TUN', flag: '🇹🇳', iso: 'tn' },
+  'sweden':      { name: 'Suécia',           short: 'SWE', flag: '🇸🇪', iso: 'se' },
   // GROUP G
-  'belgium':     { name: 'Bélgica',          short: 'BEL', flag: '🇧🇪' },
-  'egypt':       { name: 'Egito',            short: 'EGY', flag: '🇪🇬' },
-  'iran':        { name: 'Irã',              short: 'IRN', flag: '🇮🇷' },
-  'newzealand':  { name: 'Nova Zelândia',    short: 'NZL', flag: '🇳🇿' },
+  'belgium':     { name: 'Bélgica',          short: 'BEL', flag: '🇧🇪', iso: 'be' },
+  'egypt':       { name: 'Egito',            short: 'EGY', flag: '🇪🇬', iso: 'eg' },
+  'iran':        { name: 'Irã',              short: 'IRN', flag: '🇮🇷', iso: 'ir' },
+  'newzealand':  { name: 'Nova Zelândia',    short: 'NZL', flag: '🇳🇿', iso: 'nz' },
   // GROUP H
-  'spain':       { name: 'Espanha',          short: 'ESP', flag: '🇪🇸' },
-  'capeverde':   { name: 'Cabo Verde',       short: 'CPV', flag: '🇨🇻' },
-  'saudiarabia': { name: 'Arábia Saudita',   short: 'KSA', flag: '🇸🇦' },
-  'uruguay':     { name: 'Uruguai',          short: 'URU', flag: '🇺🇾' },
+  'spain':       { name: 'Espanha',          short: 'ESP', flag: '🇪🇸', iso: 'es' },
+  'capeverde':   { name: 'Cabo Verde',       short: 'CPV', flag: '🇨🇻', iso: 'cv' },
+  'saudiarabia': { name: 'Arábia Saudita',   short: 'KSA', flag: '🇸🇦', iso: 'sa' },
+  'uruguay':     { name: 'Uruguai',          short: 'URU', flag: '🇺🇾', iso: 'uy' },
   // GROUP I
-  'france':      { name: 'França',           short: 'FRA', flag: '🇫🇷' },
-  'senegal':     { name: 'Senegal',          short: 'SEN', flag: '🇸🇳' },
-  'norway':      { name: 'Noruega',          short: 'NOR', flag: '🇳🇴' },
-  'iraq':        { name: 'Iraque',           short: 'IRQ', flag: '🇮🇶' },
+  'france':      { name: 'França',           short: 'FRA', flag: '🇫🇷', iso: 'fr' },
+  'senegal':     { name: 'Senegal',          short: 'SEN', flag: '🇸🇳', iso: 'sn' },
+  'norway':      { name: 'Noruega',          short: 'NOR', flag: '🇳🇴', iso: 'no' },
+  'iraq':        { name: 'Iraque',           short: 'IRQ', flag: '🇮🇶', iso: 'iq' },
   // GROUP J
-  'argentina':   { name: 'Argentina',        short: 'ARG', flag: '🇦🇷' },
-  'algeria':     { name: 'Argélia',          short: 'ALG', flag: '🇩🇿' },
-  'austria':     { name: 'Áustria',          short: 'AUT', flag: '🇦🇹' },
-  'jordan':      { name: 'Jordânia',         short: 'JOR', flag: '🇯🇴' },
+  'argentina':   { name: 'Argentina',        short: 'ARG', flag: '🇦🇷', iso: 'ar' },
+  'algeria':     { name: 'Argélia',          short: 'ALG', flag: '🇩🇿', iso: 'dz' },
+  'austria':     { name: 'Áustria',          short: 'AUT', flag: '🇦🇹', iso: 'at' },
+  'jordan':      { name: 'Jordânia',         short: 'JOR', flag: '🇯🇴', iso: 'jo' },
   // GROUP K
-  'portugal':    { name: 'Portugal',         short: 'POR', flag: '🇵🇹' },
-  'uzbekistan':  { name: 'Uzbequistão',      short: 'UZB', flag: '🇺🇿' },
-  'colombia':    { name: 'Colômbia',         short: 'COL', flag: '🇨🇴' },
-  'drcongo':     { name: 'RD Congo',         short: 'COD', flag: '🇨🇩' },
+  'portugal':    { name: 'Portugal',         short: 'POR', flag: '🇵🇹', iso: 'pt' },
+  'uzbekistan':  { name: 'Uzbequistão',      short: 'UZB', flag: '🇺🇿', iso: 'uz' },
+  'colombia':    { name: 'Colômbia',         short: 'COL', flag: '🇨🇴', iso: 'co' },
+  'drcongo':     { name: 'RD Congo',         short: 'COD', flag: '🇨🇩', iso: 'cd' },
   // GROUP L
-  'england':     { name: 'Inglaterra',       short: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
-  'croatia':     { name: 'Croácia',          short: 'CRO', flag: '🇭🇷' },
-  'ghana':       { name: 'Gana',             short: 'GHA', flag: '🇬🇭' },
-  'panama':      { name: 'Panamá',           short: 'PAN', flag: '🇵🇦' },
+  'england':     { name: 'Inglaterra',       short: 'ENG', flag: '🏴',   iso: 'gb-eng' },
+  'croatia':     { name: 'Croácia',          short: 'CRO', flag: '🇭🇷', iso: 'hr' },
+  'ghana':       { name: 'Gana',             short: 'GHA', flag: '🇬🇭', iso: 'gh' },
+  'panama':      { name: 'Panamá',           short: 'PAN', flag: '🇵🇦', iso: 'pa' },
 };
 
 // ---- 12 groups ----------------------------------------------
@@ -115,61 +116,68 @@ for (const gId of Object.keys(GROUPS)) {
 // ---- Knockout bracket definition (R32 → Final) --------------
 // Each slot references which group position fills it.
 // Third-place slots (T3_1..T3_8) are filled by best-8 thirds sorted pts/GD/GF.
+// ---- Rodada de 32 — Chaveamento OFICIAL FIFA Copa 2026 -------------
+// Fonte: Wikipedia / Regulamento oficial FIFA (Annex B)
+// Matches 73-88 do calendário oficial.
+// T3_N = N-ésimo melhor 3º colocado (os 8 melhores entre 12 grupos).
+// A designação exata do T3 para cada jogo depende de quais grupos
+// tiveram seus 3ºs classificados — implementamos a ordem por ranking.
 const KNOCKOUT_SLOTS = [
-  // Round of 32 (16 matches)
-  { id: 'r32_01', homeSlot: '1A', awaySlot: '2F' },
-  { id: 'r32_02', homeSlot: '2A', awaySlot: '1B' },
-  { id: 'r32_03', homeSlot: '1C', awaySlot: '2D' },
-  { id: 'r32_04', homeSlot: '2C', awaySlot: '1D' },
-  { id: 'r32_05', homeSlot: '1E', awaySlot: '2J' },
-  { id: 'r32_06', homeSlot: '2E', awaySlot: '1F' },
-  { id: 'r32_07', homeSlot: '1G', awaySlot: '2H' },
-  { id: 'r32_08', homeSlot: '2G', awaySlot: '1H' },
-  { id: 'r32_09', homeSlot: '1I', awaySlot: '2L' },
-  { id: 'r32_10', homeSlot: '2I', awaySlot: '1J' },
-  { id: 'r32_11', homeSlot: '1K', awaySlot: '2B' },
-  { id: 'r32_12', homeSlot: '2K', awaySlot: '1L' },
-  { id: 'r32_13', homeSlot: 'T3_1', awaySlot: 'T3_2' },
-  { id: 'r32_14', homeSlot: 'T3_3', awaySlot: 'T3_4' },
-  { id: 'r32_15', homeSlot: 'T3_5', awaySlot: 'T3_6' },
-  { id: 'r32_16', homeSlot: 'T3_7', awaySlot: 'T3_8' },
+  { id: 'r32_01', homeSlot: '2A',  awaySlot: '2B'  }, // M73: 2ºA vs 2ºB
+  { id: 'r32_02', homeSlot: '1E',  awaySlot: 'T3_1'}, // M74: 1ºE vs melhor 3º
+  { id: 'r32_03', homeSlot: '1F',  awaySlot: '2C'  }, // M75: 1ºF vs 2ºC
+  { id: 'r32_04', homeSlot: '1C',  awaySlot: '2F'  }, // M76: 1ºC vs 2ºF
+  { id: 'r32_05', homeSlot: '1I',  awaySlot: 'T3_2'}, // M77: 1ºI vs melhor 3º
+  { id: 'r32_06', homeSlot: '2E',  awaySlot: '2I'  }, // M78: 2ºE vs 2ºI
+  { id: 'r32_07', homeSlot: '1A',  awaySlot: 'T3_3'}, // M79: 1ºA vs melhor 3º
+  { id: 'r32_08', homeSlot: '1L',  awaySlot: 'T3_4'}, // M80: 1ºL vs melhor 3º
+  { id: 'r32_09', homeSlot: '1D',  awaySlot: 'T3_5'}, // M81: 1ºD vs melhor 3º
+  { id: 'r32_10', homeSlot: '1G',  awaySlot: 'T3_6'}, // M82: 1ºG vs melhor 3º
+  { id: 'r32_11', homeSlot: '2K',  awaySlot: '2L'  }, // M83: 2ºK vs 2ºL
+  { id: 'r32_12', homeSlot: '1H',  awaySlot: '2J'  }, // M84: 1ºH vs 2ºJ
+  { id: 'r32_13', homeSlot: '1B',  awaySlot: 'T3_7'}, // M85: 1ºB vs melhor 3º
+  { id: 'r32_14', homeSlot: '1J',  awaySlot: '2H'  }, // M86: 1ºJ vs 2ºH
+  { id: 'r32_15', homeSlot: '1K',  awaySlot: 'T3_8'}, // M87: 1ºK vs melhor 3º
+  { id: 'r32_16', homeSlot: '2D',  awaySlot: '2G'  }, // M88: 2ºD vs 2ºG
 ];
 
-// R16 through Final: each match references the winner of two prior matches
+// Oitavas → Final (cada jogo referencia vencedor de jogo anterior)
+// Mapeamento oficial: M89=W74vsW77, M90=W73vsW75, M91=W76vsW78,
+// M92=W79vsW80, M93=W83vsW84, M94=W81vsW82, M95=W86vsW88, M96=W85vsW87
 const KNOCKOUT_ROUNDS = [
   {
     name: 'Oitavas',
     matches: [
-      { id: 'r16_01', home: 'W:r32_01', away: 'W:r32_02' },
-      { id: 'r16_02', home: 'W:r32_03', away: 'W:r32_04' },
-      { id: 'r16_03', home: 'W:r32_05', away: 'W:r32_06' },
-      { id: 'r16_04', home: 'W:r32_07', away: 'W:r32_08' },
-      { id: 'r16_05', home: 'W:r32_09', away: 'W:r32_10' },
-      { id: 'r16_06', home: 'W:r32_11', away: 'W:r32_12' },
-      { id: 'r16_07', home: 'W:r32_13', away: 'W:r32_14' },
-      { id: 'r16_08', home: 'W:r32_15', away: 'W:r32_16' },
+      { id: 'r16_01', home: 'W:r32_02', away: 'W:r32_05' }, // M89
+      { id: 'r16_02', home: 'W:r32_01', away: 'W:r32_03' }, // M90
+      { id: 'r16_03', home: 'W:r32_04', away: 'W:r32_06' }, // M91
+      { id: 'r16_04', home: 'W:r32_07', away: 'W:r32_08' }, // M92
+      { id: 'r16_05', home: 'W:r32_11', away: 'W:r32_12' }, // M93
+      { id: 'r16_06', home: 'W:r32_09', away: 'W:r32_10' }, // M94
+      { id: 'r16_07', home: 'W:r32_14', away: 'W:r32_16' }, // M95
+      { id: 'r16_08', home: 'W:r32_13', away: 'W:r32_15' }, // M96
     ],
   },
   {
     name: 'Quartas',
     matches: [
-      { id: 'qf_01', home: 'W:r16_01', away: 'W:r16_02' },
-      { id: 'qf_02', home: 'W:r16_03', away: 'W:r16_04' },
-      { id: 'qf_03', home: 'W:r16_05', away: 'W:r16_06' },
-      { id: 'qf_04', home: 'W:r16_07', away: 'W:r16_08' },
+      { id: 'qf_01', home: 'W:r16_01', away: 'W:r16_02' }, // M97
+      { id: 'qf_02', home: 'W:r16_05', away: 'W:r16_06' }, // M98
+      { id: 'qf_03', home: 'W:r16_03', away: 'W:r16_04' }, // M99
+      { id: 'qf_04', home: 'W:r16_07', away: 'W:r16_08' }, // M100
     ],
   },
   {
     name: 'Semifinais',
     matches: [
-      { id: 'sf_01', home: 'W:qf_01', away: 'W:qf_02' },
-      { id: 'sf_02', home: 'W:qf_03', away: 'W:qf_04' },
+      { id: 'sf_01', home: 'W:qf_01', away: 'W:qf_02' }, // M101
+      { id: 'sf_02', home: 'W:qf_03', away: 'W:qf_04' }, // M102
     ],
   },
   {
     name: 'Final',
     matches: [
-      { id: 'final', home: 'W:sf_01', away: 'W:sf_02' },
+      { id: 'final', home: 'W:sf_01', away: 'W:sf_02' }, // M104
     ],
   },
 ];

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bolão Copa do Mundo 2026 🏆</title>
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/6.11.0/css/flag-icons.min.css">
 </head>
 <body>
 
@@ -13,7 +14,19 @@
     <div class="spinner"></div>
   </div>
 
-  <!-- ======================== AUTH SCREEN ======================== -->
+  <!-- ======= MODAL: Histórico de Apostas ======= -->
+  <div id="bet-history-modal" class="bh-modal-overlay hidden"
+       onclick="if(event.target===this)closeBetHistory()">
+    <div class="bh-modal">
+      <div class="bh-modal-header">
+        <h2 id="bh-title">📋 Apostas</h2>
+        <button class="bh-close" onclick="closeBetHistory()">✕</button>
+      </div>
+      <div class="bh-modal-body" id="bh-body"></div>
+    </div>
+  </div>
+
+  <!-- ======= AUTH SCREEN ======= -->
   <section id="auth-screen" class="screen">
     <div class="auth-container">
       <div class="auth-header">
@@ -51,7 +64,7 @@
     </div>
   </section>
 
-  <!-- ======================== DASHBOARD SCREEN ======================== -->
+  <!-- ======= DASHBOARD SCREEN ======= -->
   <section id="dashboard-screen" class="screen hidden">
 
     <header class="app-header">
@@ -66,34 +79,34 @@
         </div>
       </div>
       <nav class="nav-tabs" role="tablist">
-        <button class="nav-tab active" data-section="groups" role="tab">⚽ Grupos</button>
-        <button class="nav-tab" data-section="knockout" role="tab">⚡ Mata-Mata</button>
-        <button class="nav-tab" data-section="ranking" role="tab">🏅 Ranking</button>
+        <button class="nav-tab active" data-section="groups"    role="tab">⚽ Grupos</button>
+        <button class="nav-tab"        data-section="standings" role="tab">📊 Classificação</button>
+        <button class="nav-tab"        data-section="ranking"   role="tab">🏅 Ranking</button>
+        <button class="nav-tab admin-only hidden" data-section="admin" role="tab">🔧 Admin</button>
       </nav>
     </header>
 
-    <!-- ---- GROUP STAGE ---- -->
+    <!-- ===== GRUPOS + MATA-MATA ===== -->
     <section id="section-groups" class="content-section">
+
       <div class="section-header">
-        <h2>Fase de Grupos</h2>
-        <p>Preencha o placar de cada partida (72 jogos, 12 grupos)</p>
+        <h2>⚽ Fase de Grupos</h2>
+        <p>Preencha o placar de cada partida · 72 jogos · 12 grupos</p>
       </div>
 
-      <div id="group-tabs" class="group-tabs" role="tablist"></div>
+      <!-- Banner exibido após salvar + bloquear -->
+      <div id="bets-lock-banner" class="bets-lock-banner hidden">
+        <span>🔒</span>
+        <span>Apostas salvas e bloqueadas. Aguarde o administrador para liberar a edição.</span>
+      </div>
+
       <div id="group-panel" class="group-panel"></div>
 
-      <div class="save-bar">
-        <button id="btn-save-groups" class="btn btn-primary btn-full">
-          💾 Salvar Palpites dos Grupos
-        </button>
-      </div>
-    </section>
-
-    <!-- ---- KNOCKOUT ---- -->
-    <section id="section-knockout" class="content-section hidden">
-      <div class="section-header">
-        <h2>Mata-Mata</h2>
-        <p>Escolha os vencedores de cada jogo. Times baseados nos seus palpites de grupos.</p>
+      <div class="section-divider">
+        <div class="section-divider-inner">
+          <h2>⚡ Fase Mata-Mata</h2>
+          <p>Selecione os vencedores · baseado nos seus palpites de grupos</p>
+        </div>
       </div>
 
       <div class="ko-toolbar">
@@ -106,28 +119,73 @@
       <div id="knockout-bracket" class="knockout-bracket"></div>
 
       <div class="save-bar">
-        <button id="btn-save-knockout" class="btn btn-primary btn-full">
-          💾 Salvar Palpites do Mata-Mata
+        <button id="btn-save-groups" class="btn btn-primary btn-full">
+          💾 Salvar Palpites
+        </button>
+        <button id="btn-export-bets" class="btn btn-secondary btn-full">
+          📄 Exportar Apostas
         </button>
       </div>
     </section>
 
-    <!-- ---- RANKING ---- -->
+    <!-- ===== CLASSIFICAÇÃO OFICIAL ===== -->
+    <section id="section-standings" class="content-section hidden">
+      <div class="section-header">
+        <h2>📊 Classificação Oficial</h2>
+        <p>Atualizada em tempo real · Copa do Mundo FIFA 2026</p>
+      </div>
+      <div id="standings-content">
+        <p class="muted" style="padding:20px 16px">⏳ Carregando…</p>
+      </div>
+    </section>
+
+    <!-- ===== RANKING ===== -->
     <section id="section-ranking" class="content-section hidden">
       <div class="section-header">
-        <h2>Ranking Completo</h2>
-        <p>Pontuação baseada nos resultados reais após cada jogo</p>
+        <h2>🏅 Ranking</h2>
+        <p>Clique em 📋 para ver as apostas de cada participante</p>
       </div>
       <div id="ranking-content"></div>
 
-      <div class="scoring-legend card">
+      <div class="scoring-legend card" style="margin:0 16px 20px;">
         <h3>📋 Regras de Pontuação</h3>
         <ul>
           <li><strong>+3 pts</strong> — Placar exato (grupos)</li>
-          <li><strong>+1 pt</strong> — Resultado correto, placar errado (grupos)</li>
+          <li><strong>+1 pt</strong>  — Resultado correto, placar errado (grupos)</li>
           <li><strong>+2 pts</strong> — Vencedor correto (mata-mata)</li>
           <li><strong>+5 pts</strong> — Bônus: acertar o campeão</li>
         </ul>
+      </div>
+    </section>
+
+    <!-- ===== ADMIN ===== -->
+    <section id="section-admin" class="content-section hidden admin-only">
+      <div class="section-header">
+        <h2>🔧 Painel Admin</h2>
+        <p>Gerencie apostas dos participantes</p>
+      </div>
+
+      <!-- Ferramenta de seed de teste -->
+      <div class="admin-card">
+        <div class="admin-card-title">🧪 Ferramentas de Teste</div>
+        <p class="admin-card-desc">
+          Simula 10 usuários com palpites aleatórios para testar o bolão.
+          Requer <code>node seed-server.js</code> rodando no terminal.
+        </p>
+        <button class="btn btn-secondary" onclick="window.open('test-seed.html','_blank')">
+          🧪 Abrir Seed de Teste
+        </button>
+      </div>
+
+      <!-- Lista de usuários -->
+      <div class="admin-card">
+        <div class="admin-card-title" style="display:flex;align-items:center;justify-content:space-between">
+          <span>👥 Participantes</span>
+          <button class="btn btn-ghost btn-sm" onclick="initAdminPanel()">🔄 Atualizar</button>
+        </div>
+        <div id="admin-users-list">
+          <p class="muted" style="padding:20px">Abrindo o painel Admin…</p>
+        </div>
       </div>
     </section>
 
@@ -145,7 +203,9 @@
   <script src="js/auth.js"></script>
   <script src="js/groupStage.js"></script>
   <script src="js/knockout.js"></script>
+  <script src="js/standings.js"></script>
   <script src="js/ranking.js"></script>
+  <script src="js/admin.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

@@ -1,184 +1,241 @@
 # 🏆 Bolão Copa do Mundo 2026
 
-Aplicação web completa para bolão de palpites da Copa do Mundo FIFA 2026.  
-**Stack:** HTML · CSS · JavaScript puro · Firebase (Auth + Firestore + Hosting)  
-**Sem build step** — funciona direto no browser após configurar o Firebase.
+Aplicação web completa para gerenciar um bolão de palpites da **Copa do Mundo FIFA 2026**.  
+Construída com HTML/CSS/JavaScript puro + Firebase — sem bundler, sem framework, sem build step.
+
+[![Deploy Status](https://img.shields.io/badge/deploy-Firebase%20Hosting-orange?logo=firebase)](https://bolao2026-a76c7.web.app)
+[![Firebase](https://img.shields.io/badge/backend-Firestore-yellow?logo=firebase)](https://firebase.google.com)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ---
 
-## Funcionalidades
+## ✨ Funcionalidades
 
-| Feature | Detalhe |
-|---|---|
-| Autenticação | E-mail/senha via Firebase Auth |
-| Fase de Grupos | 72 jogos, 12 grupos oficiais (draw Dez/2025) |
-| Simulação de mata-mata | Calcula os 32 classificados a partir dos seus palpites |
-| Bracket interativo | R32 → Oitavas → Quartas → Semis → Final |
-| Pontuação | Exato +3 · Resultado +1 · KO +2 · Campeão +5 |
-| Ranking | Placar público em tempo real |
-| Mobile-first | Responsivo, inputs grandes, sem scroll horizontal indesejado |
+| Módulo | Descrição |
+|--------|-----------|
+| 🔐 **Autenticação** | Cadastro e login via e-mail/senha (Firebase Auth) |
+| ⚽ **Fase de Grupos** | 72 jogos, 12 grupos, draw oficial FIFA (dez/2025). Steppers +/− para inserir placares. Gols pré-preenchidos em 0. |
+| ⚡ **Mata-Mata** | Bracket interativo R32 → Oitavas → Quartas → Semis → Final. Auto-gerado ao completar todos os grupos. |
+| 🏅 **Ranking** | Placar em tempo real — calculado ao vivo com pontuação diferenciada |
+| 📋 **Histórico** | Qualquer participante pode ver os palpites dos outros com status por jogo |
+| 🔒 **Bloqueio de Apostas** | Apostas travadas após salvar; admin pode liberar individualmente |
+| 📊 **Classificação Oficial** | Tabelas da copa via API externa (Standings) |
+| 🔧 **Painel Admin** | Gestão de usuários: bloquear/liberar apostas, ver histórico, seed de teste |
+| 📄 **Exportar Apostas** | Download do boletim HTML com todos os palpites para conferência |
 
 ---
 
-## Configuração do Firebase
+## 🗂️ Estrutura do Projeto
 
-### 1. Criar projeto
+```
+bolao2026-claude/
+├── index.html              # SPA — única página HTML
+├── css/
+│   └── styles.css          # Tema dark, variáveis CSS, mobile-first
+├── js/
+│   ├── config.js           # Inicialização do Firebase
+│   ├── data.js             # Dados estáticos: times, grupos, bracket, scoring
+│   ├── utils.js            # Helpers: showToast, showLoading, showSection
+│   ├── db.js               # CRUD Firestore (bets, profile, ranking, results)
+│   ├── auth.js             # Fluxo de autenticação (login/cadastro/logout)
+│   ├── groupStage.js       # Renderização e lógica da fase de grupos
+│   ├── knockout.js         # Bracket interativo mata-mata
+│   ├── standings.js        # Classificação oficial (API externa)
+│   ├── ranking.js          # Cálculo de pontuação e ranking de participantes
+│   ├── admin.js            # Painel admin, histórico de apostas (modal)
+│   └── app.js              # Controlador principal (roteamento de seções)
+├── firestore.rules         # Regras de segurança Firestore
+├── firebase.json           # Configuração de hosting e Firestore
+├── seed-server.js          # Servidor Node local para seed de teste (Admin SDK)
+├── seed.js                 # Script de seed alternativo (CLI)
+├── test-seed.html          # UI de seed — simula 10 usuários com palpites aleatórios
+└── package.json            # Dependências Node (firebase-admin — apenas para seed)
+```
+
+---
+
+## 🃏 Arquitetura de Cards e UI
+
+A interface é organizada em **seções navegáveis** (tabs) sem re-carregamento de página:
+
+```
+App (SPA)
+├── Auth Screen
+│   └── PublicRankingCard   — top 10 visível antes de logar
+└── Dashboard Screen
+    ├── Tab: Grupos
+    │   ├── GroupCard [A-L]  — card por grupo com borda colorida
+    │   │   └── GameRow      — linha por jogo: [Flag Team] [−][0][+] × [−][0][+] [Flag Team]
+    │   └── KnockoutBracket  — colunas R32 / Oitavas / Quartas / Semis / Final
+    ├── Tab: Classificação   — standings oficiais (API)
+    ├── Tab: Ranking         — RankingRow com pts + botão 📋 histórico
+    └── Tab: Admin (*)       — AdminUserRow: status + lock/unlock + histórico
+```
+
+> (\*) Visível apenas para o e-mail de admin configurado em `firestore.rules` e `js/admin.js`.
+
+---
+
+## 🗃️ Modelo de Dados (Firestore)
+
+```
+users/
+  {uid}/
+    profile/info           → { name, email, betsLocked, betsSavedAt, betsUnlockedAt }
+    bets/groupStage        → { [gameId]: { homeGoals, awayGoals } }   // 72 jogos
+    bets/knockout          → { [matchId]: teamId }                    // R32..Final
+
+results/
+  groupStage               → { [gameId]: { homeGoals, awayGoals } }   // preenchido pelo admin
+  knockout                 → { [matchId]: teamId }                    // vencedor real por rodada
+
+ranking/
+  current                  → { entries: [{ uid, name, pts, breakdown }] }
+```
+
+---
+
+## 🧮 Sistema de Pontuação
+
+| Acerto | Pontos |
+|--------|--------|
+| Placar exato (grupos) | **+3 pts** |
+| Resultado correto, placar errado (grupos) | **+1 pt** |
+| Vencedor correto (mata-mata, qualquer rodada) | **+2 pts** |
+| Bônus: campeão certo | **+5 pts** |
+
+---
+
+## 🔐 Regras de Segurança (Firestore)
+
+```
+users/{uid}/profile  →  R/W: próprio usuário ou admin
+users/{uid}/bets     →  R: qualquer autenticado (bolão transparente)
+                        W: próprio usuário ou admin
+results/*            →  R: qualquer autenticado | W: somente admin
+ranking/*            →  R: qualquer autenticado | W: somente admin
+```
+
+O admin é identificado pelo campo `request.auth.token.email` — configurar em `firestore.rules`.
+
+---
+
+## 🚀 Setup — Passo a Passo
+
+### 1. Clonar o repositório
+
+```bash
+git clone https://github.com/LucasRiboldi/bolao2026-claude.git
+cd bolao2026-claude
+```
+
+### 2. Criar projeto Firebase
 
 1. Acesse [console.firebase.google.com](https://console.firebase.google.com)
-2. Clique em **Adicionar projeto** → nomeie (ex: `bolao-copa-2026`)
-3. Desative o Google Analytics (opcional) → **Criar projeto**
+2. **Adicionar projeto** → nome → criar
+3. Ative **Authentication → E-mail/Senha**
+4. Crie o banco **Firestore** (modo produção)
+5. Vá em **Project Settings → Seus apps → Web** → copie as credenciais
 
-### 2. Ativar Authentication
+### 3. Configurar credenciais
 
-1. Menu lateral → **Authentication** → **Primeiros passos**
-2. Aba **Sign-in method** → habilite **E-mail/senha** → Salvar
-
-### 3. Criar Firestore
-
-1. Menu lateral → **Firestore Database** → **Criar banco de dados**
-2. Escolha **Modo de produção** (as regras de segurança já estão prontas)
-3. Selecione a região mais próxima (ex: `us-east1`)
-
-### 4. Configurar o app web
-
-1. Clique na engrenagem ⚙️ → **Configurações do projeto**
-2. Role até **Seus apps** → clique em **</>** (Web)
-3. Registre o app (ex: `bolao-web`)
-4. Copie o objeto `firebaseConfig`
-
-### 5. Colar as credenciais
-
-Abra `js/config.js` e substitua os valores `YOUR_*`:
+Edite `js/config.js` com os valores do seu projeto:
 
 ```js
 const FIREBASE_CONFIG = {
-  apiKey:            "AIzaSy...",
-  authDomain:        "bolao-copa-2026.firebaseapp.com",
-  projectId:         "bolao-copa-2026",
-  storageBucket:     "bolao-copa-2026.appspot.com",
-  messagingSenderId: "123456789",
-  appId:             "1:123456789:web:abc..."
+  apiKey:            "SUA_API_KEY",
+  authDomain:        "SEU_PROJETO.firebaseapp.com",
+  projectId:         "SEU_PROJETO",
+  storageBucket:     "SEU_PROJETO.firebasestorage.app",
+  messagingSenderId: "SEU_SENDER_ID",
+  appId:             "SEU_APP_ID"
 };
 ```
 
-### 6. Aplicar regras de segurança
+### 4. Configurar admin
+
+Em `firestore.rules` e `js/admin.js`, substitua o e-mail do admin:
+
+```js
+// js/admin.js
+const ADMIN_EMAIL = 'seu-email@example.com';
+
+// firestore.rules
+&& request.auth.token.email == 'seu-email@example.com';
+```
+
+### 5. Instalar Firebase CLI e fazer deploy
 
 ```bash
 npm install -g firebase-tools
 firebase login
-firebase init firestore   # escolha seu projeto, aponte para firestore.rules
-firebase deploy --only firestore:rules
+firebase deploy --only firestore:rules,hosting
+```
+
+### 6. Abrir no browser
+
+Acesse `https://SEU_PROJETO.web.app` ou rode localmente com:
+
+```bash
+# Qualquer servidor estático funciona, ex:
+npx serve .
+# ou extensão Live Server no VS Code (porta padrão: 5500)
 ```
 
 ---
 
-## Deploy no Firebase Hosting
+## 🧪 Seed de Teste (10 usuários simulados)
+
+Útil para testar ranking e pontuação antes da competição.
+
+### Requisitos
+- Gere uma **Service Account** no Firebase Console → Project Settings → Service Accounts
+- Salve como `service-account.json` na raiz (já no `.gitignore`)
 
 ```bash
-firebase init hosting
-# Public directory: . (raiz do projeto)
-# Single-page app: No
-# Overwrite index.html: No
+npm install           # instala firebase-admin
+node seed-server.js   # sobe servidor na porta 3001
+```
 
+Abra `test-seed.html` no browser (ou via `http://127.0.0.1:5500/test-seed.html`).  
+Clique em **▶ Executar Seed** para criar 10 usuários com palpites e resultados aleatórios.
+
+---
+
+## 📦 Scripts disponíveis
+
+```bash
+node seed-server.js   # Servidor de seed com SSE (interface test-seed.html)
+node seed.js          # Seed direto via terminal (sem UI)
+```
+
+---
+
+## 🌐 Deploy Firebase (resumo rápido)
+
+```bash
+# Deploy completo (hosting + regras)
+firebase deploy
+
+# Apenas regras do Firestore
+firebase deploy --only firestore:rules
+
+# Apenas hosting
 firebase deploy --only hosting
 ```
 
-A URL do app aparecerá no terminal (ex: `https://bolao-copa-2026.web.app`).
+---
+
+## 🤝 Contribuindo
+
+Pull requests são bem-vindos. Para mudanças grandes, abra uma issue primeiro.
+
+1. Fork → branch `feat/minha-feature`
+2. Commit com mensagem descritiva
+3. Pull Request para `main`
 
 ---
 
-## Inserir resultados reais (admin)
+## 📄 Licença
 
-Os resultados reais são gravados manualmente no Firestore pelo administrador.
-
-### Formato — Fase de Grupos
-**Coleção:** `results` → **Documento:** `groupStage`
-
-```json
-{
-  "A_0": { "homeGoals": 2, "awayGoals": 1 },
-  "A_1": { "homeGoals": 0, "awayGoals": 0 },
-  "B_2": { "homeGoals": 3, "awayGoals": 2 }
-}
-```
-
-ID do jogo: `{GRUPO}_{0-5}` seguindo a ordem do arquivo `js/data.js`.
-
-### Formato — Mata-Mata
-**Coleção:** `results` → **Documento:** `knockout`
-
-```json
-{
-  "r32_01": "brazil",
-  "r32_02": "usa",
-  "r16_01": "brazil",
-  "final":  "brazil"
-}
-```
-
-O valor é o `id` interno da seleção (ex: `brazil`, `argentina`, `france`).  
-Veja todos os IDs em `js/data.js` → constante `TEAMS`.
-
----
-
-## Atualizar o Ranking agregado
-
-Após inserir resultados, recalcule o ranking executando no Firebase Console (Firestore) ou via Cloud Function. Para bolões pequenos, o ranking é calculado diretamente no cliente ao abrir a aba **Ranking**.
-
-Para bolões grandes (100+ usuários), crie uma Cloud Function que:
-1. Leia todos os `users/*/bets/*`
-2. Calcule pontos com `calculateScore` (lógica em `js/ranking.js`)
-3. Grave em `ranking/current`
-
----
-
-## Estrutura de arquivos
-
-```
-bolao-copa-2026/
-├── index.html
-├── css/
-│   └── styles.css
-├── js/
-│   ├── config.js       ← suas credenciais Firebase
-│   ├── data.js         ← times, grupos, fixtures, simulação
-│   ├── utils.js        ← toast, loading, helpers
-│   ├── db.js           ← CRUD Firestore
-│   ├── auth.js         ← login / cadastro
-│   ├── groupStage.js   ← fase de grupos UI
-│   ├── knockout.js     ← bracket mata-mata UI
-│   ├── ranking.js      ← pontuação e ranking
-│   └── app.js          ← controlador principal
-├── firestore.rules
-└── README.md
-```
-
----
-
-## Regras de Pontuação
-
-| Acerto | Pontos |
-|---|---|
-| Placar exato (grupos) | +3 |
-| Resultado correto, placar errado (grupos) | +1 |
-| Vencedor correto (mata-mata, qualquer rodada) | +2 |
-| Bônus: acertar o campeão (final) | +5 |
-
----
-
-## Times e Grupos Oficiais (Copa 2026)
-
-| Grupo | Times |
-|---|---|
-| A | 🇲🇽 México · 🇿🇦 África do Sul · 🇰🇷 Coreia do Sul · 🇨🇿 Tchéquia |
-| B | 🇨🇦 Canadá · 🇨🇭 Suíça · 🇶🇦 Catar · 🇧🇦 Bósnia |
-| C | 🇧🇷 Brasil · 🇲🇦 Marrocos · 🇭🇹 Haiti · 🏴󠁧󠁢󠁳󠁣󠁴󠁿 Escócia |
-| D | 🇺🇸 EUA · 🇵🇾 Paraguai · 🇦🇺 Austrália · 🇹🇷 Turquia |
-| E | 🇩🇪 Alemanha · 🇨🇼 Curaçao · 🇨🇮 Costa do Marfim · 🇪🇨 Equador |
-| F | 🇳🇱 Holanda · 🇯🇵 Japão · 🇹🇳 Tunísia · 🇸🇪 Suécia |
-| G | 🇧🇪 Bélgica · 🇪🇬 Egito · 🇮🇷 Irã · 🇳🇿 Nova Zelândia |
-| H | 🇪🇸 Espanha · 🇨🇻 Cabo Verde · 🇸🇦 Arábia Saudita · 🇺🇾 Uruguai |
-| I | 🇫🇷 França · 🇸🇳 Senegal · 🇳🇴 Noruega · 🇮🇶 Iraque |
-| J | 🇦🇷 Argentina · 🇩🇿 Argélia · 🇦🇹 Áustria · 🇯🇴 Jordânia |
-| K | 🇵🇹 Portugal · 🇺🇿 Uzbequistão · 🇨🇴 Colômbia · 🇨🇩 RD Congo |
-| L | 🏴󠁧󠁢󠁥󠁮󠁧󠁿 Inglaterra · 🇭🇷 Croácia · 🇬🇭 Gana · 🇵🇦 Panamá |
+MIT © [Lucas Riboldi](https://github.com/LucasRiboldi)

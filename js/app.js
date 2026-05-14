@@ -5,21 +5,25 @@
   initGroupStage();
   initKnockout();
 
-  // Load public ranking on auth screen
   loadPublicRanking();
 
-  // ---- Section navigation
   document.querySelectorAll('.nav-tab').forEach(tab => {
     tab.addEventListener('click', async () => {
       const section = tab.dataset.section;
       showSection(section);
+
       if (section === 'ranking' && auth.currentUser) {
         await initRanking(auth.currentUser.uid);
+      }
+      if (section === 'standings') {
+        await initStandings();
+      }
+      if (section === 'admin' && isAdmin()) {
+        await initAdminPanel();
       }
     });
   });
 
-  // ---- Auth state change (entry point)
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       await _onLogin(user);
@@ -33,17 +37,16 @@ async function _onLogin(user) {
   showLoading();
   try {
     const profile = await loadProfile(user.uid);
-
-    // Update header
     const name = user.displayName || profile.name || user.email.split('@')[0];
     document.getElementById('hdr-username').textContent = name;
 
-    // Load bets
     await loadGroupBetsUI(user.uid);
     await loadKnockoutBetsUI(user.uid);
 
-    // Compute & show user score
     _refreshUserScore(user.uid);
+
+    // Exibe elementos de admin
+    initAdminUI();
 
     showScreen('dashboard-screen');
     showSection('groups');
@@ -56,6 +59,8 @@ async function _onLogin(user) {
 
 function _onLogout() {
   showScreen('auth-screen');
+  // Oculta tabs de admin ao deslogar
+  document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
   loadPublicRanking();
 }
 
@@ -67,7 +72,6 @@ async function _refreshUserScore(uid) {
     const { pts }      = calculateScore(groupBets, knockoutBets, results);
     document.getElementById('hdr-score').textContent = `${pts} pts`;
   } catch {
-    // Results may not exist yet
     document.getElementById('hdr-score').textContent = '0 pts';
   }
 }

@@ -1,48 +1,41 @@
 // ---- Firestore CRUD helpers ---------------------------------
 
-// Save group-stage bets for a user
 async function saveGroupBets(uid, bets) {
   await db.collection('users').doc(uid)
     .collection('bets').doc('groupStage')
     .set(bets);
 }
 
-// Load group-stage bets
 async function loadGroupBets(uid) {
   const snap = await db.collection('users').doc(uid)
     .collection('bets').doc('groupStage').get();
   return snap.exists ? snap.data() : {};
 }
 
-// Save knockout bets
 async function saveKnockoutBets(uid, bets) {
   await db.collection('users').doc(uid)
     .collection('bets').doc('knockout')
     .set(bets);
 }
 
-// Load knockout bets
 async function loadKnockoutBets(uid) {
   const snap = await db.collection('users').doc(uid)
     .collection('bets').doc('knockout').get();
   return snap.exists ? snap.data() : {};
 }
 
-// Save / update user profile
 async function saveProfile(uid, data) {
   await db.collection('users').doc(uid)
     .collection('profile').doc('info')
     .set(data, { merge: true });
 }
 
-// Load user profile
 async function loadProfile(uid) {
   const snap = await db.collection('users').doc(uid)
     .collection('profile').doc('info').get();
   return snap.exists ? snap.data() : {};
 }
 
-// Load real results (set by admin in Firestore)
 async function loadResults() {
   const gs = await db.collection('results').doc('groupStage').get();
   const ko = await db.collection('results').doc('knockout').get();
@@ -52,7 +45,6 @@ async function loadResults() {
   };
 }
 
-// Load all users' profiles + bets for ranking (up to 200 users)
 async function loadAllUsersForRanking() {
   const usersSnap = await db.collection('users').get();
   const list = [];
@@ -63,21 +55,66 @@ async function loadAllUsersForRanking() {
     const koSnap = await userDoc.ref.collection('bets').doc('knockout').get();
     list.push({
       uid,
-      profile:    profileSnap.exists ? profileSnap.data() : {},
-      groupBets:  gsSnap.exists ? gsSnap.data() : {},
+      profile:      profileSnap.exists ? profileSnap.data() : {},
+      groupBets:    gsSnap.exists ? gsSnap.data() : {},
       knockoutBets: koSnap.exists ? koSnap.data() : {},
     });
   }
   return list;
 }
 
-// Update ranking aggregation document (called after scoring)
 async function updateRankingDoc(rankingArray) {
   await db.collection('ranking').doc('current').set({ entries: rankingArray });
 }
 
-// Load aggregated ranking (fast, no per-user reads)
 async function loadRanking() {
   const snap = await db.collection('ranking').doc('current').get();
   return snap.exists ? snap.data().entries : [];
+}
+
+// ---- Bet lock helpers ---------------------------------------
+
+// Trava as apostas do usuário após salvar
+async function lockBets(uid) {
+  await db.collection('users').doc(uid)
+    .collection('profile').doc('info')
+    .set({ betsLocked: true, betsSavedAt: new Date().toISOString() }, { merge: true });
+}
+
+// Admin: desbloqueio de apostas de qualquer usuário
+async function unlockUserBets(targetUid) {
+  await db.collection('users').doc(targetUid)
+    .collection('profile').doc('info')
+    .set({ betsLocked: false, betsUnlockedAt: new Date().toISOString() }, { merge: true });
+}
+
+// Carrega apostas de qualquer usuário (bolão transparente — bets são public-read)
+async function loadUserBetsForHistory(targetUid) {
+  const gs = await db.collection('users').doc(targetUid)
+    .collection('bets').doc('groupStage').get();
+  const ko = await db.collection('users').doc(targetUid)
+    .collection('bets').doc('knockout').get();
+  return {
+    groupBets:    gs.exists ? gs.data() : {},
+    knockoutBets: ko.exists ? ko.data() : {},
+  };
+}
+
+// Admin: lista todos os usuários com status de bloqueio
+async function loadAdminUserList() {
+  const usersSnap = await db.collection('users').get();
+  const list = [];
+  for (const doc of usersSnap.docs) {
+    const uid = doc.id;
+    const profileSnap = await db.collection('users').doc(uid)
+      .collection('profile').doc('info').get();
+    const profile = profileSnap.exists ? profileSnap.data() : {};
+    list.push({ uid, ...profile });
+  }
+  list.sort((a, b) => {
+    if (a.betsLocked && !b.betsLocked) return -1;
+    if (!a.betsLocked && b.betsLocked) return 1;
+    return (a.name || '').localeCompare(b.name || '');
+  });
+  return list;
 }

@@ -7,11 +7,16 @@
     "ignore": [
       "firebase.json",
       ".firebaserc",
+      ".gitignore",
+      "CLAUDE.md",
+      "README.md",
       "node_modules/**",
       ".git/**",
-      "README.md",
       "package*.json",
-      "*.json"
+      "seed*.js",
+      "seed*.html",
+      "service-account.json",
+      "*.serviceAccount.json"
     ],
     "rewrites": [
       {

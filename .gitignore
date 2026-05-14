@@ -1,4 +1,23 @@
+# Dependências
 node_modules/
+
+# Firebase
 firebase-debug.log
 .firebase/
 *.local
+
+# Credenciais — NUNCA commitar
+service-account.json
+*.serviceAccount.json
+
+# Ambiente
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/settings.json
+*.swp

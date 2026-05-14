@@ -1,0 +1,20 @@
+{
+  "name": "bolao2026-claude",
+  "version": "1.0.0",
+  "description": "Bolao de palpites da Copa do Mundo FIFA 2026",
+  "main": "seed.js",
+  "scripts": {
+    "seed": "node seed.js",
+    "clear": "node seed.js --clear",
+    "server": "node seed-server.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LucasRiboldi/bolao2026-claude.git"
+  },
+  "author": "Lucas Riboldi",
+  "license": "MIT"
+}

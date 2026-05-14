@@ -1,158 +1,271 @@
-// ---- Group Stage module -------------------------------------
+// ---- Group Stage module — lista compacta + steppers horizontais ----
 
-let _groupBets     = {};   // { gameId: { homeGoals, awayGoals } }
-let _activeGroupId = 'A';
+let _groupBets = {};
+let _gsLocked  = false;
+
+// Paleta de cores por grupo (A-L) — border-left da seção
+const GROUP_COLORS = {
+  A: '#e74c3c', B: '#e67e22', C: '#f39c12', D: '#2ecc71',
+  E: '#1abc9c', F: '#3498db', G: '#9b59b6', H: '#e91e63',
+  I: '#00bcd4', J: '#8bc34a', K: '#ff5722', L: '#607d8b',
+};
 
 function initGroupStage() {
-  _buildGroupTabs();
-  _renderGroup('A');
-  document.getElementById('btn-save-groups').addEventListener('click', _saveGroups);
+  _renderAllGroups();
+  document.getElementById('btn-save-groups').addEventListener('click', _saveAll);
+  document.getElementById('btn-export-bets').addEventListener('click', _exportBets);
 }
 
-function _buildGroupTabs() {
-  const nav = document.getElementById('group-tabs');
-  nav.innerHTML = '';
-  for (const gId of Object.keys(GROUPS)) {
-    const btn = document.createElement('button');
-    btn.className = 'group-tab-btn' + (gId === 'A' ? ' active' : '');
-    btn.textContent = `Grupo ${gId}`;
-    btn.dataset.group = gId;
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.group-tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      _activeGroupId = gId;
-      _renderGroup(gId);
-    });
-    nav.appendChild(btn);
-  }
-}
-
-function _renderGroup(gId) {
+// ---- Renderiza TODOS os grupos como lista contínua ----------------
+function _renderAllGroups() {
   const panel = document.getElementById('group-panel');
-  const teams = GROUPS[gId];
-  const games = generateGroupGames(gId);
+  let html = '';
 
-  let html = `<div class="group-card">`;
-  html += `<div class="group-card-title">
-    Grupo ${gId}
-    <div class="group-teams-badge">
-      ${teams.map(t => `<span class="team-badge">${TEAMS[t].flag} ${TEAMS[t].short}</span>`).join('')}
-    </div>
-  </div>`;
+  for (const gId of Object.keys(GROUPS)) {
+    const teams = GROUPS[gId];
+    const games = generateGroupGames(gId);
+    const color = GROUP_COLORS[gId] || '#888';
 
-  // Games
-  for (const g of games) {
-    const bet = _groupBets[g.id] || {};
-    const hv = bet.homeGoals !== undefined ? bet.homeGoals : '';
-    const av = bet.awayGoals !== undefined ? bet.awayGoals : '';
-    const hFilled = hv !== '' ? ' filled' : '';
-    const aFilled = av !== '' ? ' filled' : '';
-    html += `
-    <div class="game-row" data-game="${g.id}">
-      <div class="team-cell">
-        <span class="team-flag">${TEAMS[g.home].flag}</span>
-        <span class="team-name-full">${TEAMS[g.home].name}</span>
-        <span class="team-name-short">${TEAMS[g.home].short}</span>
-      </div>
-      <input type="number" class="score-input${hFilled}" inputmode="numeric"
-             min="0" max="99" placeholder="–"
-             value="${hv}" data-game="${g.id}" data-side="home">
-      <span class="score-sep">×</span>
-      <input type="number" class="score-input${aFilled}" inputmode="numeric"
-             min="0" max="99" placeholder="–"
-             value="${av}" data-game="${g.id}" data-side="away">
-      <div class="team-cell away">
-        <span class="team-name-full">${TEAMS[g.away].name}</span>
-        <span class="team-name-short">${TEAMS[g.away].short}</span>
-        <span class="team-flag">${TEAMS[g.away].flag}</span>
-      </div>
-    </div>`;
+    html += `<div class="group-section" id="gs-${gId}" data-group="${gId}" style="border-left:3px solid ${color}">
+      <div class="group-section-header" style="border-left:none">
+        <span class="group-label" style="color:${color}">Grupo ${gId}</span>
+        <div class="group-teams-row">
+          ${teams.map(t => `<span class="team-badge"><span class="fi fi-${TEAMS[t].iso}"></span> ${TEAMS[t].short}</span>`).join('')}
+        </div>
+      </div>`;
+
+    for (const g of games) {
+      const bet = _groupBets[g.id] || {};
+      const hv  = (bet.homeGoals !== undefined && bet.homeGoals !== '') ? parseInt(bet.homeGoals, 10) : null;
+      const av  = (bet.awayGoals !== undefined && bet.awayGoals !== '') ? parseInt(bet.awayGoals, 10) : null;
+
+      html += `<div class="game-row" data-game="${g.id}">
+        <div class="team-cell">
+          <span class="fi fi-${TEAMS[g.home].iso} team-flag-icon"></span>
+          <span class="team-name">${TEAMS[g.home].short}</span>
+        </div>
+        ${_stepperHtml(g.id, 'home', hv)}
+        <span class="score-sep">×</span>
+        ${_stepperHtml(g.id, 'away', av)}
+        <div class="team-cell away">
+          <span class="team-name">${TEAMS[g.away].short}</span>
+          <span class="fi fi-${TEAMS[g.away].iso} team-flag-icon"></span>
+        </div>
+      </div>`;
+    }
+
+    html += `</div>`;
   }
 
-  // Live standings
-  html += _renderStandings(gId);
-  html += `</div>`;
   panel.innerHTML = html;
-
-  // Bind inputs
-  panel.querySelectorAll('.score-input').forEach(inp => {
-    inp.addEventListener('input', () => {
-      validateGoalInput(inp);
-      _updateBet(inp.dataset.game, inp.dataset.side, inp.value);
-      _refreshStandings(gId);
-    });
-    inp.addEventListener('blur', () => validateGoalInput(inp));
-  });
+  _bindSteppers();
+  if (_gsLocked) _applyLockUI(true);
 }
 
-function _updateBet(gameId, side, value) {
-  if (!_groupBets[gameId]) _groupBets[gameId] = {};
-  _groupBets[gameId][side === 'home' ? 'homeGoals' : 'awayGoals'] = value;
-}
-
-function _refreshStandings(gId) {
-  const existing = document.querySelector('.group-card .standings-wrap');
-  if (!existing) return;
-  existing.outerHTML = _renderStandings(gId);
-  // No need to rebind – standings are read-only
-}
-
-function _renderStandings(gId) {
-  const standings = calcGroupStandings(_groupBets);
-  const table = standings[gId] || GROUPS[gId].map(t => ({ id: t, pts: 0, gf: 0, ga: 0, gd: 0, played: 0 }));
-
-  let html = `<div class="standings-wrap" style="padding:12px 14px 14px;background:var(--surface2)">
-    <table class="standings-table">
-      <thead><tr>
-        <th style="min-width:110px">Seleção</th>
-        <th title="Jogos">J</th>
-        <th title="Pontos">Pts</th>
-        <th title="Gols marcados">GM</th>
-        <th title="Gols sofridos">GS</th>
-        <th title="Saldo">SG</th>
-      </tr></thead>
-      <tbody>`;
-
-  table.forEach((row, i) => {
-    const cls = i === 0 ? 'qualified-1' : i === 1 ? 'qualified-2' : i === 2 ? 'qualified-3' : '';
-    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
-    html += `<tr class="${cls}">
-      <td><div class="team-cell">${TEAMS[row.id].flag} ${medal} ${TEAMS[row.id].short}</div></td>
-      <td>${row.played}</td>
-      <td><strong>${row.pts}</strong></td>
-      <td>${row.gf}</td>
-      <td>${row.ga}</td>
-      <td>${row.gd > 0 ? '+' : ''}${row.gd}</td>
-    </tr>`;
-  });
-
-  html += `</tbody></table>
-    <p style="font-size:.72rem;color:var(--text-muted);margin-top:6px">
-      🥇🥈 classificados diretos · 🥉 possível melhor terceiro
-    </p>
+// ---- Stepper horizontal: [−] [val] [+] -------------------------
+function _stepperHtml(gameId, side, val) {
+  const display = val !== null ? val : '–';
+  const fillCls = val !== null ? ' filled' : '';
+  return `<div class="score-stepper">
+    <button class="step-btn step-down" data-game="${gameId}" data-side="${side}" aria-label="Diminuir">−</button><span class="score-val${fillCls}" data-game="${gameId}" data-side="${side}">${display}</span><button class="step-btn step-up" data-game="${gameId}" data-side="${side}" aria-label="Aumentar">+</button>
   </div>`;
-  return html;
+}
+
+// ---- Liga eventos dos steppers ----------------------------------
+function _bindSteppers() {
+  document.getElementById('group-panel').querySelectorAll('.step-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (_gsLocked) return;
+      const { game, side } = btn.dataset;
+      const isUp  = btn.classList.contains('step-up');
+      const field = side === 'home' ? 'homeGoals' : 'awayGoals';
+
+      if (!_groupBets[game]) _groupBets[game] = {};
+      const cur = _groupBets[game][field];
+      let val   = (cur !== undefined && cur !== '') ? parseInt(cur, 10) : null;
+
+      if (isUp) {
+        val = (val === null) ? 0 : Math.min(val + 1, 20);
+      } else {
+        if (val === null) return;
+        val = (val <= 0) ? null : val - 1;
+      }
+
+      _groupBets[game][field] = (val !== null) ? String(val) : '';
+
+      const span = document.querySelector(`.score-val[data-game="${game}"][data-side="${side}"]`);
+      if (span) {
+        span.textContent = (val !== null) ? val : '–';
+        span.classList.toggle('filled', val !== null);
+      }
+
+      // Verifica se todos os grupos estão completos → auto-simula
+      _checkAutoSimulate();
+    });
+  });
+}
+
+// ---- Auto-simular quando todos os 72 jogos estiverem preenchidos ----
+function _checkAutoSimulate() {
+  if (_gsLocked) return;
+  const totalGames = Object.keys(GROUPS).length * 6; // 72
+  let filled = 0;
+  for (const gId of Object.keys(GROUPS)) {
+    for (const g of generateGroupGames(gId)) {
+      const bet = _groupBets[g.id];
+      if (bet && bet.homeGoals !== '' && bet.awayGoals !== '') filled++;
+    }
+  }
+  if (filled === totalGames) {
+    // Todos preenchidos: simula o bracket
+    if (typeof _simulate === 'function') _simulate();
+    const status = document.getElementById('ko-status');
+    if (status) status.textContent = '✅ Grupos completos! Bracket gerado automaticamente.';
+  }
+}
+
+// ---- Aplica / remove visual de bloqueio -------------------------
+function _applyLockUI(locked) {
+  const panel   = document.getElementById('group-panel');
+  const saveBtn = document.getElementById('btn-save-groups');
+  const banner  = document.getElementById('bets-lock-banner');
+  const simBtn  = document.getElementById('btn-simulate');
+
+  panel.querySelectorAll('.step-btn').forEach(b => b.disabled = locked);
+  panel.querySelectorAll('.step-btn').forEach(b => b.style.opacity = locked ? '.35' : '');
+  if (saveBtn)  saveBtn.classList.toggle('hidden', locked);
+  if (banner)   banner.classList.toggle('hidden', !locked);
+  if (simBtn)   simBtn.disabled = locked;
+}
+
+// ---- Exposto: admin chama para (des)bloquear na UI --------------
+function setGroupStageLocked(locked) {
+  _gsLocked = locked;
+  _applyLockUI(locked);
+  if (typeof setKnockoutLocked === 'function') setKnockoutLocked(locked);
 }
 
 async function loadGroupBetsUI(uid) {
   _groupBets = await loadGroupBets(uid);
-  _renderGroup(_activeGroupId);
+
+  // Pré-preenche jogos sem aposta com 0×0
+  for (const gId of Object.keys(GROUPS)) {
+    for (const g of generateGroupGames(gId)) {
+      if (!_groupBets[g.id] || (_groupBets[g.id].homeGoals === undefined)) {
+        _groupBets[g.id] = { homeGoals: '0', awayGoals: '0' };
+      }
+    }
+  }
+
+  const profile = await loadProfile(uid);
+  _gsLocked = profile.betsLocked === true;
+  _renderAllGroups();
 }
 
-async function _saveGroups() {
+async function _saveAll() {
   const btn = document.getElementById('btn-save-groups');
   btn.disabled = true;
   showLoading();
   try {
     const uid = auth.currentUser.uid;
     await saveGroupBets(uid, _groupBets);
-    showToast('Palpites de grupos salvos! ✅', 'success');
+    if (typeof getCurrentKnockoutBets === 'function') {
+      const koBets = getCurrentKnockoutBets();
+      if (Object.keys(koBets).length > 0) {
+        await saveKnockoutBets(uid, koBets);
+      }
+    }
+    // Trava após salvar
+    await lockBets(uid);
+    _gsLocked = true;
+    _applyLockUI(true);
+    if (typeof setKnockoutLocked === 'function') setKnockoutLocked(true);
+
+    showToast('Palpites salvos e bloqueados! 🔒', 'success');
   } catch (e) {
     showToast('Erro ao salvar. Tente novamente.', 'error');
+    btn.disabled = false;
   } finally {
     hideLoading();
-    btn.disabled = false;
   }
 }
 
+// ---- Exporta apostas como página HTML imprimível ----------------
+function _exportBets() {
+  const koBets = typeof getCurrentKnockoutBets === 'function' ? getCurrentKnockoutBets() : {};
+  const userName = document.getElementById('hdr-username')?.textContent || 'Participante';
+
+  let rows = '';
+  for (const gId of Object.keys(GROUPS)) {
+    const color = GROUP_COLORS[gId] || '#888';
+    rows += `<tr><td colspan="5" style="background:${color}22;border-left:4px solid ${color};padding:6px 10px;font-weight:700;color:${color}">Grupo ${gId}</td></tr>`;
+    for (const g of generateGroupGames(gId)) {
+      const bet  = _groupBets[g.id] || {};
+      const hGoal = bet.homeGoals !== undefined ? bet.homeGoals : '–';
+      const aGoal = bet.awayGoals !== undefined ? bet.awayGoals : '–';
+      rows += `<tr>
+        <td style="padding:5px 10px;text-align:right">${TEAMS[g.home]?.short || g.home}</td>
+        <td style="padding:5px 10px;text-align:center;font-weight:700">${hGoal}</td>
+        <td style="padding:5px 10px;text-align:center;color:#888">×</td>
+        <td style="padding:5px 10px;text-align:center;font-weight:700">${aGoal}</td>
+        <td style="padding:5px 10px">${TEAMS[g.away]?.short || g.away}</td>
+      </tr>`;
+    }
+  }
+
+  const roundLabel = id =>
+    id.startsWith('r32') ? 'Rodada de 32' : id.startsWith('r16') ? 'Oitavas de Final' :
+    id.startsWith('qf')  ? 'Quartas de Final' : id.startsWith('sf') ? 'Semifinal' : 'FINAL 🏆';
+
+  let koRows = '';
+  if (Object.keys(koBets).length === 0) {
+    koRows = `<tr><td colspan="2" style="padding:10px;color:#888;font-style:italic">Nenhum palpite de mata-mata.</td></tr>`;
+  } else {
+    for (const [matchId, teamId] of Object.entries(koBets)) {
+      const t = TEAMS[teamId];
+      koRows += `<tr>
+        <td style="padding:5px 10px;color:#888">${roundLabel(matchId)}</td>
+        <td style="padding:5px 10px;font-weight:600">${t?.name || teamId}</td>
+      </tr>`;
+    }
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Apostas — ${userName} — Copa 2026</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 700px; margin: 30px auto; color: #222; }
+    h1 { font-size: 1.4rem; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+    h2 { font-size: 1.1rem; margin-top: 28px; }
+    table { width: 100%; border-collapse: collapse; }
+    tr:nth-child(even) { background: #f8f8f8; }
+    @media print { body { margin: 10px; } button { display: none; } }
+  </style>
+</head>
+<body>
+  <h1>🏆 Bolão Copa 2026 — Apostas de ${userName}</h1>
+  <p style="color:#888;font-size:.85rem">Gerado em ${new Date().toLocaleString('pt-BR')}</p>
+  <button onclick="window.print()" style="padding:8px 16px;background:#238636;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-bottom:16px">🖨️ Imprimir</button>
+
+  <h2>⚽ Fase de Grupos</h2>
+  <table>${rows}</table>
+
+  <h2>⚡ Mata-Mata</h2>
+  <table>${koRows}</table>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `apostas-copa2026-${userName.replace(/\s+/g,'-')}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function getCurrentGroupBets() { return _groupBets; }
+function isGroupStageLocked()  { return _gsLocked; }

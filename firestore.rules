@@ -3,40 +3,48 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ---- Admin: identifica pelo email do token JWT ----
+    function isAdmin() {
+      return request.auth != null
+          && request.auth.token.email == 'lucasriboldi.dev@gmail.com';
+    }
+
     // --------------------------------------------------------
-    // USERS — each user owns their own subtree
+    // USERS
     // --------------------------------------------------------
     match /users/{uid} {
-      // Profile: owner can read/write; others cannot
+      // Admin pode listar todos os usuários (para o painel admin)
+      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+
       match /profile/{doc} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read:  if request.auth != null && (request.auth.uid == uid || isAdmin());
+        allow write: if request.auth != null && (request.auth.uid == uid || isAdmin());
       }
 
-      // Bets: owner can read/write; others cannot
       match /bets/{doc} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+        // Bolão transparente: qualquer participante pode ver as apostas dos outros
+        allow read:  if request.auth != null;
+        allow write: if request.auth != null && (request.auth.uid == uid || isAdmin());
       }
     }
 
     // --------------------------------------------------------
-    // RESULTS — public read (admin writes via Firebase Console
-    //           or a trusted server/Cloud Function)
+    // RESULTS — admin escreve, todos leem
     // --------------------------------------------------------
     match /results/{doc} {
       allow read:  if request.auth != null;
-      allow write: if false; // only via Firebase Console or Admin SDK
+      allow write: if isAdmin();
     }
 
     // --------------------------------------------------------
-    // RANKING — aggregated leaderboard, public read
-    //           written by admin or Cloud Function
+    // RANKING — admin escreve, todos leem
     // --------------------------------------------------------
     match /ranking/{doc} {
       allow read:  if request.auth != null;
-      allow write: if false;
+      allow write: if isAdmin();
     }
 
-    // Deny everything else
+    // Bloqueia tudo o mais
     match /{document=**} {
       allow read, write: if false;
     }

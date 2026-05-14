@@ -1,11 +1,9 @@
 // ---- Scoring & Ranking module -------------------------------
 
-// Calculate score for one user given their bets and the real results
 function calculateScore(groupBets, knockoutBets, results) {
   let pts = 0;
   const breakdown = { exact: 0, result: 0, ko: 0, bonus: 0 };
 
-  // Group stage
   const gsResults = results.groupStage || {};
   for (const [gameId, result] of Object.entries(gsResults)) {
     const bet = groupBets[gameId];
@@ -17,24 +15,19 @@ function calculateScore(groupBets, knockoutBets, results) {
     if (isNaN(bH) || isNaN(bA) || isNaN(rH) || isNaN(rA)) continue;
 
     if (bH === rH && bA === rA) {
-      pts += SCORING.exactScore;
-      breakdown.exact++;
+      pts += SCORING.exactScore; breakdown.exact++;
     } else if (Math.sign(bH - bA) === Math.sign(rH - rA)) {
-      pts += SCORING.correctResult;
-      breakdown.result++;
+      pts += SCORING.correctResult; breakdown.result++;
     }
   }
 
-  // Knockout
   const koResults = results.knockout || {};
   for (const [matchId, winnerId] of Object.entries(koResults)) {
     if (knockoutBets[matchId] === winnerId) {
-      pts += SCORING.knockoutWinner;
-      breakdown.ko++;
+      pts += SCORING.knockoutWinner; breakdown.ko++;
     }
   }
 
-  // Champion bonus
   const champion = koResults['final'];
   if (champion && knockoutBets['final'] === champion) {
     pts += SCORING.championBonus;
@@ -50,14 +43,10 @@ async function initRanking(currentUid) {
   container.innerHTML = '<p class="muted" style="padding:20px">Carregando ranking…</p>';
 
   try {
-    // Try fast path: aggregated ranking doc
     let entries = await loadRanking();
-
     if (entries.length === 0) {
-      // Fallback: compute on client (expensive, only for small groups)
       entries = await _computeRankingClient();
     }
-
     _renderRanking(entries, currentUid, container);
   } catch (e) {
     container.innerHTML = `<p class="muted" style="padding:20px">Erro ao carregar ranking.</p>`;
@@ -69,12 +58,7 @@ async function _computeRankingClient() {
   const users   = await loadAllUsersForRanking();
   const entries = users.map(u => {
     const { pts, breakdown } = calculateScore(u.groupBets, u.knockoutBets, results);
-    return {
-      uid:  u.uid,
-      name: u.profile.name || 'Sem nome',
-      pts,
-      breakdown,
-    };
+    return { uid: u.uid, name: u.profile.name || 'Sem nome', pts, breakdown };
   });
   entries.sort((a, b) => b.pts - a.pts);
   return entries;
@@ -91,29 +75,38 @@ function _renderRanking(entries, currentUid, container) {
     const pos   = i + 1;
     const medal = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}º`;
     const isMe  = e.uid === currentUid;
+    const safeName = (e.name || '').replace(/'/g, "\\'");
+
     html += `<div class="ranking-row ${isMe ? 'me' : ''}">
       <div class="pos">${medal}</div>
-      <div>
+      <div class="ranking-info">
         <div class="name">${e.name}${isMe ? ' <em style="color:var(--accent);font-size:.8rem">(você)</em>' : ''}</div>
         ${e.breakdown ? `<div class="ranking-breakdown">
-          <span class="breakdown-item">⚽ Exatos: ${e.breakdown.exact}</span>
-          <span class="breakdown-item">✓ Resultados: ${e.breakdown.result}</span>
-          <span class="breakdown-item">⚡ Mata-mata: ${e.breakdown.ko}</span>
-          ${e.breakdown.bonus ? `<span class="breakdown-item">🏆 Bônus: +${e.breakdown.bonus}</span>` : ''}
+          <span class="breakdown-item">⚽ ${e.breakdown.exact}</span>
+          <span class="breakdown-item">✓ ${e.breakdown.result}</span>
+          <span class="breakdown-item">⚡ ${e.breakdown.ko}</span>
+          ${e.breakdown.bonus ? `<span class="breakdown-item" style="color:var(--gold)">🏆 +${e.breakdown.bonus}</span>` : ''}
         </div>` : ''}
       </div>
-      <div class="pts">${e.pts} pts</div>
+      <div class="ranking-right">
+        <span class="pts">${e.pts} pts</span>
+        <button class="btn-bh" title="Ver apostas" onclick="openBetHistory('${e.uid}','${safeName}')">📋</button>
+      </div>
     </div>`;
   });
   html += `</div>`;
   container.innerHTML = html;
 }
 
-// ---- Public ranking on auth screen --------------------------
+// ---- Public ranking on auth screen — sempre calcula ao vivo ----
 async function loadPublicRanking() {
   const el = document.getElementById('public-ranking-list');
   try {
-    const entries = await loadRanking();
+    // Tenta primeiro o ranking pré-computado (admin); se vazio, calcula ao vivo
+    let entries = await loadRanking();
+    if (entries.length === 0) {
+      entries = await _computeRankingClient();
+    }
     if (entries.length === 0) {
       el.innerHTML = '<p class="muted">Nenhum palpite registrado ainda.</p>';
       return;
