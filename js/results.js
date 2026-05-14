@@ -93,7 +93,11 @@ function _renderResultsPanel(container) {
     <div class="res-stats-bar">
       <span class="res-stat">⚽ Grupos: <strong>${gsCount}/${gsTotal}</strong></span>
       <span class="res-stat">⚡ Mata-Mata: <strong>${koCount}/${koTotal}</strong></span>
-      <button class="btn btn-ghost btn-sm" onclick="_resRefresh()" title="Recarregar resultados">🔄 Recarregar</button>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="_resRefresh()" title="Recarregar resultados">🔄 Recarregar</button>
+        <button class="btn btn-sm" style="background:var(--red);color:#fff;border:none"
+                onclick="_clearAllResults()" title="Apagar TODOS os resultados do banco">🗑️ Apagar Tudo</button>
+      </div>
     </div>
 
     <div class="res-tabs" role="tablist">
@@ -455,6 +459,37 @@ async function _clearKoResult(matchId) {
   const update = { [matchId]: firebase.firestore.FieldValue.delete() };
   await db.collection('results').doc('knockout').update(update);
   delete _resKo[matchId];
+}
+
+/**
+ * Apaga todos os resultados do Firestore (grupos + mata-mata).
+ */
+async function _clearAllResults() {
+  const gsCount = Object.keys(_resGs).length;
+  const koCount = Object.keys(_resKo).length;
+  const total   = gsCount + koCount;
+
+  if (total === 0) {
+    showToast('Não há resultados salvos para apagar.', 'error');
+    return;
+  }
+  if (!confirm(`⚠️ Apagar TODOS os ${total} resultado(s) oficiais do banco?\n\nEsta ação não pode ser desfeita.`)) return;
+
+  try {
+    const batch = db.batch();
+    if (gsCount > 0) batch.delete(db.collection('results').doc('groupStage'));
+    if (koCount > 0) batch.delete(db.collection('results').doc('knockout'));
+    await batch.commit();
+
+    _resGs = {};
+    _resKo = {};
+    invalidateResultsCache();
+    showToast('Todos os resultados foram apagados.', 'success');
+    _renderResultsPanel(document.getElementById('results-panel'));
+  } catch (err) {
+    console.error('[results] Erro ao apagar tudo:', err);
+    showToast('Erro ao apagar: ' + err.message, 'error');
+  }
 }
 
 // ============================================================
