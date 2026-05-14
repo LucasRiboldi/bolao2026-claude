@@ -4,6 +4,7 @@
   initAuth();
   initGroupStage();
   initKnockout();
+  _loadTodayMatches();
 
   loadPublicRanking();
 
@@ -48,7 +49,6 @@ async function _onLogin(user) {
 
     _refreshUserScore(user.uid);
     _loadWhatsAppButton();
-    _loadTodayMatches();
     initAdminUI();
 
     showScreen('dashboard-screen');

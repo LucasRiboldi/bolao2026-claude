@@ -29,38 +29,55 @@
   <!-- ======= AUTH SCREEN ======= -->
   <section id="auth-screen" class="screen">
     <div class="auth-container">
-      <div class="auth-header">
-        <div class="auth-logo">🏆</div>
-        <h1>Bolão Copa 2026</h1>
-        <p>Aposte nos jogos e dispute com seus amigos!</p>
+
+      <div class="auth-left">
+        <div class="auth-header">
+          <div class="auth-logo">🏆</div>
+          <h1>Bolão Copa 2026</h1>
+          <p>Aposte nos jogos e dispute com seus amigos!</p>
+        </div>
+
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">Entrar</button>
+          <button class="auth-tab" data-tab="register">Cadastrar</button>
+        </div>
+
+        <form id="auth-form" novalidate>
+          <div id="field-name" class="form-group hidden">
+            <label for="inp-name">Nome completo</label>
+            <input type="text" id="inp-name" placeholder="Seu nome" autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label for="inp-email">E-mail</label>
+            <input type="email" id="inp-email" placeholder="seu@email.com" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="inp-password">Senha</label>
+            <input type="password" id="inp-password" placeholder="Mínimo 6 caracteres" required autocomplete="current-password">
+          </div>
+          <p id="auth-error" class="error-msg hidden"></p>
+          <button type="submit" id="auth-submit" class="btn btn-primary btn-full">Entrar</button>
+        </form>
       </div>
 
-      <div class="auth-tabs">
-        <button class="auth-tab active" data-tab="login">Entrar</button>
-        <button class="auth-tab" data-tab="register">Cadastrar</button>
+      <div class="auth-right">
+        <!-- Card: Jogos de Hoje -->
+        <div id="today-matches-card" class="today-matches-card">
+          <div class="tdm-header">
+            📅 Jogos de Hoje
+            <a class="tdm-watch-btn" href="https://cazetv.com/ao-vivo/" target="_blank" rel="noopener">▶ Ao vivo</a>
+          </div>
+          <div class="tdm-body">
+            <p class="tdm-empty">Carregando jogos…</p>
+          </div>
+        </div>
+
+        <div class="public-ranking-box">
+          <h2>🏅 Ranking</h2>
+          <div id="public-ranking-list"><p class="muted">Carregando…</p></div>
+        </div>
       </div>
 
-      <form id="auth-form" novalidate>
-        <div id="field-name" class="form-group hidden">
-          <label for="inp-name">Nome completo</label>
-          <input type="text" id="inp-name" placeholder="Seu nome" autocomplete="name">
-        </div>
-        <div class="form-group">
-          <label for="inp-email">E-mail</label>
-          <input type="email" id="inp-email" placeholder="seu@email.com" required autocomplete="email">
-        </div>
-        <div class="form-group">
-          <label for="inp-password">Senha</label>
-          <input type="password" id="inp-password" placeholder="Mínimo 6 caracteres" required autocomplete="current-password">
-        </div>
-        <p id="auth-error" class="error-msg hidden"></p>
-        <button type="submit" id="auth-submit" class="btn btn-primary btn-full">Entrar</button>
-      </form>
-
-      <div class="public-ranking-box">
-        <h2>🏅 Ranking</h2>
-        <div id="public-ranking-list"><p class="muted">Carregando…</p></div>
-      </div>
     </div>
   </section>
 
@@ -103,17 +120,6 @@
       <div id="bets-lock-banner" class="bets-lock-banner hidden">
         <span>🔒</span>
         <span>Apostas bloqueadas pelo administrador. Aguarde a liberação para editar.</span>
-      </div>
-
-      <!-- Card: Jogos de Hoje -->
-      <div id="today-matches-card" class="today-matches-card">
-        <div class="tdm-header">
-          📅 Jogos de Hoje
-          <a class="tdm-watch-btn" href="https://cazetv.com/ao-vivo/" target="_blank" rel="noopener">▶ Assistir ao vivo</a>
-        </div>
-        <div class="tdm-body">
-          <p class="tdm-empty">Carregando jogos…</p>
-        </div>
       </div>
 
       <div id="group-panel" class="group-panel"></div>

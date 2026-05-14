@@ -5,7 +5,7 @@ let _r32Matches = [];
 let _koLocked   = false;
 
 function initKnockout() {
-  // Botão simular removido — auto-simula ao completar grupos
+  // Auto-simula ao completar grupos
 }
 
 function _simulate() {
@@ -20,25 +20,36 @@ function _simulate() {
 
 function _renderBracket() {
   const container = document.getElementById('knockout-bracket');
-  const shortName = {
-    'Oitavas':    'Oitavas de Final',
-    'Quartas':    'Quartas de Final',
-    'Semifinais': 'Semifinal',
-    'Final':      '🏆 Final',
+
+  const ROUND_META = {
+    'Oitavas':    { label: 'Oitavas de Final',  icon: '⚡' },
+    'Quartas':    { label: 'Quartas de Final',   icon: '⚡' },
+    'Semifinais': { label: 'Semifinal',          icon: '⚡' },
+    'Final':      { label: '🏆 Final',           icon: ''   },
   };
+
   const rounds = [
-    { name: '32avos de Final', matches: _r32Matches },
-    ...KNOCKOUT_ROUNDS.map(r => ({
-      name: shortName[r.name] || r.name,
-      matches: resolveKnockoutRound(r.matches, _koBets),
-    })),
+    { label: '32avos de Final', icon: '⚡', matches: _r32Matches },
+    ...KNOCKOUT_ROUNDS.map(r => {
+      const meta = ROUND_META[r.name] || { label: r.name, icon: '⚡' };
+      return {
+        label:   meta.label,
+        icon:    meta.icon,
+        matches: resolveKnockoutRound(r.matches, _koBets),
+      };
+    }),
   ];
 
-  let html = `<div class="bracket-rounds">`;
+  let html = `<div class="ko-sections">`;
   for (const round of rounds) {
-    html += `<div class="bracket-round"><div class="round-title">${round.name}</div>`;
+    html += `<div class="ko-section">
+      <div class="ko-section-hdr">
+        <span class="ko-section-title">${round.label}</span>
+        <span class="ko-section-count">${round.matches.length} jogos</span>
+      </div>
+      <div class="ko-matches-grid">`;
     for (const match of round.matches) html += _matchHtml(match);
-    html += `</div>`;
+    html += `</div></div>`;
   }
   html += `</div>`;
   container.innerHTML = html;
