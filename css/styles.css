@@ -337,10 +337,10 @@ body {
 .group-section-header {
   display: flex;
   align-items: center;
-  padding: 7px 12px;
+  padding: 9px 14px;
   background: var(--surface2);
   border-bottom: 1px solid var(--border);
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
@@ -374,25 +374,27 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
+  padding: 7px 14px;
   border-bottom: 1px solid var(--border);
-  min-height: 40px;
+  min-height: 44px;
 }
 .game-row:last-child { border-bottom: none; }
 
+/* Home: nome à esquerda, bandeira colada no stepper (justify: flex-end) */
 .team-cell {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 5px;
+  justify-content: flex-end;
+  gap: 6px;
   font-size: .82rem;
   font-weight: 600;
   overflow: hidden;
 }
+/* Away: bandeira colada no stepper (esquerda), nome à direita */
 .team-cell.away {
-  justify-content: flex-end;
-  flex-direction: row-reverse;
+  justify-content: flex-start;
 }
 
 /* Bandeira via flag-icons */
@@ -475,13 +477,22 @@ body {
 /* Faz as bordas dos botões ao lado do filled também ficarem verdes */
 .score-val.filled + .step-btn { border-color: var(--accent); }
 
+/* Coluna central: × em cima, resultado oficial em baixo */
+.score-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex-shrink: 0;
+  min-width: 44px;
+}
+
 .score-sep {
   color: var(--text-muted);
   font-weight: 700;
   font-size: .8rem;
-  flex-shrink: 0;
-  width: 12px;
-  text-align: center;
+  line-height: 1;
 }
 
 /* =============================================
@@ -547,13 +558,13 @@ body {
 }
 
 .round-title {
-  font-size: .62rem;
+  font-size: .6rem;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: .04em;
+  letter-spacing: .03em;
   text-align: center;
-  padding: 3px 2px 5px;
+  padding: 4px 4px 6px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 2px;
   white-space: nowrap;
@@ -710,7 +721,7 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Tabela estilo FIFA */
+/* Tabela estilo FIFA — espaçamento equilibrado */
 .fifa-table {
   width: 100%;
   border-collapse: collapse;
@@ -721,7 +732,7 @@ body {
   background: var(--surface2);
 }
 .fifa-table th {
-  padding: 7px 8px;
+  padding: 9px 10px;
   color: var(--text-muted);
   font-weight: 600;
   text-align: center;
@@ -729,16 +740,18 @@ body {
   font-size: .75rem;
   white-space: nowrap;
 }
-.fifa-table .col-pos { width: 32px; }
-.fifa-table .col-team { text-align: left; min-width: 140px; }
-.fifa-table .col-pts { font-size: .85rem; }
+.fifa-table .col-pos { width: 36px; padding-left: 14px; }
+.fifa-table .col-team { text-align: left; min-width: 150px; padding-left: 14px; }
+.fifa-table .col-pts { font-size: .85rem; padding-right: 14px; }
 
 .fifa-table td {
-  padding: 9px 8px;
+  padding: 10px 10px;
   border-bottom: 1px solid var(--border);
   text-align: center;
   font-size: .82rem;
 }
+.fifa-table td.col-pos { padding-left: 14px; }
+.fifa-table td.col-team { padding-left: 14px; }
 .fifa-table td.col-pos { color: var(--text-muted); font-size: .8rem; }
 .fifa-table td.col-pts strong { color: var(--text); font-weight: 700; }
 .fifa-table tbody tr:last-child td { border-bottom: none; }
@@ -751,8 +764,9 @@ body {
 .team-cell-st {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   text-align: left;
+  padding: 1px 0;
 }
 .team-logo-sm {
   width: 20px;
@@ -862,7 +876,8 @@ body {
   .team-badge-full  { display: none; }
   .team-badge-short { display: inline; }
 
-  .game-row { padding: 6px 8px; gap: 4px; }
+  .game-row { padding: 6px 10px; gap: 4px; }
+  .score-center { min-width: 38px; }
 
   /* Steppers maiores para toque fácil */
   .step-btn  { width: 36px; height: 38px; font-size: 1rem; }
@@ -1415,7 +1430,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 12px;
+  padding: 5px 14px;
   background: var(--bg);
   border-top: 1px solid var(--border);
 }
@@ -1432,17 +1447,18 @@ body {
   opacity: .7;
 }
 
-/* Resultado oficial inline no game-row */
+/* Resultado oficial — aparece abaixo do × em .score-center */
 .official-result-badge {
-  font-size: .72rem;
+  font-size: .65rem;
   font-weight: 800;
   color: var(--accent);
   background: rgba(35,134,54,.12);
   border: 1px solid rgba(35,134,54,.3);
-  border-radius: 999px;
-  padding: 2px 7px;
+  border-radius: 4px;
+  padding: 1px 5px;
   white-space: nowrap;
-  flex-shrink: 0;
+  line-height: 1.5;
+  letter-spacing: .02em;
 }
 
 /* =============================================

@@ -20,9 +20,14 @@ function _simulate() {
 
 function _renderBracket() {
   const container = document.getElementById('knockout-bracket');
-  const shortName = { 'Oitavas': 'Oitavas', 'Quartas': 'Quartas', 'Semifinais': 'Semis', 'Final': '🏆 Final' };
+  const shortName = {
+    'Oitavas':    'Oitavas de Final',
+    'Quartas':    'Quartas de Final',
+    'Semifinais': 'Semifinal',
+    'Final':      '🏆 Final',
+  };
   const rounds = [
-    { name: 'R32', matches: _r32Matches },
+    { name: '32avos de Final', matches: _r32Matches },
     ...KNOCKOUT_ROUNDS.map(r => ({
       name: shortName[r.name] || r.name,
       matches: resolveKnockoutRound(r.matches, _koBets),

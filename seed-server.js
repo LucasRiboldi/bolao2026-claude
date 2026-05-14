@@ -278,6 +278,15 @@ async function getOrCreateUser(email, displayName) {
   }
 }
 
+// Critério de desempate oficial
+function rankSort(a, b) {
+  if (b.pts !== a.pts)                                   return b.pts - a.pts;
+  if ((b.breakdown.exact||0)  !== (a.breakdown.exact||0))  return (b.breakdown.exact||0)  - (a.breakdown.exact||0);
+  if ((b.breakdown.result||0) !== (a.breakdown.result||0)) return (b.breakdown.result||0) - (a.breakdown.result||0);
+  if ((b.breakdown.ko||0)     !== (a.breakdown.ko||0))     return (b.breakdown.ko||0)     - (a.breakdown.ko||0);
+  return (a.name||'').localeCompare(b.name||'', 'pt-BR');
+}
+
 // ================================================================
 // SSE HELPER
 // ================================================================
@@ -310,19 +319,18 @@ async function handleSeed(res) {
     send(res, 'log', { msg: `✅ 72 jogos simulados · Campeão: ${cName}`, level: 'ok' });
     send(res, 'champion', { id: champion, name: cName });
 
-    // Grava resultados reais
     send(res, 'log', { msg: '💾 Gravando resultados no Firestore…', level: 'info' });
     await db.collection('results').doc('groupStage').set(groupResults);
     await db.collection('results').doc('knockout').set(koResults);
     send(res, 'log', { msg: '✅ Resultados gravados', level: 'ok' });
     send(res, 'progress', { pct: 10 });
 
-    const ranking = [];
+    const seedRanking = [];
 
     for (let i = 1; i <= NUM_USERS; i++) {
       const email = `teste${i}@${TEST_DOMAIN}`;
       const name  = TEST_NAMES[i - 1];
-      const pct   = 10 + Math.round((i / NUM_USERS) * 80);
+      const pct   = 10 + Math.round((i / NUM_USERS) * 70);
 
       send(res, 'user_start', { index: i, name, email });
       send(res, 'log', { msg: `👤 [${i}/${NUM_USERS}] ${name}…`, level: 'info' });
@@ -335,15 +343,13 @@ async function handleSeed(res) {
           .set({ name, email, seededAt: new Date().toISOString() });
 
         const gBets = randomGroupBets();
-        await db.collection('users').doc(uid)
-          .collection('bets').doc('groupStage').set(gBets);
+        await db.collection('users').doc(uid).collection('bets').doc('groupStage').set(gBets);
 
         const kBets = randomKnockoutBets(r32);
-        await db.collection('users').doc(uid)
-          .collection('bets').doc('knockout').set(kBets);
+        await db.collection('users').doc(uid).collection('bets').doc('knockout').set(kBets);
 
         const { pts, breakdown } = calcScore(gBets, kBets, groupResults, koResults);
-        ranking.push({ uid, name, email, pts, breakdown });
+        seedRanking.push({ uid, name, email, pts, breakdown });
 
         const champHit = breakdown.bonus > 0 ? ' 🏆 ACERTOU!' : '';
         send(res, 'user_done', { index: i, uid, pts, breakdown });
@@ -355,15 +361,48 @@ async function handleSeed(res) {
       send(res, 'progress', { pct });
     }
 
-    // Grava ranking
+    // Carrega usuários reais (não-teste) e calcula pontos deles também
+    send(res, 'log', { msg: '👥 Calculando pontos de usuários reais…', level: 'info' });
+    const testEmailSet = new Set(seedRanking.map(r => r.email));
+    const allRanking   = [...seedRanking];
+
+    try {
+      const profilesSnap = await db.collectionGroup('profile').get();
+      let realCount = 0;
+      for (const doc of profilesSnap.docs) {
+        const profile = doc.data();
+        if (!profile.email || testEmailSet.has(profile.email)) continue;
+        const uid = doc.ref.parent.parent.id;
+        try {
+          const [gSnap, kSnap] = await Promise.all([
+            db.collection('users').doc(uid).collection('bets').doc('groupStage').get(),
+            db.collection('users').doc(uid).collection('bets').doc('knockout').get(),
+          ]);
+          const gBets = gSnap.exists ? gSnap.data() : {};
+          const kBets = kSnap.exists ? kSnap.data() : {};
+          const { pts, breakdown } = calcScore(gBets, kBets, groupResults, koResults);
+          allRanking.push({ uid, name: profile.name, email: profile.email, pts, breakdown });
+          realCount++;
+          send(res, 'log', { msg: `  + ${profile.name}: ${pts} pts (real)`, level: 'ok' });
+        } catch(e) {
+          send(res, 'log', { msg: `  ⚠ ${profile.name || uid}: ${e.message}`, level: 'warn' });
+        }
+      }
+      if (realCount === 0) send(res, 'log', { msg: '  ℹ Nenhum usuário real encontrado além dos de teste', level: 'info' });
+    } catch(e) {
+      send(res, 'log', { msg: `⚠ Erro ao carregar usuários reais: ${e.message}`, level: 'warn' });
+    }
+
+    allRanking.sort(rankSort);
+
     send(res, 'log', { msg: '📊 Gravando ranking…', level: 'info' });
-    ranking.sort((a, b) => b.pts - a.pts);
-    const forFirestore = ranking.map(({ uid, name, pts, breakdown }) => ({ uid, name, pts, breakdown }));
-    await db.collection('ranking').doc('current').set({ entries: forFirestore });
+    await db.collection('ranking').doc('current').set({
+      entries: allRanking.map(({ uid, name, pts, breakdown }) => ({ uid, name, pts, breakdown })),
+    });
 
     send(res, 'progress', { pct: 100 });
-    send(res, 'log', { msg: `✅ Ranking gravado com ${forFirestore.length} entradas`, level: 'ok' });
-    send(res, 'done', { ranking });
+    send(res, 'log', { msg: `✅ Ranking gravado com ${allRanking.length} entradas (${seedRanking.length} teste + ${allRanking.length - seedRanking.length} real)`, level: 'ok' });
+    send(res, 'done', { ranking: allRanking });
 
   } catch(e) {
     send(res, 'error', { msg: e.message });
@@ -408,19 +447,413 @@ async function handleClear(res) {
 }
 
 // ================================================================
+// RECALC RANKING HANDLER
+// Recalcula pontos de TODOS os usuários com os resultados atuais
+// ================================================================
+async function handleRecalcRanking(res) {
+  sseHeaders(res);
+  send(res, 'log', { msg: '🔄 Iniciando recálculo do ranking…', level: 'info' });
+  send(res, 'progress', { pct: 5 });
+
+  try {
+    const [gsSnap, koSnap] = await Promise.all([
+      db.collection('results').doc('groupStage').get(),
+      db.collection('results').doc('knockout').get(),
+    ]);
+
+    if (!gsSnap.exists || !koSnap.exists) {
+      send(res, 'error', { msg: 'Resultados não encontrados. Execute o Seed primeiro para simular resultados.' });
+      res.end(); return;
+    }
+
+    const groupResults = gsSnap.data();
+    const koResults    = koSnap.data();
+    const champion     = koResults['final'];
+    const champName    = TEAMS[champion]?.name ?? champion;
+
+    send(res, 'log', { msg: `✅ Resultados carregados · Campeão simulado: ${champName}`, level: 'ok' });
+    send(res, 'progress', { pct: 15 });
+
+    const profilesSnap = await db.collectionGroup('profile').get();
+    const profiles = profilesSnap.docs.map(d => ({ uid: d.ref.parent.parent.id, ...d.data() }));
+    send(res, 'log', { msg: `👥 ${profiles.length} usuários encontrados`, level: 'info' });
+
+    const ranking = [];
+    let processed = 0;
+
+    for (const profile of profiles) {
+      processed++;
+      const pct = 15 + Math.round((processed / profiles.length) * 75);
+      send(res, 'progress', { pct });
+      send(res, 'recalc_user', { index: processed, total: profiles.length, name: profile.name });
+
+      try {
+        const [gSnap, kSnap] = await Promise.all([
+          db.collection('users').doc(profile.uid).collection('bets').doc('groupStage').get(),
+          db.collection('users').doc(profile.uid).collection('bets').doc('knockout').get(),
+        ]);
+        const gBets = gSnap.exists ? gSnap.data() : {};
+        const kBets = kSnap.exists ? kSnap.data() : {};
+
+        const { pts, breakdown } = calcScore(gBets, kBets, groupResults, koResults);
+        const champHit = breakdown.bonus > 0 ? ' 🏆' : '';
+        ranking.push({ uid: profile.uid, name: profile.name, email: profile.email, pts, breakdown });
+        send(res, 'log', { msg: `  ${profile.name}: ${pts} pts${champHit}`, level: pts > 0 ? 'ok' : 'info' });
+      } catch(e) {
+        send(res, 'log', { msg: `  ⚠ ${profile.name || profile.uid}: ${e.message}`, level: 'warn' });
+      }
+    }
+
+    ranking.sort(rankSort);
+
+    await db.collection('ranking').doc('current').set({
+      entries: ranking.map(({ uid, name, pts, breakdown }) => ({ uid, name, pts, breakdown })),
+    });
+
+    send(res, 'progress', { pct: 100 });
+    send(res, 'log', { msg: `✅ Ranking atualizado com ${ranking.length} entradas`, level: 'ok' });
+    send(res, 'done', { ranking });
+  } catch(e) {
+    send(res, 'error', { msg: e.message });
+  }
+  res.end();
+}
+
+// ================================================================
+// REPORT HANDLER
+// Gera relatório completo: distribuição de pontos, palpites do
+// campeão, completude dos palpites, métricas por usuário
+// ================================================================
+async function handleReport(res) {
+  sseHeaders(res);
+  send(res, 'log', { msg: '📊 Carregando dados para relatório…', level: 'info' });
+  send(res, 'progress', { pct: 5 });
+
+  try {
+    const [gsSnap, koSnap, rankSnap] = await Promise.all([
+      db.collection('results').doc('groupStage').get(),
+      db.collection('results').doc('knockout').get(),
+      db.collection('ranking').doc('current').get(),
+    ]);
+
+    const groupResults = gsSnap.exists ? gsSnap.data() : null;
+    const koResults    = koSnap.exists ? koSnap.data() : null;
+    const hasResults   = !!(groupResults && koResults);
+    const champion     = hasResults ? koResults['final'] : null;
+    const champName    = champion ? (TEAMS[champion]?.name ?? champion) : null;
+    const totalGameResults = groupResults ? Object.keys(groupResults).length : 0;
+
+    send(res, 'progress', { pct: 15 });
+
+    const profilesSnap = await db.collectionGroup('profile').get();
+    send(res, 'log', { msg: `👥 ${profilesSnap.size} usuários encontrados`, level: 'info' });
+    send(res, 'progress', { pct: 20 });
+
+    const users = [];
+    await Promise.all(profilesSnap.docs.map(async (doc) => {
+      const profile = doc.data();
+      const uid     = doc.ref.parent.parent.id;
+
+      const [gSnap, kSnap] = await Promise.all([
+        db.collection('users').doc(uid).collection('bets').doc('groupStage').get(),
+        db.collection('users').doc(uid).collection('bets').doc('knockout').get(),
+      ]);
+
+      const gBets         = gSnap.exists ? gSnap.data() : null;
+      const kBets         = kSnap.exists ? kSnap.data() : null;
+      const groupBetCount = gBets ? Object.keys(gBets).length : 0;
+      const koBetCount    = kBets ? Object.keys(kBets).length : 0;
+
+      let pts = 0, breakdown = { exact: 0, result: 0, ko: 0, bonus: 0 };
+      if (hasResults && gBets && kBets) {
+        const s = calcScore(gBets, kBets, groupResults, koResults);
+        pts = s.pts; breakdown = s.breakdown;
+      }
+
+      users.push({
+        uid,
+        name:         profile.name || 'Sem nome',
+        email:        profile.email || '',
+        isTest:       (profile.email || '').includes(`@${TEST_DOMAIN}`),
+        groupBetCount,
+        koBetCount,
+        groupPct:     Math.round(groupBetCount / 72 * 100),
+        koPct:        Math.round(koBetCount / 31 * 100),
+        pts,
+        breakdown,
+        champPick:    kBets ? kBets['final'] : null,
+        betsLocked:   !!profile.betsLocked,
+      });
+    }));
+
+    users.sort(rankSort);
+    send(res, 'progress', { pct: 75 });
+
+    // Distribuição de palpites do campeão
+    const champPicksMap = {};
+    for (const u of users) {
+      if (u.champPick) champPicksMap[u.champPick] = (champPicksMap[u.champPick] || 0) + 1;
+    }
+    const champPicksSorted = Object.entries(champPicksMap)
+      .map(([id, count]) => ({ id, name: TEAMS[id]?.name ?? id, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12);
+
+    // Histograma de pontos
+    const pts_all   = users.map(u => u.pts);
+    const maxPts    = Math.max(...pts_all, 1);
+    const bucket    = Math.max(5, Math.ceil(maxPts / 8));
+    const numBuckets = Math.ceil((maxPts + 1) / bucket);
+    const histogram = Array.from({ length: numBuckets }, (_, i) => ({
+      label: `${i * bucket}–${(i + 1) * bucket - 1}`,
+      count: pts_all.filter(p => p >= i * bucket && p < (i + 1) * bucket).length,
+    }));
+
+    // Stats gerais
+    const totalPts = pts_all.reduce((s, p) => s + p, 0);
+    const stats = {
+      totalUsers:     users.length,
+      testUsers:      users.filter(u => u.isTest).length,
+      realUsers:      users.filter(u => !u.isTest).length,
+      avgPts:         users.length > 0 ? Math.round(totalPts / users.length * 10) / 10 : 0,
+      maxPts,
+      lockedUsers:    users.filter(u => u.betsLocked).length,
+      fullGroupUsers: users.filter(u => u.groupPct === 100).length,
+      hasResults,
+      champion,
+      champName,
+      totalGameResults,
+    };
+
+    send(res, 'progress', { pct: 100 });
+    send(res, 'log', { msg: '✅ Relatório gerado com sucesso', level: 'ok' });
+    send(res, 'done', { stats, users, champPicksSorted, histogram });
+  } catch(e) {
+    send(res, 'error', { msg: e.message });
+  }
+  res.end();
+}
+
+// ================================================================
+// AUDIT HANDLER
+// Roda uma bateria de verificações e retorna resultado de cada uma
+// ================================================================
+async function handleAudit(res) {
+  sseHeaders(res);
+  send(res, 'log', { msg: '🔍 Iniciando auditoria completa…', level: 'info' });
+
+  const checks = [];
+  function check(id, label, status, detail = '') {
+    checks.push({ id, label, status, detail });
+    send(res, 'audit_check', { id, label, status, detail });
+    send(res, 'log', {
+      msg: `  [${status === 'ok' ? '✅' : status === 'warn' ? '⚠️' : '❌'}] ${label}${detail ? ': ' + detail : ''}`,
+      level: status === 'ok' ? 'ok' : status === 'warn' ? 'warn' : 'err',
+    });
+  }
+
+  // ── 1. Conexão com Firebase ──────────────────────────────────
+  try {
+    await db.collection('_audit').doc('_ping').get();
+    check('firebase_conn', 'Conexão com Firebase', 'ok', `Projeto: ${serviceAccount.project_id}`);
+  } catch(e) {
+    check('firebase_conn', 'Conexão com Firebase', 'fail', e.message);
+  }
+
+  // ── 2. Documento results/groupStage ─────────────────────────
+  let groupResults = null;
+  try {
+    const snap = await db.collection('results').doc('groupStage').get();
+    if (!snap.exists) {
+      check('results_gs_exists', 'Resultados de grupos (existe)', 'fail', 'Documento não existe — execute o Seed');
+    } else {
+      groupResults = snap.data();
+      const count = Object.keys(groupResults).length;
+      if (count === 72)       check('results_gs_exists', 'Resultados de grupos (existe)', 'ok', `72/72 jogos`);
+      else if (count > 0)     check('results_gs_exists', 'Resultados de grupos (existe)', 'warn', `${count}/72 jogos — incompleto`);
+      else                    check('results_gs_exists', 'Resultados de grupos (existe)', 'fail', 'Documento vazio');
+    }
+  } catch(e) { check('results_gs_exists', 'Resultados de grupos (existe)', 'fail', e.message); }
+
+  // ── 3. Completude dos resultados de grupos ───────────────────
+  if (groupResults) {
+    const allGames = Object.keys(GROUPS).flatMap(g => generateGroupGames(g).map(m => m.id));
+    const missing  = allGames.filter(id => !groupResults[id]);
+    if (missing.length === 0) check('results_gs_complete', 'Resultados de grupos (completo)', 'ok', 'Todos os 72 IDs presentes');
+    else check('results_gs_complete', 'Resultados de grupos (completo)', 'warn', `Faltando: ${missing.slice(0,5).join(', ')}${missing.length > 5 ? '…' : ''}`);
+  }
+
+  // ── 4. Documento results/knockout ────────────────────────────
+  let koResults = null;
+  const expectedKoIds = [
+    ...KNOCKOUT_SLOTS.map(s => s.id),
+    ...KNOCKOUT_ROUNDS.flatMap(r => r.matches.map(m => m.id)),
+  ];
+  try {
+    const snap = await db.collection('results').doc('knockout').get();
+    if (!snap.exists) {
+      check('results_ko', 'Resultados mata-mata', 'fail', 'Documento não existe');
+    } else {
+      koResults = snap.data();
+      const count = Object.keys(koResults).length;
+      if (count === expectedKoIds.length) check('results_ko', 'Resultados mata-mata', 'ok', `${count}/${expectedKoIds.length} confrontos`);
+      else check('results_ko', 'Resultados mata-mata', 'warn', `${count}/${expectedKoIds.length} confrontos`);
+    }
+  } catch(e) { check('results_ko', 'Resultados mata-mata', 'fail', e.message); }
+
+  // ── 5. Usuários no Firestore ─────────────────────────────────
+  let profiles = [];
+  try {
+    const snap = await db.collectionGroup('profile').get();
+    profiles = snap.docs.map(d => ({ uid: d.ref.parent.parent.id, ...d.data() }));
+    check('users_count', `Usuários cadastrados`, 'ok', `${profiles.length} usuário(s) encontrado(s)`);
+  } catch(e) { check('users_count', 'Usuários cadastrados', 'fail', e.message); }
+
+  // ── 6. Consistência palpites de grupos ───────────────────────
+  if (profiles.length > 0) {
+    let noBets = 0, incomplete = 0;
+    for (const p of profiles) {
+      try {
+        const snap = await db.collection('users').doc(p.uid).collection('bets').doc('groupStage').get();
+        if (!snap.exists || Object.keys(snap.data() || {}).length === 0) noBets++;
+        else if (Object.keys(snap.data()).length < 72) incomplete++;
+      } catch(e) { noBets++; }
+    }
+    if (noBets === 0 && incomplete === 0) {
+      check('bets_gs', 'Palpites de grupos', 'ok', `Todos os ${profiles.length} usuários têm 72 palpites`);
+    } else {
+      const parts = [];
+      if (noBets > 0)    parts.push(`${noBets} sem palpites`);
+      if (incomplete > 0) parts.push(`${incomplete} incompletos (<72)`);
+      check('bets_gs', 'Palpites de grupos', 'warn', parts.join(', '));
+    }
+  }
+
+  // ── 7. Consistência palpites de mata-mata ────────────────────
+  if (profiles.length > 0) {
+    let noBets = 0;
+    for (const p of profiles) {
+      try {
+        const snap = await db.collection('users').doc(p.uid).collection('bets').doc('knockout').get();
+        if (!snap.exists || Object.keys(snap.data() || {}).length === 0) noBets++;
+      } catch(e) { noBets++; }
+    }
+    if (noBets === 0) check('bets_ko', 'Palpites de mata-mata', 'ok', `Todos os ${profiles.length} usuários têm palpites KO`);
+    else check('bets_ko', 'Palpites de mata-mata', 'warn', `${noBets}/${profiles.length} sem palpites de mata-mata`);
+  }
+
+  // ── 8. Documento ranking/current ────────────────────────────
+  try {
+    const snap = await db.collection('ranking').doc('current').get();
+    if (!snap.exists) {
+      check('ranking_doc', 'Ranking gravado', 'fail', 'Documento não existe — execute Recalcular');
+    } else {
+      const entries = snap.data().entries || [];
+      if (entries.length === profiles.length) {
+        check('ranking_doc', 'Ranking gravado', 'ok', `${entries.length} entradas (igual ao nº de usuários)`);
+      } else {
+        check('ranking_doc', 'Ranking gravado', 'warn',
+          `${entries.length} no ranking vs ${profiles.length} usuários — execute Recalcular`);
+      }
+    }
+  } catch(e) { check('ranking_doc', 'Ranking gravado', 'fail', e.message); }
+
+  // ── 9. Teste unitário: placar exato ──────────────────────────
+  {
+    const gB = { 'A_0': { homeGoals: '2', awayGoals: '1' } };
+    const gR = { 'A_0': { homeGoals: 2,   awayGoals: 1   } };
+    const kB = {};
+    const kR = {};
+    const { pts, breakdown } = calcScore(gB, kB, gR, kR);
+    const ok = pts === SCORING.exactScore && breakdown.exact === 1 && breakdown.result === 0;
+    check('unit_exact', 'Teste: placar exato (2-1 vs 2-1)', ok ? 'ok' : 'fail',
+      ok ? `+${pts} pts ✓` : `Esperado ${SCORING.exactScore} pts, obteve ${pts}`);
+  }
+
+  // ── 10. Teste unitário: resultado correto (não exato) ────────
+  {
+    const gB = { 'A_0': { homeGoals: '3', awayGoals: '0' } };
+    const gR = { 'A_0': { homeGoals: 2,   awayGoals: 1   } };
+    const { pts, breakdown } = calcScore(gB, {}, gR, {});
+    const ok = pts === SCORING.correctResult && breakdown.result === 1 && breakdown.exact === 0;
+    check('unit_result', 'Teste: resultado certo (3-0 vs 2-1)', ok ? 'ok' : 'fail',
+      ok ? `+${pts} pt ✓` : `Esperado ${SCORING.correctResult} pt, obteve ${pts}`);
+  }
+
+  // ── 11. Teste unitário: empate correto ───────────────────────
+  {
+    const gB = { 'A_0': { homeGoals: '2', awayGoals: '2' } };
+    const gR = { 'A_0': { homeGoals: 0,   awayGoals: 0   } };
+    const { pts } = calcScore(gB, {}, gR, {});
+    const ok = pts === SCORING.correctResult;
+    check('unit_draw', 'Teste: empate certo (2-2 vs 0-0)', ok ? 'ok' : 'fail',
+      ok ? `+${pts} pt ✓` : `Esperado ${SCORING.correctResult} pt, obteve ${pts}`);
+  }
+
+  // ── 12. Teste unitário: campeão correto ──────────────────────
+  {
+    const kB = { 'r32_01': 'brazil', 'r16_01': 'brazil', 'qf_01': 'brazil', 'sf_01': 'brazil', 'final': 'brazil' };
+    const kR = { 'r32_01': 'brazil', 'r16_01': 'brazil', 'qf_01': 'brazil', 'sf_01': 'brazil', 'final': 'brazil' };
+    const { pts, breakdown } = calcScore({}, kB, {}, kR);
+    const expectedPts = 5 * SCORING.knockoutWinner + SCORING.championBonus;
+    const ok = pts === expectedPts && breakdown.bonus === SCORING.championBonus;
+    check('unit_champion', `Teste: campeão + 5 acertos KO`, ok ? 'ok' : 'fail',
+      ok ? `+${pts} pts ✓` : `Esperado ${expectedPts} pts, obteve ${pts}`);
+  }
+
+  // ── 13. Teste de desempate ────────────────────────────────────
+  {
+    const r1 = { name: 'A', pts: 10, breakdown: { exact: 2, result: 4, ko: 0, bonus: 0 } };
+    const r2 = { name: 'B', pts: 10, breakdown: { exact: 1, result: 6, ko: 0, bonus: 0 } };
+    const sorted = [r2, r1].sort(rankSort);
+    const ok = sorted[0].name === 'A'; // r1 tem mais exatos → deve vir primeiro
+    check('unit_tiebreak', 'Teste: desempate por placares exatos', ok ? 'ok' : 'fail',
+      ok ? 'Mais exatos vence com pontos iguais ✓' : 'Desempate incorreto');
+  }
+
+  // ── 14. Teste de desempate alfabético ─────────────────────────
+  {
+    const r1 = { name: 'Ana', pts: 5, breakdown: { exact: 1, result: 0, ko: 0, bonus: 0 } };
+    const r2 = { name: 'Zeca', pts: 5, breakdown: { exact: 1, result: 0, ko: 0, bonus: 0 } };
+    const sorted = [r2, r1].sort(rankSort);
+    const ok = sorted[0].name === 'Ana';
+    check('unit_alpha', 'Teste: desempate alfabético (Ana < Zeca)', ok ? 'ok' : 'fail',
+      ok ? 'Ordem alfabética correta ✓' : 'Ordem alfabética incorreta');
+  }
+
+  const summary = {
+    total: checks.length,
+    ok:    checks.filter(c => c.status === 'ok').length,
+    warn:  checks.filter(c => c.status === 'warn').length,
+    fail:  checks.filter(c => c.status === 'fail').length,
+  };
+
+  send(res, 'progress', { pct: 100 });
+  send(res, 'log', {
+    msg: `📋 Auditoria concluída: ${summary.ok} ok · ${summary.warn} avisos · ${summary.fail} falhas`,
+    level: summary.fail > 0 ? 'err' : summary.warn > 0 ? 'warn' : 'ok',
+  });
+  send(res, 'done', { checks, summary });
+  res.end();
+}
+
+// ================================================================
 // HTTP SERVER
 // ================================================================
 const server = http.createServer((req, res) => {
-  // CORS para qualquer origem local
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
-  if (req.url === '/api/seed'  && req.method === 'GET') { handleSeed(res);  return; }
-  if (req.url === '/api/clear' && req.method === 'GET') { handleClear(res); return; }
-  if (req.url === '/api/ping'  && req.method === 'GET') {
+  if (req.url === '/api/seed'   && req.method === 'GET') { handleSeed(res);          return; }
+  if (req.url === '/api/clear'  && req.method === 'GET') { handleClear(res);         return; }
+  if (req.url === '/api/recalc' && req.method === 'GET') { handleRecalcRanking(res); return; }
+  if (req.url === '/api/report' && req.method === 'GET') { handleReport(res);        return; }
+  if (req.url === '/api/audit'  && req.method === 'GET') { handleAudit(res);         return; }
+
+  if (req.url === '/api/ping' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
     res.end(JSON.stringify({ ok: true, project: serviceAccount.project_id }));
     return;
@@ -434,6 +867,13 @@ server.listen(PORT, () => {
   console.log(`║   🧪  Seed Server — Bolão Copa 2026          ║`);
   console.log(`╚══════════════════════════════════════════════╝`);
   console.log(`\n  ✅  Servidor rodando em http://localhost:${PORT}`);
-  console.log(`  📄  Abra http://127.0.0.1:5500/test-seed.html`);
+  console.log(`  🔗  Endpoints:`);
+  console.log(`       /api/ping    — verifica conexão`);
+  console.log(`       /api/seed    — cria 10 usuários + simula resultados`);
+  console.log(`       /api/clear   — limpa dados de teste`);
+  console.log(`       /api/recalc  — recalcula ranking de todos os usuários`);
+  console.log(`       /api/report  — gera relatório completo`);
+  console.log(`       /api/audit   — auditoria e testes unitários`);
+  console.log(`\n  📄  Abra http://127.0.0.1:5500/test-seed.html`);
   console.log(`\n  Ctrl+C para encerrar\n`);
 });

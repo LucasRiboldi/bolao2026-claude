@@ -55,28 +55,28 @@ function _renderAllGroups() {
         const hv  = (bet.homeGoals !== undefined && bet.homeGoals !== '') ? parseInt(bet.homeGoals, 10) : null;
         const av  = (bet.awayGoals !== undefined && bet.awayGoals !== '') ? parseInt(bet.awayGoals, 10) : null;
 
-        // Resultado oficial (se existir)
-        const res = _officialResults[g.id];
-        const resBadge = res
-          ? `<span class="official-result-badge" title="Resultado oficial">
-               ${res.homeGoals}–${res.awayGoals}
-             </span>`
+        // Resultado oficial centralizado sob o ×
+        const res     = _officialResults[g.id];
+        const resLine = res
+          ? `<span class="official-result-badge" title="Resultado oficial">${res.homeGoals}–${res.awayGoals}</span>`
           : '';
 
         html += `<div class="game-row" data-game="${g.id}">
           <div class="team-cell">
-            <span class="fi fi-${TEAMS[g.home].iso} team-flag-icon"></span>
             <span class="team-name team-name-full">${TEAMS[g.home].name}</span>
             <span class="team-name team-name-short">${TEAMS[g.home].short}</span>
+            <span class="fi fi-${TEAMS[g.home].iso} team-flag-icon"></span>
           </div>
           ${_stepperHtml(g.id, 'home', hv)}
-          <span class="score-sep">×</span>
+          <div class="score-center">
+            <span class="score-sep">×</span>
+            ${resLine}
+          </div>
           ${_stepperHtml(g.id, 'away', av)}
-          ${resBadge}
           <div class="team-cell away">
+            <span class="fi fi-${TEAMS[g.away].iso} team-flag-icon"></span>
             <span class="team-name team-name-full">${TEAMS[g.away].name}</span>
             <span class="team-name team-name-short">${TEAMS[g.away].short}</span>
-            <span class="fi fi-${TEAMS[g.away].iso} team-flag-icon"></span>
           </div>
         </div>`;
       }
@@ -90,12 +90,11 @@ function _renderAllGroups() {
   if (_gsLocked) _applyLockUI(true);
 }
 
-// ---- Stepper horizontal: [−] [val] [+] -------------------------
+// ---- Stepper horizontal: [−] [val] [+] — mínimo 0, nunca nulo --
 function _stepperHtml(gameId, side, val) {
-  const display = val !== null ? val : '–';
-  const fillCls = val !== null ? ' filled' : '';
+  const v = (val !== null && val !== undefined && val !== '') ? Number(val) : 0;
   return `<div class="score-stepper">
-    <button class="step-btn step-down" data-game="${gameId}" data-side="${side}" aria-label="Diminuir">−</button><span class="score-val${fillCls}" data-game="${gameId}" data-side="${side}">${display}</span><button class="step-btn step-up" data-game="${gameId}" data-side="${side}" aria-label="Aumentar">+</button>
+    <button class="step-btn step-down" data-game="${gameId}" data-side="${side}" aria-label="Diminuir">−</button><span class="score-val filled" data-game="${gameId}" data-side="${side}">${v}</span><button class="step-btn step-up" data-game="${gameId}" data-side="${side}" aria-label="Aumentar">+</button>
   </div>`;
 }
 
@@ -111,21 +110,21 @@ function _bindSteppers() {
 
       if (!_groupBets[game]) _groupBets[game] = {};
       const cur = _groupBets[game][field];
-      let val   = (cur !== undefined && cur !== '') ? parseInt(cur, 10) : null;
+      let val   = parseInt(cur, 10);
+      if (isNaN(val) || val < 0) val = 0;
 
       if (isUp) {
-        val = (val === null) ? 0 : Math.min(val + 1, 20);
+        val = Math.min(val + 1, 20);
       } else {
-        if (val === null) return;
-        val = (val <= 0) ? null : val - 1;
+        val = Math.max(val - 1, 0);
       }
 
-      _groupBets[game][field] = (val !== null) ? String(val) : '';
+      _groupBets[game][field] = String(val);
 
       const span = document.querySelector(`.score-val[data-game="${game}"][data-side="${side}"]`);
       if (span) {
-        span.textContent = (val !== null) ? val : '–';
-        span.classList.toggle('filled', val !== null);
+        span.textContent = val;
+        span.classList.add('filled');
       }
 
       _checkAutoSimulate();
@@ -179,12 +178,14 @@ async function loadGroupBetsUI(uid) {
   _groupBets = bets;
   _officialResults = results.groupStage || {};
 
-  // Pré-preenche jogos sem aposta com 0×0
+  // Garante que todos os jogos têm valor numérico (mínimo 0, nunca vazio)
   for (const gId of Object.keys(GROUPS)) {
     for (const g of generateGroupGames(gId)) {
-      if (!_groupBets[g.id] || (_groupBets[g.id].homeGoals === undefined)) {
-        _groupBets[g.id] = { homeGoals: '0', awayGoals: '0' };
-      }
+      if (!_groupBets[g.id]) _groupBets[g.id] = {};
+      if (_groupBets[g.id].homeGoals === undefined || _groupBets[g.id].homeGoals === '')
+        _groupBets[g.id].homeGoals = '0';
+      if (_groupBets[g.id].awayGoals === undefined || _groupBets[g.id].awayGoals === '')
+        _groupBets[g.id].awayGoals = '0';
     }
   }
 
