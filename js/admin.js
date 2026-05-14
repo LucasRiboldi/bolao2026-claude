@@ -91,6 +91,27 @@ async function adminSetGlobalLock(lock) {
   }
 }
 
+// ---- Recalcular ranking com resultados atuais ---------------
+async function adminRecalcRanking(opts = {}) {
+  const { silent = false, btn = null } = opts;
+  const btnEl = btn || document.getElementById('btn-recalc-ranking');
+  if (btnEl) btnEl.disabled = true;
+  if (!silent) showLoading();
+  try {
+    invalidateResultsCache();
+    const entries = await _computeRankingClient();
+    await updateRankingDoc(entries);
+    if (!silent) showToast(`Ranking atualizado! ${entries.length} participante(s) recalculado(s). ✅`, 'success');
+    return entries;
+  } catch (e) {
+    if (!silent) showToast('Erro ao recalcular: ' + e.message, 'error');
+    throw e;
+  } finally {
+    if (btnEl) btnEl.disabled = false;
+    if (!silent) hideLoading();
+  }
+}
+
 // ---- Lista de participantes (sem botões de lock individual) ----
 function _renderAdminUsers(users, container) {
   if (users.length === 0) {

@@ -484,8 +484,14 @@ async function _clearAllResults() {
     _resGs = {};
     _resKo = {};
     invalidateResultsCache();
-    showToast('Todos os resultados foram apagados.', 'success');
     _renderResultsPanel(document.getElementById('results-panel'));
+
+    // Zera pontuação de todos e atualiza ranking
+    showToast('Resultados apagados. Recalculando ranking…', 'success');
+    if (typeof adminRecalcRanking === 'function') {
+      await adminRecalcRanking({ silent: true });
+    }
+    showToast('Ranking zerado e atualizado. ✅', 'success');
   } catch (err) {
     console.error('[results] Erro ao apagar tudo:', err);
     showToast('Erro ao apagar: ' + err.message, 'error');
