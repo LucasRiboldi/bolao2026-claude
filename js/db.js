@@ -181,3 +181,22 @@ async function loadAdminConfig() {
 async function saveAdminConfig(data) {
   await db.collection('config').doc('admin').set(data, { merge: true });
 }
+
+// ---- Global lock (admin bloqueia/libera todos de uma vez) ----
+
+async function loadGlobalLock() {
+  try {
+    const snap = await db.collection('config').doc('admin').get();
+    return snap.exists ? (snap.data().globalLocked === true) : false;
+  } catch {
+    return false;
+  }
+}
+
+async function setGlobalLock(locked) {
+  const ts   = new Date().toISOString();
+  const data = locked
+    ? { globalLocked: true,  globalLockedAt: ts }
+    : { globalLocked: false, globalUnlockedAt: ts };
+  await db.collection('config').doc('admin').set(data, { merge: true });
+}

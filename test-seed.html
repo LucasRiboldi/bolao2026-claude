@@ -3,38 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🧪 Seed de Teste — Bolão 2026</title>
+  <title>🧪 Ferramentas de Teste — Bolão 2026</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #0d1117; color: #e6edf3;
-      min-height: 100vh; padding: 20px;
-    }
-    .wrap { max-width: 820px; margin: 0 auto; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; min-height: 100vh; padding: 20px; }
+    .wrap { max-width: 860px; margin: 0 auto; }
 
-    /* ---- banner ---- */
-    .banner {
-      background: #ff9800; color: #000;
-      border-radius: 10px; padding: 12px 18px; margin-bottom: 22px;
-      font-weight: 700; font-size: .9rem;
-    }
+    .banner { background: #ff9800; color: #000; border-radius: 10px; padding: 12px 18px; margin-bottom: 20px; font-weight: 700; font-size: .9rem; }
     .banner p { font-weight: 400; font-size: .82rem; margin-top: 4px; }
 
-    h1 { font-size: 1.45rem; margin-bottom: 4px; }
-    .subtitle { color: #8b949e; font-size: .88rem; margin-bottom: 22px; }
+    h1 { font-size: 1.4rem; margin-bottom: 4px; }
+    .subtitle { color: #8b949e; font-size: .87rem; margin-bottom: 18px; }
 
-    /* ---- server status ---- */
-    .server-bar {
-      display: flex; align-items: center; gap: 10px;
-      background: #161b22; border: 1px solid #30363d;
-      border-radius: 10px; padding: 12px 18px; margin-bottom: 16px;
-    }
-    .dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      background: #8b949e; flex-shrink: 0;
-      transition: background .3s;
-    }
+    /* server bar */
+    .server-bar { display: flex; align-items: center; gap: 10px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 11px 16px; margin-bottom: 16px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #8b949e; flex-shrink: 0; transition: background .3s; }
     .dot.green  { background: #3fb950; box-shadow: 0 0 6px #3fb950; }
     .dot.red    { background: #f85149; }
     .dot.pulse  { animation: pulse 1s infinite; }
@@ -42,103 +25,109 @@
     #server-label { font-size: .85rem; color: #8b949e; }
     #server-label strong { color: #e6edf3; }
 
-    /* ---- card ---- */
-    .card {
-      background: #161b22; border: 1px solid #30363d;
-      border-radius: 10px; padding: 18px; margin-bottom: 16px;
-    }
-    .card-title { font-size: .9rem; font-weight: 700; color: #58a6ff; margin-bottom: 14px; }
+    /* tabs */
+    .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid #30363d; padding-bottom: 0; }
+    .tab-btn { background: none; border: none; border-bottom: 3px solid transparent; color: #8b949e; font-size: .88rem; font-weight: 600; padding: 8px 16px; cursor: pointer; margin-bottom: -1px; transition: color .15s, border-color .15s; }
+    .tab-btn:hover { color: #e6edf3; }
+    .tab-btn.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
 
-    /* ---- users grid ---- */
-    .users-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-      gap: 8px; margin-bottom: 16px;
-    }
-    .urow {
-      background: #0d1117; border: 1px solid #30363d;
-      border-radius: 8px; padding: 9px 13px;
-      display: flex; align-items: center; gap: 8px; font-size: .8rem;
-      transition: border-color .25s;
-    }
+    /* cards */
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px; margin-bottom: 14px; }
+    .card-title { font-size: .9rem; font-weight: 700; color: #58a6ff; margin-bottom: 12px; }
+    .card-desc { font-size: .82rem; color: #8b949e; margin-bottom: 14px; line-height: 1.5; }
+
+    /* users grid */
+    .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 8px; margin-bottom: 14px; }
+    .urow { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 9px 13px; display: flex; align-items: center; gap: 8px; font-size: .79rem; transition: border-color .2s; }
     .urow.ok   { border-color: #238636; }
     .urow.err  { border-color: #f85149; }
     .urow.busy { border-color: #d29922; }
     .uicon { font-size: 1rem; flex-shrink: 0; width: 20px; text-align: center; }
-    .uname { font-weight: 600; color: #e6edf3; }
-    .uemail { color: #8b949e; font-size: .73rem; }
+    .uname { font-weight: 600; }
+    .uemail { color: #8b949e; font-size: .72rem; }
     .upts  { margin-left: auto; font-weight: 700; color: #3fb950; white-space: nowrap; }
 
-    /* ---- buttons ---- */
-    .btns { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 0; }
-    .btn {
-      display: inline-flex; align-items: center; gap: 7px;
-      padding: 9px 20px; border: none; border-radius: 8px;
-      font-size: .9rem; font-weight: 700; cursor: pointer; transition: opacity .15s;
-    }
+    /* buttons */
+    .btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 20px; border: none; border-radius: 8px; font-size: .88rem; font-weight: 700; cursor: pointer; transition: opacity .15s; }
     .btn:disabled { opacity: .35; cursor: not-allowed; }
-    .btn-run   { background: #238636; color: #fff; }
-    .btn-run:hover:not(:disabled)   { background: #2ea043; }
-    .btn-clear { background: #da3633; color: #fff; }
-    .btn-clear:hover:not(:disabled) { background: #f85149; }
+    .btn-green  { background: #238636; color: #fff; }
+    .btn-green:hover:not(:disabled)  { background: #2ea043; }
+    .btn-red    { background: #da3633; color: #fff; }
+    .btn-red:hover:not(:disabled)    { background: #f85149; }
+    .btn-blue   { background: #1f6feb; color: #fff; }
+    .btn-blue:hover:not(:disabled)   { background: #388bfd; }
+    .btn-yellow { background: #9e6a03; color: #e6edf3; }
+    .btn-yellow:hover:not(:disabled) { background: #bb8009; }
+    .btn-ghost  { background: transparent; color: #58a6ff; border: 1px solid #30363d; }
+    .btn-ghost:hover:not(:disabled)  { background: #21262d; }
+    .btn-sm { padding: 6px 14px; font-size: .8rem; }
 
-    /* ---- progress ---- */
+    /* progress */
     .prog-wrap { margin-top: 14px; display: none; }
     .prog-bg { background: #30363d; border-radius: 999px; height: 7px; overflow: hidden; }
     .prog-fill { background: #238636; height: 100%; border-radius: 999px; width: 0%; transition: width .4s ease; }
     .prog-label { font-size: .78rem; color: #8b949e; margin-top: 5px; }
 
-    /* ---- log ---- */
-    .log-box {
-      background: #0d1117; border: 1px solid #30363d; border-radius: 8px;
-      padding: 12px 14px; max-height: 240px; overflow-y: auto;
-      font-family: 'Cascadia Code','Fira Code',monospace; font-size: .76rem; line-height: 1.8;
-    }
+    /* log */
+    .log-box { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 11px 13px; max-height: 220px; overflow-y: auto; font-family: 'Cascadia Code','Fira Code',monospace; font-size: .75rem; line-height: 1.8; }
     .ll { display: flex; gap: 8px; }
     .lt { color: #8b949e; flex-shrink: 0; }
-    .lk  { color: #3fb950; }  /* ok */
-    .le  { color: #f85149; }  /* err */
-    .li  { color: #58a6ff; }  /* info */
-    .lw  { color: #d29922; }  /* warn */
+    .lk { color: #3fb950; }
+    .le { color: #f85149; }
+    .li { color: #58a6ff; }
+    .lw { color: #d29922; }
 
-    /* ---- results ---- */
-    .results { display: none; margin-top: 20px; }
-    .results h2 { font-size: 1rem; color: #58a6ff; margin-bottom: 12px; }
-
-    .champ-row {
-      background: #1c2a1c; border: 1px solid #238636;
-      border-radius: 8px; padding: 12px 18px; margin-bottom: 14px;
-      display: flex; gap: 24px; flex-wrap: wrap; align-items: center;
-    }
-    .cl { font-size: .76rem; color: #8b949e; }
-    .cv { font-weight: 700; font-size: .95rem; margin-top: 2px; }
-
-    table { width: 100%; border-collapse: collapse; font-size: .82rem; }
-    th { background: #21262d; padding: 8px 12px; text-align: left; color: #8b949e; font-weight: 600; border-bottom: 1px solid #30363d; }
-    td { padding: 8px 12px; border-bottom: 1px solid #21262d; }
+    /* ranking results */
+    .results-section { margin-top: 18px; }
+    .results-section h2 { font-size: .95rem; color: #58a6ff; margin-bottom: 12px; }
+    .stats-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+    .stat-box { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 10px 16px; flex: 1; min-width: 120px; }
+    .stat-lbl { font-size: .72rem; color: #8b949e; margin-bottom: 3px; }
+    .stat-val { font-size: 1rem; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; font-size: .81rem; }
+    th { background: #21262d; padding: 8px 11px; text-align: left; color: #8b949e; font-weight: 600; border-bottom: 1px solid #30363d; }
+    td { padding: 8px 11px; border-bottom: 1px solid #21262d; }
     tr:last-child td { border-bottom: none; }
     .p1 { color: #f0e040; font-weight: 800; }
     .p2 { color: #c0c0c0; font-weight: 700; }
     .p3 { color: #cd7f32; font-weight: 700; }
-    .pts-badge {
-      background: #238636; color: #fff;
-      border-radius: 999px; padding: 2px 10px; font-weight: 700; font-size: .78rem;
-    }
+    .pts-badge { background: #238636; color: #fff; border-radius: 999px; padding: 2px 10px; font-weight: 700; font-size: .77rem; }
 
-    /* ---- instructions ---- */
-    .instructions {
-      background: #161b22; border: 1px solid #388bfd;
-      border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; font-size: .84rem;
-    }
-    .instructions h3 { color: #58a6ff; margin-bottom: 10px; font-size: .9rem; }
-    .instructions ol { padding-left: 20px; }
-    .instructions li { margin-bottom: 6px; line-height: 1.5; }
-    .instructions code {
-      background: #0d1117; border: 1px solid #30363d;
-      border-radius: 4px; padding: 1px 7px; font-family: monospace; font-size: .85em;
-    }
-    .instructions .note { color: #8b949e; font-size: .8rem; margin-top: 10px; }
+    /* report */
+    .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    @media (max-width: 540px) { .report-grid { grid-template-columns: 1fr; } }
+    .report-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px 14px; }
+    .report-block h3 { font-size: .82rem; color: #8b949e; margin-bottom: 8px; font-weight: 600; }
+    .report-item { display: flex; justify-content: space-between; font-size: .8rem; padding: 3px 0; border-bottom: 1px solid #21262d; }
+    .report-item:last-child { border-bottom: none; }
+    .report-val { font-weight: 700; color: #e6edf3; }
+    .histo-row { display: flex; align-items: center; gap: 8px; font-size: .78rem; margin-bottom: 4px; }
+    .histo-bar-bg { flex: 1; background: #21262d; border-radius: 4px; height: 8px; overflow: hidden; }
+    .histo-bar    { background: #1f6feb; height: 100%; border-radius: 4px; }
+    .histo-lbl    { color: #8b949e; min-width: 36px; text-align: right; }
+
+    /* audit */
+    .audit-check { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px solid #21262d; font-size: .8rem; }
+    .audit-check:last-child { border-bottom: none; }
+    .audit-icon { font-size: 1rem; flex-shrink: 0; width: 20px; text-align: center; }
+    .audit-name { font-weight: 600; }
+    .audit-msg  { color: #8b949e; font-size: .75rem; margin-top: 2px; }
+    .audit-ok   .audit-name { color: #3fb950; }
+    .audit-fail .audit-name { color: #f85149; }
+    .audit-warn .audit-name { color: #d29922; }
+
+    /* instructions */
+    .instructions { background: #161b22; border: 1px solid #388bfd; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; font-size: .83rem; }
+    .instructions h3 { color: #58a6ff; margin-bottom: 8px; font-size: .88rem; }
+    .instructions ol { padding-left: 18px; }
+    .instructions li { margin-bottom: 5px; line-height: 1.5; }
+    .instructions code { background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 1px 6px; font-family: monospace; font-size: .85em; }
 
     .hidden { display: none !important; }
+    code { background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 1px 6px; font-family: monospace; font-size: .85em; }
   </style>
 </head>
 <body>
@@ -146,21 +135,20 @@
 
   <div class="banner">
     ⚠️ PÁGINA DE TESTE — Apenas em ambiente de desenvolvimento
-    <p>Cria 10 usuários fictícios, simula palpites e resultados da Copa, e grava no Firestore via Admin SDK.</p>
+    <p>Gerencia dados de teste no Firestore via Admin SDK (node seed-server.js).</p>
   </div>
 
-  <h1>🧪 Seed de Teste — Bolão Copa 2026</h1>
-  <p class="subtitle">10 usuários · palpites aleatórios · resultados simulados · cálculo de pontos</p>
+  <h1>🧪 Ferramentas de Teste — Bolão Copa 2026</h1>
+  <p class="subtitle">Seed · Recalcular · Relatório · Auditoria</p>
 
   <!-- Status do servidor local -->
   <div class="server-bar">
     <div class="dot pulse" id="dot"></div>
-    <div id="server-label"><strong>Verificando servidor local…</strong> Conectando a localhost:3001</div>
-    <button class="btn btn-run" style="margin-left:auto;padding:6px 14px;font-size:.8rem" onclick="checkServer()">🔄 Verificar</button>
+    <div id="server-label"><strong>Verificando servidor local…</strong> localhost:3001</div>
+    <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="checkServer()">🔄 Verificar</button>
   </div>
 
-  <!-- Instruções (visíveis quando servidor está offline) -->
-  <div class="instructions" id="instructions">
+  <div class="instructions hidden" id="instructions">
     <h3>📋 Como iniciar o servidor local</h3>
     <ol>
       <li>Abra um terminal na pasta do projeto</li>
@@ -168,49 +156,83 @@
       <li>Inicie o servidor: <code>node seed-server.js</code></li>
       <li>Deixe o terminal aberto e recarregue esta página</li>
     </ol>
-    <p class="note">O servidor roda em http://localhost:3001 e usa o Admin SDK para gravar diretamente no Firestore sem depender das regras de segurança.</p>
   </div>
 
-  <!-- Usuários -->
-  <div class="card">
-    <div class="card-title">👥 Usuários de Teste</div>
-    <div class="users-grid" id="users-grid"></div>
-    <div class="btns">
-      <button class="btn btn-run" id="btn-run" onclick="runSeed()" disabled>▶ Executar Simulação</button>
-      <button class="btn btn-clear" id="btn-clear" onclick="clearSeed()" disabled>🗑 Limpar Dados</button>
+  <!-- Abas -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('seed')">🧪 Seed</button>
+    <button class="tab-btn" onclick="switchTab('recalc')">🔄 Recalcular</button>
+    <button class="tab-btn" onclick="switchTab('report')">📊 Relatório</button>
+    <button class="tab-btn" onclick="switchTab('audit')">🔍 Auditoria</button>
+  </div>
+
+  <!-- ===== ABA: SEED ===== -->
+  <div class="tab-pane active" id="tab-seed">
+    <div class="card">
+      <div class="card-title">👥 Usuários de Teste</div>
+      <p class="card-desc">Cria 10 usuários fictícios no Firebase Auth + Firestore, simula palpites aleatórios e resultados do campeonato, e calcula pontuação de <strong>todos</strong> os usuários (incluindo os reais).</p>
+      <div class="users-grid" id="users-grid"></div>
+      <div class="btns">
+        <button class="btn btn-green" id="btn-run"   onclick="runSeed()"   disabled>▶ Executar Simulação</button>
+        <button class="btn btn-red"   id="btn-clear" onclick="clearSeed()" disabled>🗑 Apagar Dados de Teste</button>
+      </div>
+      <div class="prog-wrap" id="seed-prog">
+        <div class="prog-bg"><div class="prog-fill" id="seed-prog-fill"></div></div>
+        <div class="prog-label" id="seed-prog-label">Iniciando…</div>
+      </div>
     </div>
-    <div class="prog-wrap" id="prog-wrap">
-      <div class="prog-bg"><div class="prog-fill" id="prog-fill"></div></div>
-      <div class="prog-label" id="prog-label">Iniciando…</div>
+    <div class="card">
+      <div class="card-title">📋 Log</div>
+      <div class="log-box" id="seed-log"><div class="ll li"><span class="lt"></span><span>Aguardando servidor…</span></div></div>
     </div>
+    <div id="seed-results" class="hidden"></div>
   </div>
 
-  <!-- Log -->
-  <div class="card">
-    <div class="card-title">📋 Log de Execução</div>
-    <div class="log-box" id="log-box"><div class="ll li"><span class="lt"></span><span>Aguardando servidor local em localhost:3001…</span></div></div>
+  <!-- ===== ABA: RECALCULAR ===== -->
+  <div class="tab-pane" id="tab-recalc">
+    <div class="card">
+      <div class="card-title">🔄 Recalcular Ranking</div>
+      <p class="card-desc">Lê os resultados oficiais lançados pelo admin e recalcula a pontuação de <strong>todos os usuários</strong> do banco. Atualiza o documento <code>ranking/current</code>.</p>
+      <div class="btns">
+        <button class="btn btn-blue" id="btn-recalc" onclick="runRecalc()" disabled>🔄 Recalcular Agora</button>
+      </div>
+      <div class="prog-wrap" id="recalc-prog">
+        <div class="prog-bg"><div class="prog-fill" id="recalc-prog-fill"></div></div>
+        <div class="prog-label" id="recalc-prog-label">Processando…</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Log</div>
+      <div class="log-box" id="recalc-log"><div class="ll li"><span class="lt"></span><span>Aguardando servidor…</span></div></div>
+    </div>
+    <div id="recalc-results" class="hidden"></div>
   </div>
 
-  <!-- Resultados -->
-  <div class="results" id="results">
-    <h2>🏆 Ranking Simulado</h2>
-    <div class="champ-row" id="champ-row"></div>
-    <table>
-      <thead>
-        <tr>
-          <th>#</th><th>Usuário</th>
-          <th title="Placar exato (+3 pts cada)">⚽ Exatos</th>
-          <th title="Resultado correto (+1 pt cada)">✓ Resultados</th>
-          <th title="Vencedor mata-mata (+2 pts cada)">⚡ Mata-Mata</th>
-          <th title="Acertou o campeão (+5 pts)">🏆 Campeão</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody id="ranking-body"></tbody>
-    </table>
+  <!-- ===== ABA: RELATÓRIO ===== -->
+  <div class="tab-pane" id="tab-report">
+    <div class="card">
+      <div class="card-title">📊 Relatório Geral</div>
+      <p class="card-desc">Estatísticas detalhadas do bolão: distribuição de pontos, escolhas de campeão, histograma.</p>
+      <div class="btns">
+        <button class="btn btn-yellow" id="btn-report" onclick="runReport()" disabled>📊 Gerar Relatório</button>
+      </div>
+    </div>
+    <div id="report-content" class="hidden"></div>
   </div>
 
-</div>
+  <!-- ===== ABA: AUDITORIA ===== -->
+  <div class="tab-pane" id="tab-audit">
+    <div class="card">
+      <div class="card-title">🔍 Auditoria do Sistema</div>
+      <p class="card-desc">Executa 14 verificações: conexão Firebase, completude de resultados, perfis e apostas, consistência do ranking, e testes unitários de pontuação.</p>
+      <div class="btns">
+        <button class="btn btn-ghost" id="btn-audit" onclick="runAudit()" disabled>🔍 Executar Auditoria</button>
+      </div>
+    </div>
+    <div id="audit-content" class="hidden"></div>
+  </div>
+
+</div><!-- /wrap -->
 
 <script>
 const SERVER = 'http://localhost:3001';
@@ -221,24 +243,32 @@ const TEST_NAMES  = [
   'Teste Foxtrot','Teste Golf','Teste Hotel','Teste India','Teste Juliet',
 ];
 
-// ---- build users grid ----
+let _serverOk = false;
+
+// ---- Build users grid ----
 (function() {
   const grid = document.getElementById('users-grid');
   for (let i = 1; i <= NUM_USERS; i++) {
     const d = document.createElement('div');
     d.className = 'urow'; d.id = `urow-${i}`;
     d.innerHTML = `<span class="uicon" id="uicon-${i}">⏸</span>
-      <div>
-        <div class="uname">${TEST_NAMES[i-1]}</div>
-        <div class="uemail">teste${i}@${TEST_DOMAIN}</div>
-      </div>
+      <div><div class="uname">${TEST_NAMES[i-1]}</div><div class="uemail">teste${i}@${TEST_DOMAIN}</div></div>
       <div class="upts hidden" id="upts-${i}"></div>`;
     grid.appendChild(d);
   }
 })();
 
-// ---- server check ----
-let _serverOk = false;
+// ---- Tabs ----
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    const tabs = ['seed','recalc','report','audit'];
+    b.classList.toggle('active', tabs[i] === name);
+  });
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+}
+
+// ---- Server check ----
 async function checkServer() {
   const dot   = document.getElementById('dot');
   const label = document.getElementById('server-label');
@@ -251,46 +281,47 @@ async function checkServer() {
       dot.className = 'dot green';
       label.innerHTML = `<strong>Servidor online</strong> · projeto: ${j.project}`;
       document.getElementById('instructions').classList.add('hidden');
-      document.getElementById('btn-run').disabled   = false;
-      document.getElementById('btn-clear').disabled = false;
+      setAllBtns(false);
       _serverOk = true;
+      return;
     }
-  } catch {
-    dot.className = 'dot red';
-    label.innerHTML = '<strong>Servidor offline</strong> · execute <code style="background:#0d1117;border:1px solid #30363d;border-radius:4px;padding:1px 6px;font-family:monospace">node seed-server.js</code> no terminal';
-    document.getElementById('instructions').classList.remove('hidden');
-    document.getElementById('btn-run').disabled   = true;
-    document.getElementById('btn-clear').disabled = true;
-    _serverOk = false;
-  }
+  } catch {}
+  dot.className = 'dot red';
+  label.innerHTML = '<strong>Servidor offline</strong> · execute <code>node seed-server.js</code>';
+  document.getElementById('instructions').classList.remove('hidden');
+  setAllBtns(true);
+  _serverOk = false;
 }
 
-// Poll every 3s until server is up
+function setAllBtns(disabled) {
+  ['btn-run','btn-clear','btn-recalc','btn-report','btn-audit'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.disabled = disabled || !_serverOk;
+  });
+}
+
 const _poll = setInterval(async () => { await checkServer(); if (_serverOk) clearInterval(_poll); }, 3000);
 checkServer();
 
-// ---- logging ----
-function addLog(msg, type = 'i') {
-  const box  = document.getElementById('log-box');
-  const now  = new Date().toLocaleTimeString('pt-BR');
-  const line = document.createElement('div');
-  line.className = 'll';
-  line.innerHTML = `<span class="lt">[${now}]</span><span class="l${type}">${msg}</span>`;
-  box.appendChild(line);
+// ---- Logging ----
+function addLog(boxId, msg, type = 'i') {
+  const box = document.getElementById(boxId);
+  const now = new Date().toLocaleTimeString('pt-BR');
+  const div = document.createElement('div');
+  div.className = 'll';
+  div.innerHTML = `<span class="lt">[${now}]</span><span class="l${type}">${msg}</span>`;
+  box.appendChild(div);
   box.scrollTop = box.scrollHeight;
 }
+function clearLog(boxId) { document.getElementById(boxId).innerHTML = ''; }
 
-function clearLog() { document.getElementById('log-box').innerHTML = ''; }
-
-function setProgress(pct, label) {
-  document.getElementById('prog-wrap').style.display = 'block';
-  document.getElementById('prog-fill').style.width   = pct + '%';
-  document.getElementById('prog-label').textContent  = label || `${pct}%`;
-}
-
-function setButtons(disabled) {
-  document.getElementById('btn-run').disabled   = disabled || !_serverOk;
-  document.getElementById('btn-clear').disabled = disabled || !_serverOk;
+function setProgress(prefixId, pct, label) {
+  const wrap = document.getElementById(`${prefixId}-prog`);
+  const fill = document.getElementById(`${prefixId}-prog-fill`);
+  const lbl  = document.getElementById(`${prefixId}-prog-label`);
+  if (wrap) wrap.style.display = 'block';
+  if (fill) fill.style.width = pct + '%';
+  if (lbl)  lbl.textContent = label || `${pct}%`;
 }
 
 function setUserStatus(i, icon, cls = '', pts = null) {
@@ -298,132 +329,229 @@ function setUserStatus(i, icon, cls = '', pts = null) {
   const ic   = document.getElementById(`uicon-${i}`);
   const ptel = document.getElementById(`upts-${i}`);
   if (ic)  ic.textContent = icon;
-  if (row) { row.className = `urow${cls ? ' '+cls : ''}`; }
-  if (ptel && pts !== null) {
-    ptel.textContent = pts + ' pts';
-    ptel.classList.remove('hidden');
+  if (row) row.className = `urow${cls ? ' '+cls : ''}`;
+  if (ptel && pts !== null) { ptel.textContent = pts + ' pts'; ptel.classList.remove('hidden'); }
+}
+
+// ---- Generic SSE runner ----
+function runStream(endpoint, logBoxId, progId, onEvent, onDone) {
+  clearLog(logBoxId);
+  setAllBtns(true);
+
+  const es = new EventSource(`${SERVER}${endpoint}`);
+  es.onmessage = (e) => {
+    const d = JSON.parse(e.data);
+    if (d.type === 'log') {
+      const lvl = d.level === 'ok' ? 'k' : d.level === 'err' ? 'e' : d.level === 'warn' ? 'w' : 'i';
+      addLog(logBoxId, d.msg, lvl);
+    } else if (d.type === 'progress') {
+      setProgress(progId, d.pct, `Processando… ${d.pct}%`);
+    } else if (d.type === 'error') {
+      addLog(logBoxId, `❌ ${d.msg}`, 'e');
+      es.close(); setAllBtns(false); if (progId) setProgress(progId, 0, 'Erro');
+    } else if (d.type === 'done') {
+      es.close(); setAllBtns(false);
+      if (progId) setProgress(progId, 100, 'Concluído! ✅');
+      if (onDone) onDone(d);
+    } else if (onEvent) {
+      onEvent(d);
+    }
+  };
+  es.onerror = () => {
+    addLog(logBoxId, '❌ Conexão perdida', 'e');
+    es.close(); setAllBtns(false); checkServer();
+  };
+}
+
+// ---- ABA SEED ----
+function runSeed() {
+  if (!_serverOk) return;
+  for (let i = 1; i <= NUM_USERS; i++) setUserStatus(i, '⏸', '');
+  document.getElementById('seed-results').classList.add('hidden');
+
+  runStream('/api/seed', 'seed-log', 'seed', (d) => {
+    if (d.type === 'user_start') setUserStatus(d.index, '⏳', 'busy');
+    if (d.type === 'user_done')  setUserStatus(d.index, '✅', 'ok', d.pts ?? null);
+    if (d.type === 'user_err')   setUserStatus(d.index, '❌', 'err');
+  }, (done) => {
+    if (done.ranking) renderRanking('seed-results', done.ranking);
+  });
+}
+
+function clearSeed() {
+  if (!_serverOk) return;
+  if (!confirm('⚠️ Apagar todos os dados dos 10 usuários de teste (Auth + Firestore)?')) return;
+  for (let i = 1; i <= NUM_USERS; i++) setUserStatus(i, '⏸', '');
+
+  runStream('/api/clear', 'seed-log', 'seed', (d) => {
+    if (d.type === 'user_start') setUserStatus(d.index, '⏳', 'busy');
+    if (d.type === 'user_done' && d.cleared) setUserStatus(d.index, '🗑', 'ok');
+    if (d.type === 'user_err')   setUserStatus(d.index, '❌', 'err');
+  }, () => {
+    addLog('seed-log', '✅ Limpeza concluída.', 'k');
+  });
+}
+
+// ---- ABA RECALCULAR ----
+function runRecalc() {
+  if (!_serverOk) return;
+  document.getElementById('recalc-results').classList.add('hidden');
+
+  runStream('/api/recalc', 'recalc-log', 'recalc', null, (done) => {
+    if (done.ranking) renderRanking('recalc-results', done.ranking);
+  });
+}
+
+// ---- ABA RELATÓRIO ----
+async function runReport() {
+  if (!_serverOk) return;
+  document.getElementById('btn-report').disabled = true;
+  document.getElementById('report-content').classList.add('hidden');
+  try {
+    const r = await fetch(`${SERVER}/api/report`);
+    const d = await r.json();
+    if (d.error) { alert('Erro: ' + d.error); return; }
+    renderReport(d);
+  } catch (e) {
+    alert('Erro ao conectar: ' + e.message);
+  } finally {
+    document.getElementById('btn-report').disabled = false;
   }
 }
 
-// ---- SSE stream runner ----
-function runStream(endpoint, onDone) {
-  clearLog();
-  setButtons(true);
-  // Reset user rows
-  for (let i = 1; i <= NUM_USERS; i++) setUserStatus(i, '⏸', '');
-  document.getElementById('results').style.display = 'none';
+function renderReport(d) {
+  const { stats, champPicksSorted, histogram } = d;
+  const maxHisto = Math.max(...histogram.map(h => h.count), 1);
 
-  const es = new EventSource(`${SERVER}${endpoint}`);
-
-  es.onmessage = (e) => {
-    const d = JSON.parse(e.data);
-
-    switch (d.type) {
-      case 'log':
-        addLog(d.msg, d.level === 'ok' ? 'k' : d.level === 'err' ? 'e' : d.level === 'warn' ? 'w' : 'i');
-        break;
-      case 'progress':
-        setProgress(d.pct, `Processando… ${d.pct}%`);
-        break;
-      case 'champion':
-        // handled in 'done'
-        break;
-      case 'user_start':
-        setUserStatus(d.index, '⏳', 'busy');
-        break;
-      case 'user_done':
-        if (d.cleared) {
-          setUserStatus(d.index, '✅', 'ok');
-        } else if (d.pts !== undefined) {
-          setUserStatus(d.index, '✅', 'ok', d.pts);
+  let html = `<div class="card">
+    <div class="card-title">📊 Estatísticas Gerais</div>
+    <div class="report-grid">
+      <div class="report-block">
+        <h3>Resumo</h3>
+        <div class="report-item"><span>Total de usuários</span><span class="report-val">${stats.totalUsers}</span></div>
+        <div class="report-item"><span>Usuários com apostas</span><span class="report-val">${stats.usersWithBets}</span></div>
+        <div class="report-item"><span>Resultados grupos</span><span class="report-val">${stats.groupResultsCount} / 72</span></div>
+        <div class="report-item"><span>Resultados mata-mata</span><span class="report-val">${stats.koResultsCount}</span></div>
+        <div class="report-item"><span>Média de pontos</span><span class="report-val">${stats.avgPts?.toFixed(1) ?? '—'} pts</span></div>
+        <div class="report-item"><span>Maior pontuação</span><span class="report-val">${stats.maxPts ?? '—'} pts</span></div>
+      </div>
+      <div class="report-block">
+        <h3>🏆 Escolhas de Campeão</h3>
+        ${champPicksSorted.length === 0
+          ? '<p style="color:#8b949e;font-size:.8rem">Nenhuma aposta de campeão registrada.</p>'
+          : champPicksSorted.map(c => `<div class="report-item"><span>${c.name}</span><span class="report-val">${c.count} (${c.pct}%)</span></div>`).join('')
         }
-        break;
-      case 'user_err':
-        setUserStatus(d.index, '❌', 'err');
-        break;
-      case 'error':
-        addLog(`❌ Erro: ${d.msg}`, 'e');
-        es.close();
-        setButtons(false);
-        setProgress(0, 'Erro');
-        break;
-      case 'done':
-        es.close();
-        setButtons(false);
-        setProgress(100, 'Concluído! ✅');
-        if (onDone) onDone(d);
-        break;
-    }
-  };
+      </div>
+    </div>
+    <div class="report-block" style="margin-top:0">
+      <h3>📈 Histograma de Pontos</h3>
+      ${histogram.map(h => `
+        <div class="histo-row">
+          <span style="min-width:55px;font-size:.75rem;color:#8b949e">${h.range}</span>
+          <div class="histo-bar-bg"><div class="histo-bar" style="width:${Math.round(h.count/maxHisto*100)}%"></div></div>
+          <span class="histo-lbl">${h.count}</span>
+        </div>`).join('')}
+    </div>
+  </div>`;
 
-  es.onerror = () => {
-    addLog('❌ Conexão com o servidor perdida', 'e');
-    es.close();
-    setButtons(false);
-    checkServer();
-  };
+  const el = document.getElementById('report-content');
+  el.innerHTML = html;
+  el.classList.remove('hidden');
 }
 
-// ---- run seed ----
-function runSeed() {
-  if (!_serverOk) { alert('O servidor local não está disponível. Execute: node seed-server.js'); return; }
-
-  runStream('/api/seed', ({ ranking, champion, name: champName }) => {
-    if (ranking) renderResults(ranking);
-  });
+// ---- ABA AUDITORIA ----
+async function runAudit() {
+  if (!_serverOk) return;
+  document.getElementById('btn-audit').disabled = true;
+  document.getElementById('audit-content').classList.add('hidden');
+  try {
+    const r = await fetch(`${SERVER}/api/audit`);
+    const d = await r.json();
+    if (d.error) { alert('Erro: ' + d.error); return; }
+    renderAudit(d.checks);
+  } catch (e) {
+    alert('Erro: ' + e.message);
+  } finally {
+    document.getElementById('btn-audit').disabled = false;
+  }
 }
 
-// ---- clear seed ----
-function clearSeed() {
-  if (!_serverOk) { alert('O servidor local não está disponível.'); return; }
-  if (!confirm('⚠️ Apagar todos os dados de teste (usuários, palpites, resultados e ranking)?')) return;
-  runStream('/api/clear', () => {
-    addLog('✅ Limpeza concluída! Os usuários foram removidos do Firebase Auth também.', 'k');
-  });
+function renderAudit(checks) {
+  const passed = checks.filter(c => c.status === 'ok').length;
+  const failed = checks.filter(c => c.status === 'fail').length;
+  const warned = checks.filter(c => c.status === 'warn').length;
+
+  const icon = s => s === 'ok' ? '✅' : s === 'fail' ? '❌' : '⚠️';
+
+  let html = `<div class="card">
+    <div class="card-title" style="display:flex;align-items:center;gap:10px">
+      🔍 Resultado da Auditoria
+      <span style="font-size:.8rem;font-weight:400;color:#8b949e">${passed} ok · ${warned} avisos · ${failed} falhas</span>
+    </div>
+    ${checks.map(c => `
+    <div class="audit-check audit-${c.status}">
+      <span class="audit-icon">${icon(c.status)}</span>
+      <div>
+        <div class="audit-name">${c.name}</div>
+        ${c.msg ? `<div class="audit-msg">${c.msg}</div>` : ''}
+      </div>
+    </div>`).join('')}
+  </div>`;
+
+  const el = document.getElementById('audit-content');
+  el.innerHTML = html;
+  el.classList.remove('hidden');
 }
 
-// ---- render results ----
-function renderResults(ranking) {
-  const section = document.getElementById('results');
-  section.style.display = 'block';
+// ---- Renderizar ranking ----
+function renderRanking(containerId, ranking) {
+  const total   = ranking.length;
+  const avgPts  = (ranking.reduce((s,e) => s+e.pts, 0) / total).toFixed(1);
+  const medals  = ['🥇','🥈','🥉'];
 
-  // Champion info
-  const champ = ranking[0]; // highest scorer might not be champion — but we show stats
-  const total = ranking.length;
-  const totalPts = ranking.reduce((s, e) => s + e.pts, 0);
-  const avg = (totalPts / total).toFixed(1);
-  const top = ranking[0];
+  let html = `<div class="card results-section">
+    <h2>🏆 Ranking Calculado</h2>
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-lbl">👥 Usuários</div><div class="stat-val">${total}</div></div>
+      <div class="stat-box"><div class="stat-lbl">🏆 Líder</div><div class="stat-val">${ranking[0]?.name || '—'} · ${ranking[0]?.pts ?? 0} pts</div></div>
+      <div class="stat-box"><div class="stat-lbl">📊 Média</div><div class="stat-val">${avgPts} pts</div></div>
+      <div class="stat-box"><div class="stat-lbl">⚽ Exatos (máx)</div><div class="stat-val">${Math.max(...ranking.map(e => e.breakdown?.exact ?? 0))}</div></div>
+    </div>
+    <table>
+      <thead><tr>
+        <th>#</th><th>Usuário</th>
+        <th title="+3 pts">⚽ Exatos</th>
+        <th title="+1 pt">✓ Result.</th>
+        <th title="+2 pts">⚡ KO</th>
+        <th title="+5 pts">🏆 Campeão</th>
+        <th>Total</th>
+      </tr></thead>
+      <tbody>
+        ${ranking.map((e,i) => {
+          const pos  = medals[i] || `${i+1}º`;
+          const cls  = i===0?'p1':i===1?'p2':i===2?'p3':'';
+          const bd   = e.breakdown || {};
+          const champ = bd.bonus > 0
+            ? `<span style="color:#f0e040;font-weight:700">✅ +${bd.bonus}</span>`
+            : '—';
+          return `<tr>
+            <td class="${cls}">${pos}</td>
+            <td><div style="font-weight:600">${e.name}</div><div style="color:#8b949e;font-size:.72rem">${e.email||''}</div></td>
+            <td>${bd.exact??0} <span style="color:#8b949e">×3</span> = <strong>${(bd.exact??0)*3}</strong></td>
+            <td>${bd.result??0} <span style="color:#8b949e">×1</span> = <strong>${bd.result??0}</strong></td>
+            <td>${bd.ko??0} <span style="color:#8b949e">×2</span> = <strong>${(bd.ko??0)*2}</strong></td>
+            <td>${champ}</td>
+            <td><span class="pts-badge">${e.pts} pts</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>`;
 
-  document.getElementById('champ-row').innerHTML = `
-    <div><div class="cl">👥 Usuários Simulados</div><div class="cv">${total}</div></div>
-    <div><div class="cl">🏆 Maior Pontuação</div><div class="cv">${top.name} · ${top.pts} pts</div></div>
-    <div><div class="cl">📊 Média de Pontos</div><div class="cv">${avg} pts</div></div>
-    <div><div class="cl">⚽ Exatos (melhor)</div><div class="cv">${Math.max(...ranking.map(e=>e.breakdown.exact))} acertos</div></div>
-  `;
-
-  const medals = ['🥇','🥈','🥉'];
-  const body = document.getElementById('ranking-body');
-  body.innerHTML = ranking.map((e, i) => {
-    const pos = medals[i] || `${i+1}º`;
-    const cls = i===0?'p1':i===1?'p2':i===2?'p3':'';
-    const champBadge = e.breakdown.bonus > 0
-      ? `<span style="color:#f0e040;font-weight:700">✅ +${e.breakdown.bonus} pts</span>`
-      : '—';
-    return `<tr>
-      <td class="${cls}">${pos}</td>
-      <td>
-        <div style="font-weight:600">${e.name}</div>
-        <div style="color:#8b949e;font-size:.73rem">${e.email}</div>
-      </td>
-      <td>${e.breakdown.exact} × <span style="color:#8b949e">3</span> = <strong>${e.breakdown.exact * 3} pts</strong></td>
-      <td>${e.breakdown.result} × <span style="color:#8b949e">1</span> = <strong>${e.breakdown.result} pts</strong></td>
-      <td>${e.breakdown.ko} × <span style="color:#8b949e">2</span> = <strong>${e.breakdown.ko * 2} pts</strong></td>
-      <td>${champBadge}</td>
-      <td><span class="pts-badge">${e.pts} pts</span></td>
-    </tr>`;
-  }).join('');
-
-  section.scrollIntoView({ behavior: 'smooth' });
+  const el = document.getElementById(containerId);
+  el.innerHTML = html;
+  el.classList.remove('hidden');
+  el.scrollIntoView({ behavior: 'smooth' });
 }
 </script>
 </body>

@@ -21,7 +21,7 @@ async function initAdminPanel() {
     if (inp && config.whatsapp) inp.value = config.whatsapp;
   } catch {}
 
-  adminLoadUnlockSelect();
+  initGlobalLockStatus();
 
   if (typeof initResultsPanel === 'function') {
     initResultsPanel();
@@ -52,6 +52,46 @@ async function adminSaveWhatsApp() {
   }
 }
 
+// ---- Lock global: bloqueia/libera TODOS os participantes ----
+async function initGlobalLockStatus() {
+  try {
+    const locked = await loadGlobalLock();
+    _updateGlobalLockUI(locked);
+  } catch {}
+}
+
+function _updateGlobalLockUI(locked) {
+  const badge  = document.getElementById('global-lock-badge');
+  const btnLock   = document.getElementById('btn-global-lock');
+  const btnUnlock = document.getElementById('btn-global-unlock');
+  if (badge) {
+    badge.textContent = locked ? '🔒 Bloqueado' : '🔓 Aberto';
+    badge.className   = 'global-lock-badge ' + (locked ? 'locked' : 'open');
+  }
+  if (btnLock)   btnLock.classList.toggle('hidden', locked);
+  if (btnUnlock) btnUnlock.classList.toggle('hidden', !locked);
+}
+
+async function adminSetGlobalLock(lock) {
+  const btnLock   = document.getElementById('btn-global-lock');
+  const btnUnlock = document.getElementById('btn-global-unlock');
+  if (btnLock)   btnLock.disabled   = true;
+  if (btnUnlock) btnUnlock.disabled = true;
+  try {
+    await setGlobalLock(lock);
+    _updateGlobalLockUI(lock);
+    // Atualiza a UI local se o admin também estiver logado como participante
+    if (typeof setGroupStageLocked === 'function') setGroupStageLocked(lock);
+    showToast(lock ? '🔒 Apostas bloqueadas para todos!' : '🔓 Apostas liberadas para todos!', 'success');
+  } catch (e) {
+    showToast('Erro: ' + e.message, 'error');
+  } finally {
+    if (btnLock)   btnLock.disabled   = false;
+    if (btnUnlock) btnUnlock.disabled = false;
+  }
+}
+
+// ---- Lista de participantes (sem botões de lock individual) ----
 function _renderAdminUsers(users, container) {
   if (users.length === 0) {
     container.innerHTML = '<p class="muted" style="padding:20px">Nenhum usuário cadastrado.</p>';
@@ -59,60 +99,21 @@ function _renderAdminUsers(users, container) {
   }
   let html = `<div class="admin-table">`;
   users.forEach(u => {
-    const locked    = u.betsLocked === true;
-    const statusCls = locked ? 'status-locked' : 'status-open';
-    const statusTxt = locked ? '🔒 Bloqueado' : '🔓 Aberto';
-    const safeName  = (u.name || 'Sem nome').replace(/'/g, "\\'");
+    const safeName = (u.name || 'Sem nome').replace(/'/g, "\\'");
     html += `
     <div class="admin-user-row" id="adm-row-${u.uid}">
       <div class="admin-user-info">
         <div class="admin-user-name">${u.name || 'Sem nome'}</div>
         <div class="admin-user-email">${u.email || u.uid}</div>
       </div>
-      <span class="admin-user-status ${statusCls}">${statusTxt}</span>
       <div class="admin-user-actions">
         <button class="btn-icon" title="Ver apostas"
           onclick="openBetHistory('${u.uid}','${safeName}')">📋</button>
-        ${locked
-          ? `<button class="btn-adm btn-adm-unlock" onclick="adminToggleLock('${u.uid}',false,this)">🔓 Liberar</button>`
-          : `<button class="btn-adm btn-adm-lock"   onclick="adminToggleLock('${u.uid}',true,this)">🔒 Bloquear</button>`
-        }
       </div>
     </div>`;
   });
   html += `</div>`;
   container.innerHTML = html;
-}
-
-async function adminToggleLock(uid, lock, btn) {
-  btn.disabled = true;
-  btn.textContent = '⏳';
-  try {
-    if (lock) await lockBets(uid);
-    else      await unlockUserBets(uid);
-
-    const row    = document.getElementById(`adm-row-${uid}`);
-    const status = row.querySelector('.admin-user-status');
-    if (lock) {
-      status.className = 'admin-user-status status-locked';
-      status.textContent = '🔒 Bloqueado';
-      btn.className = 'btn-adm btn-adm-unlock';
-      btn.textContent = '🔓 Liberar';
-      btn.onclick = () => adminToggleLock(uid, false, btn);
-    } else {
-      status.className = 'admin-user-status status-open';
-      status.textContent = '🔓 Aberto';
-      btn.className = 'btn-adm btn-adm-lock';
-      btn.textContent = '🔒 Bloquear';
-      btn.onclick = () => adminToggleLock(uid, true, btn);
-    }
-    btn.disabled = false;
-    showToast(lock ? 'Apostas bloqueadas.' : 'Apostas liberadas! ✅', 'success');
-  } catch (e) {
-    showToast('Erro: ' + e.message, 'error');
-    btn.disabled = false;
-    btn.textContent = lock ? '🔒 Bloquear' : '🔓 Liberar';
-  }
 }
 
 // ---- Histórico de apostas (modal) ---------------------------
@@ -142,14 +143,13 @@ function closeBetHistory() {
   document.body.style.overflow = '';
 }
 
-// ---- Renderização do histórico de apostas (nova versão) -----
+// ---- Renderização do histórico de apostas -------------------
 function _renderBetHistory(groupBets, knockoutBets, results) {
   const gsResults = results.groupStage || {};
   const koResults = results.knockout   || {};
   let html = '';
   let exact = 0, correct = 0, koHits = 0;
 
-  // ---- Fase de grupos ----
   html += `<div class="bh-section-title">⚽ Fase de Grupos</div>`;
 
   for (const gId of Object.keys(GROUPS)) {
@@ -168,9 +168,9 @@ function _renderBetHistory(groupBets, knockoutBets, results) {
         const bH = parseInt(bet.homeGoals, 10), bA = parseInt(bet.awayGoals, 10);
         const rH = parseInt(res.homeGoals,  10), rA = parseInt(res.awayGoals,  10);
         if (!isNaN(bH) && !isNaN(bA) && !isNaN(rH) && !isNaN(rA)) {
-          if (bH === rH && bA === rA)                        { cls = 'bh-exact';   icon = '✅'; pts = 3; exact++;   }
-          else if (Math.sign(bH - bA) === Math.sign(rH - rA)) { cls = 'bh-correct'; icon = '✓';  pts = 1; correct++; }
-          else                                               { cls = 'bh-wrong';   icon = '❌'; }
+          if (bH === rH && bA === rA)                                { cls = 'bh-exact';   icon = '✅'; pts = 3; exact++;   }
+          else if (Math.sign(bH - bA) === Math.sign(rH - rA))       { cls = 'bh-correct'; icon = '✓';  pts = 1; correct++; }
+          else                                                       { cls = 'bh-wrong';   icon = '❌'; }
         }
       } else if (bet) {
         cls = 'bh-placed'; icon = '📌';
@@ -182,34 +182,29 @@ function _renderBetHistory(groupBets, knockoutBets, results) {
       html += `
       <div class="bh-game-card ${cls}">
         <span class="bh-si">${icon}</span>
-
         <div class="bh-teams-row">
           <div class="bh-team bh-team-home">
             <span class="fi fi-${home.iso} bh-flag"></span>
             <span class="bh-team-name">${home.name}</span>
           </div>
-
           <div class="bh-score-block">
             <span class="bh-bet-score">${betStr}</span>
             ${realStr
               ? `<span class="bh-real-score">Real: ${realStr}</span>`
               : `<span class="bh-waiting">⏳ Aguardando</span>`}
           </div>
-
           <div class="bh-team bh-team-away">
             <span class="bh-team-name">${away.name}</span>
             <span class="fi fi-${away.iso} bh-flag"></span>
           </div>
         </div>
-
         ${pts ? `<span class="bh-pts">+${pts}</span>` : '<span class="bh-pts bh-pts-empty"></span>'}
       </div>`;
     }
 
-    html += `</div>`; // .bh-group-block
+    html += `</div>`;
   }
 
-  // ---- Mata-mata ----
   html += `<div class="bh-section-title" style="margin-top:20px">⚡ Mata-Mata</div>`;
 
   const koEntries = Object.entries(knockoutBets);
@@ -251,7 +246,6 @@ function _renderBetHistory(groupBets, knockoutBets, results) {
     html_ko += `</div>`;
     html += html_ko;
 
-    // Bônus campeão
     const fp = knockoutBets['final'], fr = koResults['final'];
     if (fp && fr && fp === fr) {
       html += `
@@ -263,7 +257,6 @@ function _renderBetHistory(groupBets, knockoutBets, results) {
     }
   }
 
-  // ---- Resumo ----
   const bonusPts = (knockoutBets['final'] && koResults['final'] && knockoutBets['final'] === koResults['final']) ? 5 : 0;
   const total = exact * 3 + correct + koHits * 2 + bonusPts;
   html += `
@@ -276,88 +269,4 @@ function _renderBetHistory(groupBets, knockoutBets, results) {
   </div>`;
 
   return html;
-}
-
-// ---- Toggle rápido de desbloqueio por e-mail ----------------
-async function adminLoadUnlockSelect() {
-  const sel    = document.getElementById('sel-unlock-user');
-  const status = document.getElementById('unlock-status');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">Carregando…</option>';
-  try {
-    const users = await loadAdminUserList();
-    sel.innerHTML = '<option value="">— Selecione o participante —</option>';
-    users.forEach(u => {
-      const label  = `${u.name || 'Sem nome'} (${u.email || u.uid})`;
-      const locked = u.betsLocked === true;
-      const opt    = document.createElement('option');
-      opt.value       = u.uid;
-      opt.textContent = `${locked ? '🔒' : '🔓'} ${label}`;
-      opt.dataset.locked = locked ? '1' : '0';
-      sel.appendChild(opt);
-    });
-    if (status) status.textContent = `${users.length} participante(s) carregado(s).`;
-  } catch (e) {
-    sel.innerHTML = '<option value="">Erro ao carregar</option>';
-  }
-}
-
-async function adminQuickToggle() {
-  const sel    = document.getElementById('sel-unlock-user');
-  const btn    = document.getElementById('btn-quick-toggle');
-  const status = document.getElementById('unlock-status');
-  if (!sel || !sel.value) {
-    showToast('Selecione um participante.', 'error');
-    return;
-  }
-  const uid    = sel.value;
-  const opt    = sel.options[sel.selectedIndex];
-  const locked = opt.dataset.locked === '1';
-  btn.disabled = true;
-  btn.textContent = '⏳';
-  try {
-    if (locked) {
-      await unlockUserBets(uid);
-      opt.dataset.locked  = '0';
-      opt.textContent     = opt.textContent.replace('🔒', '🔓');
-      if (status) status.textContent = `✅ Apostas liberadas para edição!`;
-      showToast('Apostas liberadas! ✅', 'success');
-    } else {
-      await lockBets(uid);
-      opt.dataset.locked  = '1';
-      opt.textContent     = opt.textContent.replace('🔓', '🔒');
-      if (status) status.textContent = `🔒 Apostas bloqueadas.`;
-      showToast('Apostas bloqueadas.', 'success');
-    }
-    _updateQuickToggleBtn(opt.dataset.locked === '1');
-  } catch (e) {
-    showToast('Erro: ' + e.message, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = locked ? '🔓 Liberar' : '🔒 Bloquear';
-  }
-}
-
-function _updateQuickToggleBtn(isCurrentlyLocked) {
-  const btn = document.getElementById('btn-quick-toggle');
-  if (!btn) return;
-  if (isCurrentlyLocked) {
-    btn.textContent  = '🔓 Liberar para Edição';
-    btn.className    = 'btn btn-adm-unlock';
-  } else {
-    btn.textContent  = '🔒 Bloquear Apostas';
-    btn.className    = 'btn btn-adm-lock';
-  }
-}
-
-function onUnlockSelectChange() {
-  const sel = document.getElementById('sel-unlock-user');
-  const opt = sel?.options[sel.selectedIndex];
-  if (opt?.value) {
-    _updateQuickToggleBtn(opt.dataset.locked === '1');
-    document.getElementById('btn-quick-toggle').disabled = false;
-  } else {
-    const btn = document.getElementById('btn-quick-toggle');
-    if (btn) { btn.disabled = true; btn.textContent = '🔓 Liberar / 🔒 Bloquear'; btn.className = 'btn btn-secondary'; }
-  }
 }

@@ -102,7 +102,18 @@
 
       <div id="bets-lock-banner" class="bets-lock-banner hidden">
         <span>🔒</span>
-        <span>Apostas salvas e bloqueadas. Aguarde o administrador para liberar a edição.</span>
+        <span>Apostas bloqueadas pelo administrador. Aguarde a liberação para editar.</span>
+      </div>
+
+      <!-- Card: Jogos de Hoje -->
+      <div id="today-matches-card" class="today-matches-card">
+        <div class="tdm-header">
+          📅 Jogos de Hoje
+          <a class="tdm-watch-btn" href="https://cazetv.com/ao-vivo/" target="_blank" rel="noopener">▶ Assistir ao vivo</a>
+        </div>
+        <div class="tdm-body">
+          <p class="tdm-empty">Carregando jogos…</p>
+        </div>
       </div>
 
       <div id="group-panel" class="group-panel"></div>
@@ -191,23 +202,18 @@
         </div>
       </div>
 
-      <!-- Toggle rápido de apostas -->
+      <!-- Lock global -->
       <div class="admin-card">
-        <div class="admin-card-title">🔓 Liberar / Bloquear Apostas</div>
+        <div class="admin-card-title" style="display:flex;align-items:center;gap:10px">
+          🔒 Bloquear / Liberar Apostas
+          <span id="global-lock-badge" class="global-lock-badge open">🔓 Aberto</span>
+        </div>
         <p class="admin-card-desc">
-          Selecione o participante e use o botão para liberar a edição das apostas ou bloquear novamente.
+          Bloqueia ou libera as apostas de <strong>todos os participantes</strong> de uma só vez.
         </p>
-        <div class="admin-unlock-quick">
-          <div class="admin-unlock-row">
-            <select id="sel-unlock-user" onchange="onUnlockSelectChange()">
-              <option value="">— Selecione o participante —</option>
-            </select>
-            <button id="btn-quick-toggle" class="btn btn-secondary"
-                    onclick="adminQuickToggle()" disabled>
-              🔓 Liberar / 🔒 Bloquear
-            </button>
-          </div>
-          <span id="unlock-status" class="admin-unlock-status"></span>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button id="btn-global-lock"   class="btn btn-adm-lock"   onclick="adminSetGlobalLock(true)">🔒 Bloquear Todos</button>
+          <button id="btn-global-unlock" class="btn btn-adm-unlock hidden" onclick="adminSetGlobalLock(false)">🔓 Liberar Todos</button>
         </div>
       </div>
 

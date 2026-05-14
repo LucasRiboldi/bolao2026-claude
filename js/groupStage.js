@@ -189,8 +189,7 @@ async function loadGroupBetsUI(uid) {
     }
   }
 
-  const profile = await loadProfile(uid);
-  _gsLocked = profile.betsLocked === true;
+  _gsLocked = await loadGlobalLock();
   _renderAllGroups();
 }
 
@@ -214,16 +213,11 @@ async function _saveAll() {
         await saveKnockoutBets(uid, koBets);
       }
     }
-    await lockBets(uid);
-    _gsLocked = true;
-    _applyLockUI(true);
-    if (typeof setKnockoutLocked === 'function') setKnockoutLocked(true);
-
-    showToast('Palpites salvos e bloqueados! 🔒', 'success');
+    showToast('Palpites salvos! ✅', 'success');
   } catch (e) {
     showToast('Erro ao salvar. Tente novamente.', 'error');
-    btn.disabled = false;
   } finally {
+    btn.disabled = false;
     hideLoading();
   }
 }

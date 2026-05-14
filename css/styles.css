@@ -1660,3 +1660,137 @@ body {
   padding: 24px 20px;
   text-align: center;
 }
+
+/* =============================================
+   CARD — JOGOS DE HOJE
+   ============================================= */
+.today-matches-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 0 0 14px;
+  overflow: hidden;
+}
+
+.tdm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: .85rem;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+
+.tdm-watch-btn {
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  background: rgba(35,134,54,.12);
+  border: 1px solid rgba(35,134,54,.3);
+  border-radius: var(--radius-sm);
+  padding: 3px 10px;
+  transition: background var(--transition);
+}
+.tdm-watch-btn:hover { background: rgba(35,134,54,.22); }
+
+.tdm-body { padding: 4px 0; }
+
+.tdm-match {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  text-decoration: none;
+  color: var(--text);
+  transition: background var(--transition);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+.tdm-match:last-child { border-bottom: none; }
+.tdm-match:hover { background: var(--surface2); }
+
+.tdm-team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.tdm-team-home { justify-content: flex-end; }
+.tdm-team-away { justify-content: flex-start; }
+
+.tdm-name {
+  font-size: .82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tdm-flag { font-size: 1.1em; flex-shrink: 0; }
+
+.tdm-score-block {
+  flex-shrink: 0;
+  min-width: 52px;
+  text-align: center;
+}
+
+.tdm-time {
+  font-size: .8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.tdm-score {
+  font-size: .95rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.tdm-live {
+  color: #3fb950;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.tdm-live-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3fb950;
+  animation: pulse-dot 1s infinite;
+}
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+.tdm-empty {
+  padding: 14px 14px;
+  color: var(--text-muted);
+  font-size: .83rem;
+}
+
+/* =============================================
+   GLOBAL LOCK BADGE (admin)
+   ============================================= */
+.global-lock-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: .75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.global-lock-badge.open   { background: rgba(35,134,54,.15);  color: #3fb950; border-color: rgba(63,185,80,.3); }
+.global-lock-badge.locked { background: rgba(218,54,51,.15);  color: #f85149; border-color: rgba(248,81,73,.3); }
+
+.btn-adm-lock   { background: var(--red);    color: #fff; padding: 8px 18px; border: none; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; font-size: .88rem; transition: opacity var(--transition); }
+.btn-adm-unlock { background: var(--accent); color: #fff; padding: 8px 18px; border: none; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; font-size: .88rem; transition: opacity var(--transition); }
+.btn-adm-lock:hover:not(:disabled)   { opacity: .85; }
+.btn-adm-unlock:hover:not(:disabled) { opacity: .85; }
+.btn-adm-lock:disabled, .btn-adm-unlock:disabled { opacity: .4; cursor: not-allowed; }

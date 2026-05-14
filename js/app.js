@@ -47,11 +47,8 @@ async function _onLogin(user) {
     await loadKnockoutBetsUI(user.uid);
 
     _refreshUserScore(user.uid);
-
-    // Carrega config admin (WhatsApp, etc.)
     _loadWhatsAppButton();
-
-    // Exibe elementos de admin
+    _loadTodayMatches();
     initAdminUI();
 
     showScreen('dashboard-screen');
@@ -96,6 +93,67 @@ async function _loadWhatsAppButton() {
       btn.classList.add('hidden');
     }
   } catch { /* silencioso */ }
+}
+
+// ---- Card: Jogos de Hoje ------------------------------------
+async function _loadTodayMatches() {
+  const card = document.getElementById('today-matches-card');
+  if (!card) return;
+  const body = card.querySelector('.tdm-body');
+
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    const resp = await fetch(
+      `https://v3.football.api-sports.io/fixtures?league=1&season=2026&date=${today}`,
+      { headers: { 'x-apisports-key': 'b89962f0944bdce04ad5fec40c67e32d' } }
+    );
+    const data = await resp.json();
+    const fixtures = (data.response || []);
+
+    if (fixtures.length === 0) {
+      body.innerHTML = `<p class="tdm-empty">Sem jogos da Copa hoje.</p>`;
+      return;
+    }
+
+    let html = '';
+    for (const f of fixtures) {
+      const home    = f.teams.home;
+      const away    = f.teams.away;
+      const status  = f.fixture.status.short;
+      const time    = new Date(f.fixture.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+      const homeIso = _findTeamIso(home.name);
+      const awayIso = _findTeamIso(away.name);
+
+      const scoreHtml = status === 'NS'
+        ? `<span class="tdm-time">${time}</span>`
+        : (status === 'FT' || status === 'AET' || status === 'PEN')
+          ? `<span class="tdm-score">${f.goals.home ?? 0}–${f.goals.away ?? 0}</span>`
+          : `<span class="tdm-score tdm-live">${f.goals.home ?? 0}–${f.goals.away ?? 0} <span class="tdm-live-dot"></span></span>`;
+
+      html += `<a class="tdm-match" href="https://cazetv.com/ao-vivo/" target="_blank" rel="noopener">
+        <div class="tdm-team tdm-team-home">
+          ${homeIso ? `<span class="fi fi-${homeIso} tdm-flag"></span>` : ''}
+          <span class="tdm-name">${home.name}</span>
+        </div>
+        <div class="tdm-score-block">${scoreHtml}</div>
+        <div class="tdm-team tdm-team-away">
+          <span class="tdm-name">${away.name}</span>
+          ${awayIso ? `<span class="fi fi-${awayIso} tdm-flag"></span>` : ''}
+        </div>
+      </a>`;
+    }
+    body.innerHTML = html;
+  } catch {
+    body.innerHTML = `<p class="tdm-empty">Não foi possível carregar os jogos.</p>`;
+  }
+}
+
+function _findTeamIso(apiName) {
+  const n = (apiName || '').toLowerCase();
+  for (const t of Object.values(TEAMS)) {
+    if (t.name.toLowerCase() === n || t.short.toLowerCase() === n) return t.iso;
+  }
+  return null;
 }
 
 // ---- Aba Minhas Apostas ------------------------------------
