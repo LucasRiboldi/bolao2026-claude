@@ -51,18 +51,33 @@
 
   <!-- ======= AUTH SCREEN ======= -->
   <section id="auth-screen" class="screen">
-    <div class="auth-page">
 
-      <!-- 1. Hero Copa 2026 -->
-      <div class="hero-section">
-        <span class="hero-trophy">🏆</span>
-        <div class="hero-badge-row">
-          <span class="hero-badge">FIFA WORLD CUP</span>
-          <span class="hero-year">2026</span>
+    <!-- ===== HERO — Full Viewport ===== -->
+    <div class="hero-section">
+      <!-- Ambient glow orbs -->
+      <div class="hero-glow hero-glow-gold"></div>
+      <div class="hero-glow hero-glow-green"></div>
+      <div class="hero-glow hero-glow-red"></div>
+
+      <!-- Main content -->
+      <div class="hero-content">
+        <div class="hero-eyebrow">
+          <span class="hero-eyebrow-dot"></span>
+          <span>FIFA World Cup</span>
+          <span class="hero-eyebrow-sep">•</span>
+          <span class="hero-eyebrow-year">2026</span>
         </div>
-        <h1 class="hero-title">Bolão<br><span class="hero-highlight">Copa 2026</span></h1>
-        <p class="hero-tagline">Aposte nos jogos · dispute com amigos · conquiste o topo!</p>
-        <div class="hero-flags-row">
+
+        <span class="hero-trophy" aria-hidden="true">🏆</span>
+
+        <h1 class="hero-title">
+          <span class="hero-title-main">Bolão Copa</span>
+          <span class="hero-title-year">2026</span>
+        </h1>
+
+        <p class="hero-tagline">Aposte nos jogos · dispute com amigos · conquiste o topo</p>
+
+        <div class="hero-flags-row" aria-hidden="true">
           <span class="fi fi-br hero-fl"></span>
           <span class="fi fi-ar hero-fl"></span>
           <span class="fi fi-fr hero-fl"></span>
@@ -73,20 +88,26 @@
           <span class="fi fi-us hero-fl"></span>
           <span class="fi fi-mx hero-fl"></span>
           <span class="fi fi-nl hero-fl"></span>
+          <span class="fi fi-it hero-fl"></span>
+          <span class="fi fi-hr hero-fl"></span>
         </div>
+
         <div class="hero-stats-row">
           <div class="hero-stat-item">
             <span class="hero-stat-num">48</span>
             <span class="hero-stat-lbl">seleções</span>
           </div>
+          <div class="hero-stat-divider"></div>
           <div class="hero-stat-item">
             <span class="hero-stat-num">104</span>
             <span class="hero-stat-lbl">jogos</span>
           </div>
+          <div class="hero-stat-divider"></div>
           <div class="hero-stat-item">
             <span class="hero-stat-num">3</span>
             <span class="hero-stat-lbl">países-sede</span>
           </div>
+          <div class="hero-stat-divider"></div>
           <div class="hero-stat-item">
             <span class="hero-stat-num">JUN</span>
             <span class="hero-stat-lbl">2026</span>
@@ -94,10 +115,21 @@
         </div>
       </div>
 
-      <!-- 2. Card: Jogos de Hoje -->
+      <!-- Scroll hint -->
+      <div class="hero-scroll-hint" aria-hidden="true">
+        <span class="hero-scroll-label">apostar</span>
+        <span class="hero-scroll-arrow">↓</span>
+      </div>
+    </div>
+    <!-- /hero-section -->
+
+    <!-- ===== CARDS AREA ===== -->
+    <div class="auth-page">
+
+      <!-- Card: Jogos de Hoje -->
       <div id="today-matches-card" class="today-matches-card today-matches-card--auth">
         <div class="tdm-header">
-          📅 Jogos de Hoje
+          <span>📅 Jogos de Hoje</span>
           <a class="tdm-watch-btn" href="https://cazetv.com/ao-vivo/" target="_blank" rel="noopener">▶ Ao vivo</a>
         </div>
         <div class="tdm-body">
@@ -105,7 +137,7 @@
         </div>
       </div>
 
-      <!-- 3. Formulário de autenticação -->
+      <!-- Formulário de autenticação -->
       <div class="auth-card">
         <div class="auth-tabs">
           <button class="auth-tab active" data-tab="login">Entrar</button>
@@ -134,13 +166,14 @@
         </form>
       </div>
 
-      <!-- 4. Ranking Público -->
+      <!-- Ranking Público -->
       <div class="public-ranking-box public-ranking-box--auth">
         <h2>🏅 Ranking ao Vivo</h2>
         <div id="public-ranking-list"><p class="muted">Carregando…</p></div>
       </div>
 
-    </div>
+    </div><!-- /auth-page -->
+
   </section>
 
   <!-- ======= DASHBOARD SCREEN ======= -->
@@ -173,39 +206,28 @@
 
     <!-- ===== GRUPOS + MATA-MATA ===== -->
     <section id="section-groups" class="content-section">
-
       <div class="section-header">
         <h2>⚽ Fase de Grupos</h2>
         <p>Preencha o placar de cada partida · 72 jogos · 12 grupos</p>
       </div>
-
       <div id="bets-lock-banner" class="bets-lock-banner hidden">
         <span>🔒</span>
         <span>Apostas bloqueadas pelo administrador. Aguarde a liberação para editar.</span>
       </div>
-
       <div id="group-panel" class="group-panel"></div>
-
       <div class="section-divider">
         <div class="section-divider-inner">
           <h2>⚡ Fase Mata-Mata</h2>
           <p>Selecione os vencedores de cada confronto</p>
         </div>
       </div>
-
       <div class="ko-status-bar">
         <span id="ko-status" class="ko-status"></span>
       </div>
-
       <div id="knockout-bracket" class="knockout-bracket"></div>
-
       <div class="save-bar">
-        <button id="btn-save-groups" class="btn btn-primary btn-full">
-          💾 Salvar Palpites
-        </button>
-        <button id="btn-export-bets" class="btn btn-secondary btn-full">
-          📄 Exportar
-        </button>
+        <button id="btn-save-groups" class="btn btn-primary btn-full">💾 Salvar Palpites</button>
+        <button id="btn-export-bets" class="btn btn-secondary btn-full">📄 Exportar</button>
       </div>
     </section>
 
@@ -238,7 +260,6 @@
         <p>Clique em 📋 para ver as apostas de cada participante</p>
       </div>
       <div id="ranking-content"></div>
-
       <div class="scoring-legend card" style="margin:0 16px 20px;">
         <h3>📋 Regras de Pontuação</h3>
         <ul>
@@ -257,12 +278,9 @@
         <p>Gerencie apostas dos participantes</p>
       </div>
 
-      <!-- WhatsApp do Admin -->
       <div class="admin-card">
         <div class="admin-card-title">📱 WhatsApp do Admin</div>
-        <p class="admin-card-desc">
-          Número exibido para os participantes entrarem em contato. Use o formato internacional sem espaços (ex: <code>5511999990000</code>).
-        </p>
+        <p class="admin-card-desc">Número exibido para os participantes. Formato internacional sem espaços (ex: <code>5511999990000</code>).</p>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:0 16px 14px">
           <input type="tel" id="inp-whatsapp" placeholder="5511999990000"
                  style="flex:1;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.9rem;min-width:180px">
@@ -270,78 +288,52 @@
         </div>
       </div>
 
-      <!-- Lock global -->
       <div class="admin-card">
         <div class="admin-card-title" style="display:flex;align-items:center;gap:10px">
           🔒 Bloquear / Liberar Apostas
           <span id="global-lock-badge" class="global-lock-badge open">🔓 Aberto</span>
         </div>
-        <p class="admin-card-desc">
-          Bloqueia ou libera as apostas de <strong>todos os participantes</strong> de uma só vez.
-        </p>
+        <p class="admin-card-desc">Bloqueia ou libera as apostas de <strong>todos os participantes</strong> de uma só vez.</p>
         <div style="display:flex;gap:10px;flex-wrap:wrap;padding:0 16px 14px">
           <button id="btn-global-lock"   class="btn btn-adm-lock"   onclick="adminSetGlobalLock(true)">🔒 Bloquear Todos</button>
           <button id="btn-global-unlock" class="btn btn-adm-unlock hidden" onclick="adminSetGlobalLock(false)">🔓 Liberar Todos</button>
         </div>
       </div>
 
-      <!-- Controle de Cadastro -->
       <div class="admin-card">
         <div class="admin-card-title" style="display:flex;align-items:center;gap:10px">
           🔐 Controle de Cadastro
           <span id="registration-badge" class="global-lock-badge open">🔓 Aberto</span>
         </div>
-        <p class="admin-card-desc">
-          Quando fechado, novos usuários <strong>não podem se cadastrar</strong>. Use durante o campeonato para evitar novos participantes.
-          Por enquanto está aberto para testes.
-        </p>
+        <p class="admin-card-desc">Quando fechado, novos usuários <strong>não podem se cadastrar</strong>. Por enquanto aberto para testes.</p>
         <div style="display:flex;gap:10px;flex-wrap:wrap;padding:0 16px 14px">
           <button id="btn-close-reg" class="btn btn-adm-lock"   onclick="adminToggleRegistration(false)">🔐 Fechar Cadastro</button>
           <button id="btn-open-reg"  class="btn btn-adm-unlock hidden" onclick="adminToggleRegistration(true)">🔓 Abrir Cadastro</button>
         </div>
       </div>
 
-      <!-- Recalcular Ranking -->
       <div class="admin-card">
         <div class="admin-card-title">📊 Recalcular Pontuação</div>
-        <p class="admin-card-desc">
-          Lê os resultados oficiais já lançados e recalcula a pontuação de <strong>todos os participantes</strong>,
-          atualizando o ranking do bolão. Use sempre que lançar novos resultados.
-        </p>
+        <p class="admin-card-desc">Recalcula a pontuação de <strong>todos os participantes</strong> com base nos resultados lançados.</p>
         <div style="padding:0 16px 14px">
-          <button id="btn-recalc-ranking" class="btn btn-secondary" onclick="adminRecalcRanking()">
-            🔄 Recalcular Ranking Agora
-          </button>
+          <button id="btn-recalc-ranking" class="btn btn-secondary" onclick="adminRecalcRanking()">🔄 Recalcular Ranking Agora</button>
         </div>
       </div>
 
-      <!-- Ferramentas de teste -->
       <div class="admin-card">
         <div class="admin-card-title">🧪 Ferramentas de Teste</div>
-        <p class="admin-card-desc">
-          Simula 10 usuários com palpites aleatórios. Requer <code>node seed-server.js</code> rodando no terminal.
-        </p>
+        <p class="admin-card-desc">Simula 10 usuários com palpites aleatórios. Requer <code>node seed-server.js</code> rodando no terminal.</p>
         <div style="padding:0 16px 14px">
-          <button class="btn btn-secondary" onclick="window.open('test-seed.html','_blank')">
-            🧪 Abrir Seed de Teste
-          </button>
+          <button class="btn btn-secondary" onclick="window.open('test-seed.html','_blank')">🧪 Abrir Seed de Teste</button>
         </div>
       </div>
 
-      <!-- Resultados Oficiais -->
       <div class="admin-card">
         <div class="admin-card-title">🏆 Resultados Oficiais</div>
-        <p class="admin-card-desc">
-          Lance os resultados reais dos jogos. Estes dados alimentam o ranking do bolão
-          de forma <strong>independente</strong> da API de classificação — funcionam mesmo
-          se a API estiver fora do ar.
-        </p>
-        <div id="results-panel">
-          <p class="muted" style="padding:20px">Abrindo painel de resultados…</p>
-        </div>
+        <p class="admin-card-desc">Lance os resultados reais dos jogos. Alimentam o ranking independente da API de classificação.</p>
+        <div id="results-panel"><p class="muted" style="padding:20px">Abrindo painel de resultados…</p></div>
       </div>
 
-      <!-- Lista de usuários -->
       <div class="admin-card">
         <div class="admin-card-title" style="display:flex;align-items:center;justify-content:space-between">
           <span>👥 Participantes</span>
