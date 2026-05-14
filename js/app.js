@@ -18,6 +18,9 @@
       if (section === 'standings') {
         await initStandings();
       }
+      if (section === 'mybets' && auth.currentUser) {
+        await initMyBets(auth.currentUser.uid);
+      }
       if (section === 'admin' && isAdmin()) {
         await initAdminPanel();
       }
@@ -45,6 +48,9 @@ async function _onLogin(user) {
 
     _refreshUserScore(user.uid);
 
+    // Carrega config admin (WhatsApp, etc.)
+    _loadWhatsAppButton();
+
     // Exibe elementos de admin
     initAdminUI();
 
@@ -59,8 +65,9 @@ async function _onLogin(user) {
 
 function _onLogout() {
   showScreen('auth-screen');
-  // Oculta tabs de admin ao deslogar
   document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+  const btn = document.getElementById('btn-whatsapp');
+  if (btn) btn.classList.add('hidden');
   loadPublicRanking();
 }
 
@@ -73,5 +80,35 @@ async function _refreshUserScore(uid) {
     document.getElementById('hdr-score').textContent = `${pts} pts`;
   } catch {
     document.getElementById('hdr-score').textContent = '0 pts';
+  }
+}
+
+async function _loadWhatsAppButton() {
+  try {
+    const config = await loadAdminConfig();
+    const btn = document.getElementById('btn-whatsapp');
+    if (!btn) return;
+    if (config.whatsapp) {
+      const number = config.whatsapp.replace(/\D/g, '');
+      btn.href = `https://wa.me/${number}`;
+      btn.classList.remove('hidden');
+    } else {
+      btn.classList.add('hidden');
+    }
+  } catch { /* silencioso */ }
+}
+
+// ---- Aba Minhas Apostas ------------------------------------
+async function initMyBets(uid) {
+  const container = document.getElementById('mybets-content');
+  container.innerHTML = `<div style="padding:20px;text-align:center"><div class="spinner"></div></div>`;
+  try {
+    const [{ groupBets, knockoutBets }, results] = await Promise.all([
+      loadUserBetsForHistory(uid),
+      loadResults(),
+    ]);
+    container.innerHTML = _renderBetHistory(groupBets, knockoutBets, results);
+  } catch (e) {
+    container.innerHTML = `<p class="muted" style="padding:20px">Erro ao carregar apostas: ${e.message}</p>`;
   }
 }

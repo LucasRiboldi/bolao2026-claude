@@ -5,7 +5,7 @@ let _r32Matches = [];
 let _koLocked   = false;
 
 function initKnockout() {
-  document.getElementById('btn-simulate').addEventListener('click', _simulate);
+  // Botão simular removido — auto-simula ao completar grupos
 }
 
 function _simulate() {
@@ -16,8 +16,6 @@ function _simulate() {
   _r32Matches     = buildR32(qualified);
   _koBets = {};
   _renderBracket();
-  document.getElementById('ko-status').textContent =
-    '✅ Bracket gerado! Toque nos times para escolher os vencedores.';
 }
 
 function _renderBracket() {
@@ -82,10 +80,10 @@ function _teamClass(teamId, winner) {
 }
 
 function _teamHtml(teamId) {
-  if (!teamId) return `<span class="tf">❓</span> A definir`;
+  if (!teamId) return `<span class="tf">❓</span> <span class="bt-name">A definir</span>`;
   const t = TEAMS[teamId];
   if (!t) return teamId;
-  return `<span class="fi fi-${t.iso} tf"></span> ${t.short}`;
+  return `<span class="fi fi-${t.iso} tf"></span><span class="bt-name">${t.short}</span>`;
 }
 
 async function loadKnockoutBetsUI(uid) {

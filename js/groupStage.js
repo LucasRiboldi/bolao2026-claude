@@ -130,13 +130,11 @@ function _applyLockUI(locked) {
   const panel   = document.getElementById('group-panel');
   const saveBtn = document.getElementById('btn-save-groups');
   const banner  = document.getElementById('bets-lock-banner');
-  const simBtn  = document.getElementById('btn-simulate');
 
   panel.querySelectorAll('.step-btn').forEach(b => b.disabled = locked);
   panel.querySelectorAll('.step-btn').forEach(b => b.style.opacity = locked ? '.35' : '');
-  if (saveBtn)  saveBtn.classList.toggle('hidden', locked);
-  if (banner)   banner.classList.toggle('hidden', !locked);
-  if (simBtn)   simBtn.disabled = locked;
+  if (saveBtn) saveBtn.classList.toggle('hidden', locked);
+  if (banner)  banner.classList.toggle('hidden', !locked);
 }
 
 // ---- Exposto: admin chama para (des)bloquear na UI --------------

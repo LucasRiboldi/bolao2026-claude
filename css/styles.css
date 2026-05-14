@@ -511,50 +511,51 @@ body {
 }
 
 /* =============================================
-   KNOCKOUT BRACKET
+   KNOCKOUT BRACKET — responsivo, ocupa toda a largura
    ============================================= */
-.ko-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-  flex-wrap: wrap;
+.ko-status-bar {
+  padding: 6px 14px;
+  min-height: 24px;
 }
 .ko-status { font-size: .82rem; color: var(--accent); }
 
 .knockout-bracket {
-  padding: 10px 8px;
+  width: 100%;
+  padding: 8px 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
 }
 
 .bracket-rounds {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   align-items: flex-start;
-  min-width: max-content;
+  width: 100%;
+  padding: 0 8px;
+  box-sizing: border-box;
 }
 
+/* Cada coluna ocupa 1/5 da tela mínimo — responsivo */
 .bracket-round {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-width: 138px;
-  max-width: 138px;
+  gap: 6px;
+  flex: 1 1 0;
+  min-width: 100px;
+  scroll-snap-align: start;
 }
 
 .round-title {
-  font-size: .63rem;
+  font-size: .62rem;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: .04em;
   text-align: center;
-  padding: 3px 0 5px;
+  padding: 3px 2px 5px;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 3px;
+  margin-bottom: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -571,16 +572,21 @@ body {
 .bracket-team {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 7px 8px;
+  gap: 4px;
+  padding: 6px 6px;
   cursor: pointer;
   transition: background var(--transition);
   border-bottom: 1px solid var(--border);
-  font-size: .76rem;
+  font-size: .72rem;
   font-weight: 500;
-  min-height: 34px;
+  min-height: 32px;
+  overflow: hidden;
+}
+.bt-name {
   white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 .bracket-team:last-child { border-bottom: none; }
 .bracket-team:hover:not(.tbd):not(.selected) { background: var(--surface2); }
@@ -595,7 +601,53 @@ body {
   cursor: default;
   font-style: italic;
 }
-.bracket-team .tf { font-size: .95rem; }
+.bracket-team .tf { font-size: .88rem; flex-shrink: 0; }
+
+/* WhatsApp button no header */
+.btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #25D366;
+  color: #fff;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: opacity var(--transition), transform var(--transition);
+}
+.btn-whatsapp:hover { opacity: .85; transform: scale(1.08); }
+.btn-whatsapp svg { width: 17px; height: 17px; }
+.btn-whatsapp.hidden { display: none; }
+
+/* Admin: unlock toggle rápido */
+.admin-unlock-quick {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.admin-unlock-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.admin-unlock-row select {
+  flex: 1;
+  min-width: 180px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: .88rem;
+}
+.admin-unlock-status {
+  font-size: .8rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
 
 /* =============================================
    CLASSIFICAÇÃO OFICIAL (API-Football)

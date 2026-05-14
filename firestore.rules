@@ -3,17 +3,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ---- Admin: identifica pelo email do token JWT ----
     function isAdmin() {
       return request.auth != null
           && request.auth.token.email == 'lucasriboldi.dev@gmail.com';
     }
 
-    // --------------------------------------------------------
-    // USERS
-    // --------------------------------------------------------
     match /users/{uid} {
-      // Admin pode listar todos os usuários (para o painel admin)
       allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
 
       match /profile/{doc} {
@@ -22,29 +17,27 @@ service cloud.firestore {
       }
 
       match /bets/{doc} {
-        // Bolão transparente: qualquer participante pode ver as apostas dos outros
         allow read:  if request.auth != null;
         allow write: if request.auth != null && (request.auth.uid == uid || isAdmin());
       }
     }
 
-    // --------------------------------------------------------
-    // RESULTS — admin escreve, todos leem
-    // --------------------------------------------------------
     match /results/{doc} {
       allow read:  if request.auth != null;
       allow write: if isAdmin();
     }
 
-    // --------------------------------------------------------
-    // RANKING — admin escreve, todos leem
-    // --------------------------------------------------------
     match /ranking/{doc} {
       allow read:  if request.auth != null;
       allow write: if isAdmin();
     }
 
-    // Bloqueia tudo o mais
+    // Config global do bolão (WhatsApp admin, etc.)
+    match /config/{doc} {
+      allow read:  if request.auth != null;
+      allow write: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

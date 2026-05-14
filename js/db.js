@@ -118,3 +118,14 @@ async function loadAdminUserList() {
   });
   return list;
 }
+
+// ---- Config global do bolão (admin escreve, todos leem) ------
+
+async function loadAdminConfig() {
+  const snap = await db.collection('config').doc('admin').get();
+  return snap.exists ? snap.data() : {};
+}
+
+async function saveAdminConfig(data) {
+  await db.collection('config').doc('admin').set(data, { merge: true });
+}
