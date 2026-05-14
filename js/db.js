@@ -200,3 +200,22 @@ async function setGlobalLock(locked) {
     : { globalLocked: false, globalUnlockedAt: ts };
   await db.collection('config').doc('admin').set(data, { merge: true });
 }
+
+async function updateUserName(uid, name) {
+  await db.collection('users').doc(uid)
+    .collection('profile').doc('info')
+    .set({ name }, { merge: true });
+}
+
+async function deleteUserData(uid) {
+  const batch = db.batch();
+  batch.delete(db.collection('users').doc(uid).collection('profile').doc('info'));
+  batch.delete(db.collection('users').doc(uid).collection('bets').doc('groupStage'));
+  batch.delete(db.collection('users').doc(uid).collection('bets').doc('knockout'));
+  batch.delete(db.collection('users').doc(uid));
+  await batch.commit();
+}
+
+async function setRegistrationOpen(open) {
+  await saveAdminConfig({ registrationOpen: open });
+}

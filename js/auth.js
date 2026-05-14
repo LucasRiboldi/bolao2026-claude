@@ -8,7 +8,7 @@ function initAuth() {
   const nameF  = document.getElementById('field-name');
   const submit = document.getElementById('auth-submit');
 
-  tabs.forEach(tab => tab.addEventListener('click', () => {
+  tabs.forEach(tab => tab.addEventListener('click', async () => {
     _currentTab = tab.dataset.tab;
     tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === _currentTab));
     nameF.classList.toggle('hidden', _currentTab === 'login');
@@ -16,6 +16,16 @@ function initAuth() {
       _currentTab === 'login' ? 'current-password' : 'new-password';
     submit.textContent = _currentTab === 'login' ? 'Entrar' : 'Cadastrar';
     errEl.classList.add('hidden');
+
+    const banner = document.getElementById('reg-closed-banner');
+    if (banner && _currentTab === 'register') {
+      try {
+        const config = await loadAdminConfig();
+        banner.classList.toggle('hidden', config.registrationOpen !== false);
+      } catch { banner.classList.add('hidden'); }
+    } else if (banner) {
+      banner.classList.add('hidden');
+    }
   }));
 
   form.addEventListener('submit', async (e) => {
@@ -35,6 +45,15 @@ function initAuth() {
       if (_currentTab === 'login') {
         await auth.signInWithEmailAndPassword(email, password);
       } else {
+        try {
+          const config = await loadAdminConfig();
+          if (config.registrationOpen === false) {
+            showError('Cadastro temporariamente fechado. Contate o administrador.');
+            submit.disabled = false;
+            hideLoading();
+            return;
+          }
+        } catch { /* default: open */ }
         const cred = await auth.createUserWithEmailAndPassword(email, password);
         await cred.user.updateProfile({ displayName: name });
         await saveProfile(cred.user.uid, { name, email });

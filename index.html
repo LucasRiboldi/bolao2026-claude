@@ -26,20 +26,94 @@
     </div>
   </div>
 
+  <!-- ======= MODAL: Editar Apostas (admin) ======= -->
+  <div id="edit-bets-modal" class="bh-modal-overlay hidden"
+       onclick="if(event.target===this)closeEditBets()">
+    <div class="bh-modal eb-modal">
+      <div class="bh-modal-header">
+        <h2 id="eb-title">✏️ Editar Apostas</h2>
+        <button class="bh-close" onclick="closeEditBets()">✕</button>
+      </div>
+      <div class="eb-tabs">
+        <button class="eb-tab active" data-tab="groups" onclick="switchEditBetsTab('groups')">⚽ Grupos</button>
+        <button class="eb-tab" data-tab="knockout" onclick="switchEditBetsTab('knockout')">⚡ Mata-Mata</button>
+      </div>
+      <div class="bh-modal-body" style="padding:0">
+        <div id="eb-groups-panel" class="eb-panel"></div>
+        <div id="eb-ko-panel" class="eb-panel hidden"></div>
+      </div>
+      <div class="eb-footer">
+        <button class="btn btn-ghost" onclick="closeEditBets()">Cancelar</button>
+        <button class="btn btn-primary" onclick="adminSaveEditedBets()">💾 Salvar Apostas</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ======= AUTH SCREEN ======= -->
   <section id="auth-screen" class="screen">
-    <div class="auth-container">
+    <div class="auth-page">
 
-      <div class="auth-left">
-        <div class="auth-header">
-          <div class="auth-logo">🏆</div>
-          <h1>Bolão Copa 2026</h1>
-          <p>Aposte nos jogos e dispute com seus amigos!</p>
+      <!-- 1. Hero Copa 2026 -->
+      <div class="hero-section">
+        <span class="hero-trophy">🏆</span>
+        <div class="hero-badge-row">
+          <span class="hero-badge">FIFA WORLD CUP</span>
+          <span class="hero-year">2026</span>
         </div>
+        <h1 class="hero-title">Bolão<br><span class="hero-highlight">Copa 2026</span></h1>
+        <p class="hero-tagline">Aposte nos jogos · dispute com amigos · conquiste o topo!</p>
+        <div class="hero-flags-row">
+          <span class="fi fi-br hero-fl"></span>
+          <span class="fi fi-ar hero-fl"></span>
+          <span class="fi fi-fr hero-fl"></span>
+          <span class="fi fi-de hero-fl"></span>
+          <span class="fi fi-es hero-fl"></span>
+          <span class="fi fi-pt hero-fl"></span>
+          <span class="fi fi-gb-eng hero-fl"></span>
+          <span class="fi fi-us hero-fl"></span>
+          <span class="fi fi-mx hero-fl"></span>
+          <span class="fi fi-nl hero-fl"></span>
+        </div>
+        <div class="hero-stats-row">
+          <div class="hero-stat-item">
+            <span class="hero-stat-num">48</span>
+            <span class="hero-stat-lbl">seleções</span>
+          </div>
+          <div class="hero-stat-item">
+            <span class="hero-stat-num">104</span>
+            <span class="hero-stat-lbl">jogos</span>
+          </div>
+          <div class="hero-stat-item">
+            <span class="hero-stat-num">3</span>
+            <span class="hero-stat-lbl">países-sede</span>
+          </div>
+          <div class="hero-stat-item">
+            <span class="hero-stat-num">JUN</span>
+            <span class="hero-stat-lbl">2026</span>
+          </div>
+        </div>
+      </div>
 
+      <!-- 2. Card: Jogos de Hoje -->
+      <div id="today-matches-card" class="today-matches-card today-matches-card--auth">
+        <div class="tdm-header">
+          📅 Jogos de Hoje
+          <a class="tdm-watch-btn" href="https://cazetv.com/ao-vivo/" target="_blank" rel="noopener">▶ Ao vivo</a>
+        </div>
+        <div class="tdm-body">
+          <p class="tdm-empty">Carregando jogos…</p>
+        </div>
+      </div>
+
+      <!-- 3. Formulário de autenticação -->
+      <div class="auth-card">
         <div class="auth-tabs">
           <button class="auth-tab active" data-tab="login">Entrar</button>
           <button class="auth-tab" data-tab="register">Cadastrar</button>
+        </div>
+
+        <div id="reg-closed-banner" class="reg-closed-banner hidden">
+          🔐 Cadastro temporariamente fechado. Contate o administrador.
         </div>
 
         <form id="auth-form" novalidate>
@@ -60,22 +134,10 @@
         </form>
       </div>
 
-      <div class="auth-right">
-        <!-- Card: Jogos de Hoje -->
-        <div id="today-matches-card" class="today-matches-card">
-          <div class="tdm-header">
-            📅 Jogos de Hoje
-            <a class="tdm-watch-btn" href="https://cazetv.com/ao-vivo/" target="_blank" rel="noopener">▶ Ao vivo</a>
-          </div>
-          <div class="tdm-body">
-            <p class="tdm-empty">Carregando jogos…</p>
-          </div>
-        </div>
-
-        <div class="public-ranking-box">
-          <h2>🏅 Ranking</h2>
-          <div id="public-ranking-list"><p class="muted">Carregando…</p></div>
-        </div>
+      <!-- 4. Ranking Público -->
+      <div class="public-ranking-box public-ranking-box--auth">
+        <h2>🏅 Ranking ao Vivo</h2>
+        <div id="public-ranking-list"><p class="muted">Carregando…</p></div>
       </div>
 
     </div>
@@ -201,7 +263,7 @@
         <p class="admin-card-desc">
           Número exibido para os participantes entrarem em contato. Use o formato internacional sem espaços (ex: <code>5511999990000</code>).
         </p>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:0 16px 14px">
           <input type="tel" id="inp-whatsapp" placeholder="5511999990000"
                  style="flex:1;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.9rem;min-width:180px">
           <button class="btn btn-secondary" onclick="adminSaveWhatsApp()">💾 Salvar</button>
@@ -217,9 +279,25 @@
         <p class="admin-card-desc">
           Bloqueia ou libera as apostas de <strong>todos os participantes</strong> de uma só vez.
         </p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;padding:0 16px 14px">
           <button id="btn-global-lock"   class="btn btn-adm-lock"   onclick="adminSetGlobalLock(true)">🔒 Bloquear Todos</button>
           <button id="btn-global-unlock" class="btn btn-adm-unlock hidden" onclick="adminSetGlobalLock(false)">🔓 Liberar Todos</button>
+        </div>
+      </div>
+
+      <!-- Controle de Cadastro -->
+      <div class="admin-card">
+        <div class="admin-card-title" style="display:flex;align-items:center;gap:10px">
+          🔐 Controle de Cadastro
+          <span id="registration-badge" class="global-lock-badge open">🔓 Aberto</span>
+        </div>
+        <p class="admin-card-desc">
+          Quando fechado, novos usuários <strong>não podem se cadastrar</strong>. Use durante o campeonato para evitar novos participantes.
+          Por enquanto está aberto para testes.
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;padding:0 16px 14px">
+          <button id="btn-close-reg" class="btn btn-adm-lock"   onclick="adminToggleRegistration(false)">🔐 Fechar Cadastro</button>
+          <button id="btn-open-reg"  class="btn btn-adm-unlock hidden" onclick="adminToggleRegistration(true)">🔓 Abrir Cadastro</button>
         </div>
       </div>
 
@@ -230,9 +308,11 @@
           Lê os resultados oficiais já lançados e recalcula a pontuação de <strong>todos os participantes</strong>,
           atualizando o ranking do bolão. Use sempre que lançar novos resultados.
         </p>
-        <button id="btn-recalc-ranking" class="btn btn-secondary" onclick="adminRecalcRanking()">
-          🔄 Recalcular Ranking Agora
-        </button>
+        <div style="padding:0 16px 14px">
+          <button id="btn-recalc-ranking" class="btn btn-secondary" onclick="adminRecalcRanking()">
+            🔄 Recalcular Ranking Agora
+          </button>
+        </div>
       </div>
 
       <!-- Ferramentas de teste -->
@@ -241,9 +321,11 @@
         <p class="admin-card-desc">
           Simula 10 usuários com palpites aleatórios. Requer <code>node seed-server.js</code> rodando no terminal.
         </p>
-        <button class="btn btn-secondary" onclick="window.open('test-seed.html','_blank')">
-          🧪 Abrir Seed de Teste
-        </button>
+        <div style="padding:0 16px 14px">
+          <button class="btn btn-secondary" onclick="window.open('test-seed.html','_blank')">
+            🧪 Abrir Seed de Teste
+          </button>
+        </div>
       </div>
 
       <!-- Resultados Oficiais -->

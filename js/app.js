@@ -96,6 +96,8 @@ async function _loadWhatsAppButton() {
 }
 
 // ---- Card: Jogos de Hoje ------------------------------------
+let _todayPollTimer = null;
+
 async function _loadTodayMatches() {
   const card = document.getElementById('today-matches-card');
   if (!card) return;
@@ -112,10 +114,12 @@ async function _loadTodayMatches() {
 
     if (fixtures.length === 0) {
       body.innerHTML = `<p class="tdm-empty">Sem jogos da Copa hoje.</p>`;
+      _schedulePoll(false);
       return;
     }
 
     let html = '';
+    let hasLive = false;
     for (const f of fixtures) {
       const home    = f.teams.home;
       const away    = f.teams.away;
@@ -123,29 +127,48 @@ async function _loadTodayMatches() {
       const time    = new Date(f.fixture.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
       const homeIso = _findTeamIso(home.name);
       const awayIso = _findTeamIso(away.name);
+      const isLive  = !['NS','FT','AET','PEN','PST','CANC','ABD','AWD','WO'].includes(status);
+      if (isLive) hasLive = true;
 
-      const scoreHtml = status === 'NS'
-        ? `<span class="tdm-time">${time}</span>`
+      const midHtml = status === 'NS'
+        ? `<div class="tdm-mid">
+             <span class="tdm-kickoff-time">${time}</span>
+             <span class="tdm-kickoff-label">início</span>
+           </div>`
         : (status === 'FT' || status === 'AET' || status === 'PEN')
-          ? `<span class="tdm-score">${f.goals.home ?? 0}–${f.goals.away ?? 0}</span>`
-          : `<span class="tdm-score tdm-live">${f.goals.home ?? 0}–${f.goals.away ?? 0} <span class="tdm-live-dot"></span></span>`;
+          ? `<div class="tdm-mid">
+               <span class="tdm-final-score">${f.goals.home ?? 0}–${f.goals.away ?? 0}</span>
+               <span class="tdm-final-label">${status === 'PEN' ? 'pen' : 'fim'}</span>
+             </div>`
+          : `<div class="tdm-mid tdm-mid-live">
+               <span class="tdm-live-score">${f.goals.home ?? 0}–${f.goals.away ?? 0}</span>
+               <span class="tdm-live-badge"><span class="tdm-live-dot"></span>AO VIVO</span>
+             </div>`;
 
-      html += `<a class="tdm-match" href="https://cazetv.com/ao-vivo/" target="_blank" rel="noopener">
-        <div class="tdm-team tdm-team-home">
-          ${homeIso ? `<span class="fi fi-${homeIso} tdm-flag"></span>` : ''}
+      html += `<a class="tdm-match${isLive ? ' tdm-match-live' : ''}" href="https://cazetv.com/ao-vivo/" target="_blank" rel="noopener">
+        <div class="tdm-side tdm-home">
+          <div class="tdm-flag-wrap">${homeIso ? `<span class="fi fi-${homeIso} tdm-flag-lg"></span>` : `<span class="tdm-flag-fallback">?</span>`}</div>
           <span class="tdm-name">${home.name}</span>
         </div>
-        <div class="tdm-score-block">${scoreHtml}</div>
-        <div class="tdm-team tdm-team-away">
+        ${midHtml}
+        <div class="tdm-side tdm-away">
           <span class="tdm-name">${away.name}</span>
-          ${awayIso ? `<span class="fi fi-${awayIso} tdm-flag"></span>` : ''}
+          <div class="tdm-flag-wrap">${awayIso ? `<span class="fi fi-${awayIso} tdm-flag-lg"></span>` : `<span class="tdm-flag-fallback">?</span>`}</div>
         </div>
       </a>`;
     }
     body.innerHTML = html;
+    _schedulePoll(hasLive);
   } catch {
     body.innerHTML = `<p class="tdm-empty">Não foi possível carregar os jogos.</p>`;
+    _schedulePoll(false);
   }
+}
+
+function _schedulePoll(hasLive) {
+  if (_todayPollTimer) clearTimeout(_todayPollTimer);
+  const delay = hasLive ? 60_000 : 300_000;
+  _todayPollTimer = setTimeout(_loadTodayMatches, delay);
 }
 
 function _findTeamIso(apiName) {
