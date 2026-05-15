@@ -3343,3 +3343,272 @@ body {
   opacity: .75;
 }
 
+/* =============================================
+   CALENDÁRIO DE JOGOS — CARROSSEL DE DATAS
+   ============================================= */
+.today-matches-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* Pílulas de data */
+.cal-carousel-wrap {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.cal-carousel-wrap::-webkit-scrollbar { display: none; }
+
+.cal-carousel {
+  display: flex;
+  gap: 6px;
+  min-width: max-content;
+}
+
+.cal-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 11px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface2);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all .15s;
+  min-width: 60px;
+  line-height: 1.3;
+}
+.cal-pill:hover { background: var(--border); color: var(--text); }
+.cal-pill-today { border-color: var(--gold) !important; color: var(--gold) !important; }
+.cal-pill-sel {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+.cal-pill-day { font-size: .68rem; text-transform: capitalize; color: inherit; }
+.cal-pill-num { font-weight: 700; font-size: .8rem; color: inherit; }
+
+/* Lista de cards */
+.cal-matches-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  max-height: 480px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* =============================================
+   CARD DE PARTIDA — ESTILO CAMPO DE FUTEBOL
+   ============================================= */
+.cal-match-card {
+  display: grid;
+  grid-template-columns: 1fr 110px 1fr;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  padding: 14px 10px;
+  text-decoration: none;
+  color: #fff;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s;
+  /* Campo de futebol */
+  background:
+    linear-gradient(180deg,
+      #0f5c28 0%,
+      #156b30 20%,
+      #1a7a38 35%,
+      #1d8540 50%,
+      #1a7a38 65%,
+      #156b30 80%,
+      #0f5c28 100%);
+}
+.cal-match-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0,0,0,.5);
+}
+
+/* Listras do campo */
+.cal-field-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 38px,
+      rgba(255,255,255,.04) 38px,
+      rgba(255,255,255,.04) 76px
+    );
+}
+/* Linha central */
+.cal-match-card::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 20%;
+  bottom: 20%;
+  width: 1px;
+  background: rgba(255,255,255,.12);
+  pointer-events: none;
+}
+
+/* Lado do time */
+.cal-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+  padding: 0 4px;
+}
+
+/* Bandeira grande */
+.cal-flag-xl {
+  width: 76px !important;
+  height: 57px !important;
+  border-radius: 5px;
+  box-shadow: 0 3px 12px rgba(0,0,0,.55), 0 1px 3px rgba(0,0,0,.4);
+  display: block;
+  object-fit: cover;
+}
+
+.cal-flag-fallback {
+  width: 76px;
+  height: 57px;
+  border-radius: 5px;
+  background: rgba(255,255,255,.1);
+  border: 2px dashed rgba(255,255,255,.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .75rem;
+  color: rgba(255,255,255,.5);
+  font-weight: 700;
+}
+
+.cal-team-name {
+  font-size: .72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: rgba(255,255,255,.92);
+  text-align: center;
+  line-height: 1.2;
+  text-shadow: 0 1px 3px rgba(0,0,0,.6);
+  max-width: 90px;
+}
+
+/* Centro — placar / horário */
+.cal-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+.cal-score-num {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+  text-shadow: 0 2px 8px rgba(0,0,0,.7);
+  letter-spacing: 2px;
+}
+.cal-score-sep {
+  font-weight: 300;
+  color: rgba(255,255,255,.55);
+}
+
+.cal-score-time {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0,0,0,.7);
+  line-height: 1;
+}
+.cal-score-tz {
+  font-size: .62rem;
+  font-weight: 600;
+  color: rgba(255,255,255,.55);
+  letter-spacing: .05em;
+}
+
+.cal-live-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(220,38,38,.9);
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-shadow: none;
+  box-shadow: 0 0 10px rgba(220,38,38,.5);
+}
+.cal-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  animation: pulse 1s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.cal-fin-label {
+  font-size: .68rem;
+  color: rgba(255,255,255,.55);
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+
+.cal-venue {
+  font-size: .62rem;
+  color: rgba(255,255,255,.45);
+  text-align: center;
+  line-height: 1.3;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Estados especiais */
+.cal-card-live {
+  box-shadow: 0 0 0 2px rgba(220,38,38,.6), 0 4px 20px rgba(0,0,0,.5);
+}
+.cal-card-live:hover {
+  box-shadow: 0 0 0 2px rgba(220,38,38,.8), 0 8px 28px rgba(0,0,0,.6);
+}
+.cal-card-done {
+  filter: brightness(.85);
+}
+
+@media (max-width: 400px) {
+  .cal-match-card { grid-template-columns: 1fr 88px 1fr; padding: 12px 6px; }
+  .cal-flag-xl { width: 58px !important; height: 44px !important; }
+  .cal-team-name { font-size: .65rem; max-width: 70px; }
+  .cal-score-num { font-size: 1.6rem; }
+  .cal-score-time { font-size: 1.2rem; }
+  .cal-center { gap: 3px; }
+}
+

@@ -131,92 +131,211 @@ async function _loadWhatsAppButton() {
   } catch { /* silencioso */ }
 }
 
-// ---- Card: Jogos de Hoje ------------------------------------
-let _todayPollTimer = null;
+// ---- Calendário de Jogos Copa 2026 --------------------------
+let _calFixtures  = [];
+let _calByDate    = {};
+let _calSelDate   = null;
+let _calLoaded    = false;
+let _calPollTimer = null;
+
+const _API_NAME_MAP = {
+  'south korea': 'southkorea', 'korea republic': 'southkorea', 'korea (republic)': 'southkorea',
+  'south africa': 'southafrica',
+  'ivory coast': 'ivorycoast', "cote d'ivoire": 'ivorycoast', 'côte d\'ivoire': 'ivorycoast',
+  'czech republic': 'czechia',
+  'united states': 'usa', 'usa': 'usa',
+  'new zealand': 'newzealand',
+  'dr congo': 'drcongo', 'democratic republic of congo': 'drcongo', 'congo dr': 'drcongo',
+  'cape verde': 'capeverde', 'cabo verde': 'capeverde',
+  'saudi arabia': 'saudiarabia',
+  'netherlands': 'netherlands', 'holland': 'netherlands',
+  'bosnia and herzegovina': 'bosnia', 'bosnia & herzegovina': 'bosnia',
+  'bosnia herzegovina': 'bosnia',
+  'mexico': 'mexico', 'canada': 'canada', 'switzerland': 'switzerland',
+  'brazil': 'brazil', 'scotland': 'scotland', 'england': 'england',
+  'germany': 'germany', 'france': 'france', 'spain': 'spain',
+  'argentina': 'argentina', 'portugal': 'portugal', 'croatia': 'croatia',
+  'uruguay': 'uruguay', 'colombia': 'colombia', 'ecuador': 'ecuador',
+  'paraguay': 'paraguay', 'australia': 'australia', 'turkey': 'turkey', 'türkiye': 'turkey',
+  'curacao': 'curacao', 'curaçao': 'curacao',
+  'morocco': 'morocco', 'senegal': 'senegal', 'ghana': 'ghana',
+  'panama': 'panama', 'haiti': 'haiti', 'iraq': 'iraq', 'iran': 'iran',
+  'japan': 'japan', 'belgium': 'belgium', 'egypt': 'egypt', 'sweden': 'sweden',
+  'norway': 'norway', 'austria': 'austria', 'algeria': 'algeria', 'jordan': 'jordan',
+  'uzbekistan': 'uzbekistan', 'tunisia': 'tunisia', 'qatar': 'qatar',
+};
+
+function _findTeamIso(apiName) {
+  const n = (apiName || '').toLowerCase().trim();
+  if (_API_NAME_MAP[n] && TEAMS[_API_NAME_MAP[n]]) return TEAMS[_API_NAME_MAP[n]].iso;
+  for (const t of Object.values(TEAMS)) {
+    if (t.name.toLowerCase() === n || t.short.toLowerCase() === n) return t.iso;
+  }
+  return null;
+}
+
+function _calToday() {
+  return new Date().toLocaleDateString('fr-CA', { timeZone: 'America/Sao_Paulo' });
+}
 
 async function _loadTodayMatches() {
   const card = document.getElementById('today-matches-card');
   if (!card) return;
   const body = card.querySelector('.tdm-body');
+  body.innerHTML = '<p class="tdm-empty" style="padding:24px 16px">Carregando calendário…</p>';
 
-  const today = new Date().toISOString().split('T')[0];
-  const todayLabel = new Date().toLocaleDateString('pt-BR', {
-    weekday: 'short', day: 'numeric', month: 'short', timeZone: 'America/Sao_Paulo',
-  });
   try {
-    const resp = await fetch(
-      `https://v3.football.api-sports.io/fixtures?league=1&season=2026&date=${today}`,
-      { headers: { 'x-apisports-key': 'b89962f0944bdce04ad5fec40c67e32d' } }
-    );
-    const data = await resp.json();
-    const fixtures = (data.response || []);
-
-    if (fixtures.length === 0) {
-      body.innerHTML = `<p class="tdm-empty">Sem jogos da Copa hoje.</p>`;
-      _schedulePoll(false);
-      return;
-    }
-
-    let cards = '';
-    let hasLive = false;
-    for (const f of fixtures) {
-      const home    = f.teams.home;
-      const away    = f.teams.away;
-      const status  = f.fixture.status.short;
-      const time    = new Date(f.fixture.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
-      const homeIso = _findTeamIso(home.name);
-      const awayIso = _findTeamIso(away.name);
-      const isLive  = !['NS','FT','AET','PEN','PST','CANC','ABD','AWD','WO'].includes(status);
-      if (isLive) hasLive = true;
-
-      const midHtml = status === 'NS'
-        ? `<div class="tdm-mid">
-             <span class="tdm-kickoff-time">${time}</span>
-             <span class="tdm-kickoff-label">início</span>
-           </div>`
-        : (status === 'FT' || status === 'AET' || status === 'PEN')
-          ? `<div class="tdm-mid">
-               <span class="tdm-final-score">${f.goals.home ?? 0}–${f.goals.away ?? 0}</span>
-               <span class="tdm-final-label">${status === 'PEN' ? 'pen' : 'fim'}</span>
-             </div>`
-          : `<div class="tdm-mid tdm-mid-live">
-               <span class="tdm-live-score">${f.goals.home ?? 0}–${f.goals.away ?? 0}</span>
-               <span class="tdm-live-badge"><span class="tdm-live-dot"></span>AO VIVO</span>
-             </div>`;
-
-      cards += `<a class="tdm-card${isLive ? ' tdm-match-live' : ''}" href="https://cazetv.com/ao-vivo/" target="_blank" rel="noopener">
-        <div class="tdm-side tdm-home">
-          <div class="tdm-flag-wrap">${homeIso ? `<span class="fi fi-${homeIso} tdm-flag-lg"></span>` : `<span class="tdm-flag-fallback">?</span>`}</div>
-          <span class="tdm-name">${home.name}</span>
-        </div>
-        ${midHtml}
-        <div class="tdm-side tdm-away">
-          <span class="tdm-name">${away.name}</span>
-          <div class="tdm-flag-wrap">${awayIso ? `<span class="fi fi-${awayIso} tdm-flag-lg"></span>` : `<span class="tdm-flag-fallback">?</span>`}</div>
-        </div>
-      </a>`;
-    }
-    body.innerHTML = `<div class="tdm-date-label">${todayLabel} · ${fixtures.length} jogo${fixtures.length !== 1 ? 's' : ''}</div>
-      <div class="tdm-carousel">${cards}</div>`;
-    _schedulePoll(hasLive);
+    await _calFetchAll();
+    const today = _calToday();
+    const dates  = Object.keys(_calByDate).sort();
+    // Seleciona hoje se houver jogos, senão o primeiro dia com jogos
+    _calSelDate = _calByDate[today] ? today : (dates[0] || today);
+    _calRender(body);
   } catch {
-    body.innerHTML = `<p class="tdm-empty">Não foi possível carregar os jogos.</p>`;
-    _schedulePoll(false);
+    body.innerHTML = `<p class="tdm-empty">Não foi possível carregar o calendário.<br>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="_loadTodayMatches()">🔄 Tentar novamente</button></p>`;
   }
 }
 
-function _schedulePoll(hasLive) {
-  if (_todayPollTimer) clearTimeout(_todayPollTimer);
-  const delay = hasLive ? 60_000 : 300_000;
-  _todayPollTimer = setTimeout(_loadTodayMatches, delay);
+async function _calFetchAll(forceRefresh = false) {
+  if (_calLoaded && !forceRefresh) return;
+  const resp = await fetch(
+    'https://v3.football.api-sports.io/fixtures?league=1&season=2026',
+    { headers: { 'x-apisports-key': 'b89962f0944bdce04ad5fec40c67e32d' } }
+  );
+  const data = await resp.json();
+  _calFixtures = (data.response || []).sort((a, b) =>
+    new Date(a.fixture.date) - new Date(b.fixture.date)
+  );
+  _calByDate = {};
+  for (const f of _calFixtures) {
+    const d = new Date(f.fixture.date).toLocaleDateString('fr-CA', { timeZone: 'America/Sao_Paulo' });
+    if (!_calByDate[d]) _calByDate[d] = [];
+    _calByDate[d].push(f);
+  }
+  _calLoaded = true;
 }
 
-function _findTeamIso(apiName) {
-  const n = (apiName || '').toLowerCase();
-  for (const t of Object.values(TEAMS)) {
-    if (t.name.toLowerCase() === n || t.short.toLowerCase() === n) return t.iso;
+function _calRender(body) {
+  const today = _calToday();
+  const dates  = Object.keys(_calByDate).sort();
+
+  const pills = dates.map(d => {
+    const dt      = new Date(d + 'T12:00:00');
+    const dayName = dt.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+    const dayNum  = dt.getDate();
+    const month   = dt.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+    const isSel   = d === _calSelDate;
+    const isToday = d === today;
+    return `<button class="cal-pill${isSel ? ' cal-pill-sel' : ''}${isToday ? ' cal-pill-today' : ''}"
+                    data-date="${d}" onclick="_calSelectDate('${d}')">
+      <span class="cal-pill-day">${dayName}</span>
+      <span class="cal-pill-num">${dayNum}/${month}</span>
+    </button>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="cal-carousel-wrap">
+      <div class="cal-carousel" id="cal-carousel">${pills}</div>
+    </div>
+    <div class="cal-matches-wrap" id="cal-matches">
+      ${_calMatchesHtml(_calSelDate)}
+    </div>`;
+
+  requestAnimationFrame(() => {
+    const sel = document.querySelector('.cal-pill-sel');
+    if (sel) sel.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
+  });
+
+  _calSchedulePoll();
+}
+
+function _calMatchesHtml(date) {
+  const fixtures = _calByDate[date] || [];
+  if (fixtures.length === 0) return '<p class="tdm-empty" style="padding:20px">Sem jogos neste dia.</p>';
+  return fixtures.map(f => _calMatchCard(f)).join('');
+}
+
+function _calSelectDate(date) {
+  _calSelDate = date;
+  document.querySelectorAll('.cal-pill').forEach(p => {
+    p.classList.toggle('cal-pill-sel', p.dataset.date === date);
+  });
+  const wrap = document.getElementById('cal-matches');
+  if (wrap) wrap.innerHTML = _calMatchesHtml(date);
+  _calSchedulePoll();
+}
+
+function _calMatchCard(f) {
+  const home   = f.teams.home;
+  const away   = f.teams.away;
+  const status = f.fixture.status.short;
+  const DONE   = ['FT', 'AET', 'PEN'];
+  const LIVE_NOT = ['NS', 'FT', 'AET', 'PEN', 'PST', 'CANC', 'ABD', 'AWD', 'WO'];
+  const isLive     = !LIVE_NOT.includes(status);
+  const isFinished = DONE.includes(status);
+  const isPending  = status === 'NS';
+  if (isLive) _calHasLive = true;
+
+  const homeIso = _findTeamIso(home.name);
+  const awayIso = _findTeamIso(away.name);
+
+  const time = new Date(f.fixture.date).toLocaleTimeString('pt-BR', {
+    hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo',
+  });
+  const venue = (f.fixture.venue?.name || '').substring(0, 30);
+  const city  = (f.fixture.venue?.city || '');
+
+  const flagHtml = iso =>
+    iso ? `<span class="fi fi-${iso} cal-flag-xl"></span>`
+        : `<span class="cal-flag-fallback"></span>`;
+
+  let centerHtml;
+  if (isPending) {
+    centerHtml = `
+      <div class="cal-score-time">${time}<span class="cal-score-tz">BRT</span></div>
+      ${venue ? `<div class="cal-venue">${venue}${city ? ` · ${city}` : ''}</div>` : ''}`;
+  } else if (isLive) {
+    centerHtml = `
+      <div class="cal-score-num">${f.goals.home ?? 0}<span class="cal-score-sep"> : </span>${f.goals.away ?? 0}</div>
+      <div class="cal-live-badge"><span class="cal-live-dot"></span>${f.fixture.status.elapsed ?? ''}' AO VIVO</div>`;
+  } else {
+    centerHtml = `
+      <div class="cal-score-num">${f.goals.home ?? 0}<span class="cal-score-sep"> : </span>${f.goals.away ?? 0}</div>
+      <div class="cal-fin-label">${status === 'PEN' ? 'Pênaltis' : 'Encerrado'}</div>`;
   }
-  return null;
+
+  const cls = isLive ? ' cal-card-live' : isFinished ? ' cal-card-done' : '';
+  return `<a class="cal-match-card${cls}" href="https://cazetv.com/ao-vivo/" target="_blank" rel="noopener">
+    <div class="cal-field-lines" aria-hidden="true"></div>
+    <div class="cal-side cal-home">
+      ${flagHtml(homeIso)}
+      <span class="cal-team-name">${home.name}</span>
+    </div>
+    <div class="cal-center">${centerHtml}</div>
+    <div class="cal-side cal-away">
+      ${flagHtml(awayIso)}
+      <span class="cal-team-name">${away.name}</span>
+    </div>
+  </a>`;
+}
+
+let _calHasLive = false;
+
+function _calSchedulePoll() {
+  if (_calPollTimer) clearTimeout(_calPollTimer);
+  const today   = _calToday();
+  const isToday = _calSelDate === today;
+  if (!isToday && !_calHasLive) return;
+  const delay = _calHasLive ? 60_000 : 300_000;
+  _calPollTimer = setTimeout(async () => {
+    _calHasLive = false;
+    _calLoaded  = false;
+    await _calFetchAll();
+    const wrap = document.getElementById('cal-matches');
+    if (wrap && _calSelDate) wrap.innerHTML = _calMatchesHtml(_calSelDate);
+    _calSchedulePoll();
+  }, delay);
 }
 
 // ---- Aba Minhas Apostas ------------------------------------
