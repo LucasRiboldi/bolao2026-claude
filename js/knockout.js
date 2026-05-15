@@ -22,30 +22,34 @@ function _renderBracket() {
   const container = document.getElementById('knockout-bracket');
 
   const ROUND_META = {
-    'Oitavas':    { label: 'Oitavas de Final',  icon: '⚡' },
-    'Quartas':    { label: 'Quartas de Final',   icon: '⚡' },
-    'Semifinais': { label: 'Semifinal',          icon: '⚡' },
-    'Final':      { label: '🏆 Final',           icon: ''   },
+    'Oitavas':         { label: 'Oitavas de Final',  icon: '⚡' },
+    'Quartas':         { label: 'Quartas de Final',   icon: '⚡' },
+    'Semifinais':      { label: 'Semifinal',          icon: '⚡' },
+    'Terceiro Lugar':  { label: '🥉 3º Lugar',        icon: ''   },
+    'Final':           { label: '🏆 Final',           icon: ''   },
   };
+
+  // Rastreia { matchId: {home, away} } para resolver perdedores (L:) na 3ª disputa
+  const resolved = {};
+  for (const m of _r32Matches) resolved[m.id] = { home: m.home, away: m.away };
 
   const rounds = [
     { label: '32avos de Final', icon: '⚡', matches: _r32Matches },
-    ...KNOCKOUT_ROUNDS.map(r => {
-      const meta = ROUND_META[r.name] || { label: r.name, icon: '⚡' };
-      return {
-        label:   meta.label,
-        icon:    meta.icon,
-        matches: resolveKnockoutRound(r.matches, _koBets),
-      };
-    }),
   ];
+  for (const r of KNOCKOUT_ROUNDS) {
+    const meta    = ROUND_META[r.name] || { label: r.name, icon: '⚡' };
+    const matches = resolveKnockoutRound(r.matches, _koBets, resolved);
+    for (const m of matches) resolved[m.id] = { home: m.home, away: m.away };
+    rounds.push({ label: meta.label, icon: meta.icon, matches });
+  }
 
   let html = `<div class="ko-sections">`;
   for (const round of rounds) {
+    const n = round.matches.length;
     html += `<div class="ko-section">
       <div class="ko-section-hdr">
         <span class="ko-section-title">${round.label}</span>
-        <span class="ko-section-count">${round.matches.length} jogos</span>
+        <span class="ko-section-count">${n} jogo${n !== 1 ? 's' : ''}</span>
       </div>
       <div class="ko-matches-grid">`;
     for (const match of round.matches) html += _matchHtml(match);
@@ -108,9 +112,10 @@ async function loadKnockoutBetsUI(uid) {
     const groupBets = getCurrentGroupBets();
     const standings = calcGroupStandings(groupBets);
     const qualified = getQualified(standings);
-    _r32Matches = buildR32(qualified);
+    _r32Matches     = buildR32(qualified);
     _renderBracket();
-    document.getElementById('ko-status').textContent = '✅ Palpites carregados.';
+    const el = document.getElementById('ko-status');
+    if (el) el.textContent = '✅ Palpites carregados.';
   }
 }
 

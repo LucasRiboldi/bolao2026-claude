@@ -183,14 +183,69 @@ const KNOCKOUT_ROUNDS = [
     ],
   },
   {
+    name: 'Terceiro Lugar',
+    matches: [
+      { id: 'third', home: 'L:sf_01', away: 'L:sf_02' }, // M103 (18/jul — Miami)
+    ],
+  },
+  {
     name: 'Final',
     matches: [
-      { id: 'final', home: 'W:sf_01', away: 'W:sf_02' }, // M104
+      { id: 'final', home: 'W:sf_01', away: 'W:sf_02' }, // M104 (19/jul — MetLife)
     ],
   },
 ];
 
 // ---- Simulation helpers -------------------------------------
+
+// ---- H2H tiebreaker helpers (regra oficial FIFA) -------------
+// Passo 1: pontos/GD/GF apenas nos confrontos diretos entre times empatados
+// Passo 2 (se ainda empatados): GD geral → GF geral
+// Passo 3: fair play / Ranking FIFA (não implementável sem dados externos)
+
+function _h2hStats(teamIds, results) {
+  const set = new Set(teamIds);
+  const s = {};
+  for (const id of teamIds) s[id] = { pts: 0, gf: 0, ga: 0, gd: 0 };
+  for (const r of results) {
+    if (!set.has(r.home) || !set.has(r.away)) continue;
+    s[r.home].gf += r.hg; s[r.home].ga += r.ag;
+    s[r.away].gf += r.ag; s[r.away].ga += r.hg;
+    if      (r.hg > r.ag) s[r.home].pts += 3;
+    else if (r.hg === r.ag) { s[r.home].pts += 1; s[r.away].pts += 1; }
+    else                    s[r.away].pts += 3;
+  }
+  for (const id of teamIds) s[id].gd = s[id].gf - s[id].ga;
+  return s;
+}
+
+function _rankGroupTeams(teams, results) {
+  teams.sort((a, b) => b.pts - a.pts);
+  const ranked = [];
+  let i = 0;
+  while (i < teams.length) {
+    let j = i;
+    while (j < teams.length && teams[j].pts === teams[i].pts) j++;
+    const tied = teams.slice(i, j);
+    if (tied.length === 1) {
+      ranked.push(tied[0]);
+    } else {
+      // Passo 1: H2H entre os times empatados
+      const h2h = _h2hStats(tied.map(t => t.id), results);
+      tied.sort((a, b) => {
+        const ha = h2h[a.id], hb = h2h[b.id];
+        return hb.pts - ha.pts   // H2H pontos
+            || hb.gd  - ha.gd   // H2H saldo de gols
+            || hb.gf  - ha.gf   // H2H gols marcados
+            || b.gd   - a.gd    // Passo 2: saldo geral
+            || b.gf   - a.gf;   // Passo 2: gols marcados geral
+      });
+      ranked.push(...tied);
+    }
+    i = j;
+  }
+  return ranked;
+}
 
 function calcGroupStandings(groupBets) {
   const standings = {};
@@ -199,6 +254,8 @@ function calcGroupStandings(groupBets) {
     for (const t of GROUPS[gId]) {
       table[t] = { id: t, pts: 0, gf: 0, ga: 0, gd: 0, played: 0 };
     }
+    const results = []; // guarda partidas para cálculo H2H
+
     for (const game of generateGroupGames(gId)) {
       const bet = groupBets[game.id];
       if (bet === undefined || bet.homeGoals === '' || bet.awayGoals === '') continue;
@@ -206,20 +263,19 @@ function calcGroupStandings(groupBets) {
       const ag = parseInt(bet.awayGoals, 10);
       if (isNaN(hg) || isNaN(ag)) continue;
 
+      results.push({ home: game.home, away: game.away, hg, ag });
+
       const h = table[game.home];
       const a = table[game.away];
       h.gf += hg; h.ga += ag; h.played++;
       a.gf += ag; a.ga += hg; a.played++;
-      if (hg > ag) { h.pts += 3; }
+      if      (hg > ag) h.pts += 3;
       else if (hg === ag) { h.pts += 1; a.pts += 1; }
-      else { a.pts += 3; }
+      else               a.pts += 3;
       h.gd = h.gf - h.ga;
       a.gd = a.gf - a.ga;
     }
-    const sorted = Object.values(table).sort((a, b) =>
-      b.pts - a.pts || b.gd - a.gd || b.gf - a.gf
-    );
-    standings[gId] = sorted;
+    standings[gId] = _rankGroupTeams(Object.values(table), results);
   }
   return standings;
 }
@@ -265,19 +321,27 @@ function buildR32(qualified) {
   }));
 }
 
-// Given knockout bets (map of matchId → winnerId), resolve later rounds
-function resolveKnockoutRound(roundMatches, koBets) {
+// Resolve um round do mata-mata dado os palpites e o estado já resolvido.
+// prevResolved: { [matchId]: { home, away } } — necessário para resolver L: (perdedor)
+function resolveKnockoutRound(roundMatches, koBets, prevResolved = {}) {
   return roundMatches.map(m => {
-    const resolveRef = (ref) => {
-      if (!ref.startsWith('W:')) return ref;
-      const prevId = ref.slice(2);
-      return koBets[prevId] || null;
+    const resolve = (ref) => {
+      if (!ref) return null;
+      if (ref.startsWith('W:')) {
+        return koBets[ref.slice(2)] || null;
+      }
+      if (ref.startsWith('L:')) {
+        // Perdedor = o time que NÃO foi apostado como vencedor daquela partida
+        const prevId = ref.slice(2);
+        const prev   = prevResolved[prevId];
+        if (!prev) return null;
+        const winner = koBets[prevId];
+        if (!winner) return null;
+        return prev.home === winner ? prev.away : prev.home;
+      }
+      return ref;
     };
-    return {
-      id: m.id,
-      home: resolveRef(m.home),
-      away: resolveRef(m.away),
-    };
+    return { id: m.id, home: resolve(m.home), away: resolve(m.away) };
   });
 }
 

@@ -157,23 +157,23 @@ function _renderAdminUsers(users, container) {
   }
   let html = `<div class="admin-table">`;
   users.forEach(u => {
-    const safeName  = (u.name  || 'Sem nome').replace(/'/g, "\\'");
-    const safeEmail = (u.email || u.uid).replace(/'/g, "\\'");
+    const safeName  = escapeHtml(u.name  || 'Sem nome');
+    const safeEmail = escapeHtml(u.email || u.uid);
     html += `
     <div class="admin-user-row" id="adm-row-${u.uid}">
       <div class="admin-user-info">
-        <div class="admin-user-name">${u.name || 'Sem nome'}</div>
-        <div class="admin-user-email">${u.email || u.uid}</div>
+        <div class="admin-user-name">${safeName}</div>
+        <div class="admin-user-email">${safeEmail}</div>
       </div>
       <div class="admin-user-actions">
         <button class="btn-icon" title="Ver apostas"
-          onclick="openBetHistory('${u.uid}','${safeName}')">📋</button>
+          onclick="openBetHistory('${u.uid}','${safeName.replace(/'/g,"&#39;")}')">📋</button>
         <button class="btn-icon" title="Editar apostas"
-          onclick="adminEditBets('${u.uid}','${safeName}')">✏️</button>
+          onclick="adminEditBets('${u.uid}','${safeName.replace(/'/g,"&#39;")}')">✏️</button>
         <button class="btn-icon" title="Editar nome"
-          onclick="adminEditName('${u.uid}','${safeName}')">🔤</button>
+          onclick="adminEditName('${u.uid}','${safeName.replace(/'/g,"&#39;")}')">🔤</button>
         <button class="btn-icon btn-icon-danger" title="Excluir participante"
-          onclick="adminDeleteUser('${u.uid}','${safeName}')">🗑️</button>
+          onclick="adminDeleteUser('${u.uid}','${safeName.replace(/'/g,"&#39;")}')">🗑️</button>
       </div>
     </div>`;
   });
@@ -396,6 +396,33 @@ function _renderBetHistory(groupBets, knockoutBets, results) {
   let html = '';
   let exact = 0, correct = 0, koHits = 0;
 
+  // Sets de times que avançaram em cada fase (mesma lógica de calculateScore)
+  const advKO = { r32: new Set(), r16: new Set(), qf: new Set(), sf: new Set() };
+  for (const [mid, wid] of Object.entries(koResults)) {
+    if      (mid.startsWith('r32_')) advKO.r32.add(wid);
+    else if (mid.startsWith('r16_')) advKO.r16.add(wid);
+    else if (mid.startsWith('qf_'))  advKO.qf.add(wid);
+    else if (mid.startsWith('sf_'))  advKO.sf.add(wid);
+  }
+  function _koRoundHasResult(matchId) {
+    if (matchId === 'final')  return 'final'  in koResults;
+    if (matchId === 'third')  return 'third'  in koResults;
+    if (matchId.startsWith('r32_')) return advKO.r32.size > 0;
+    if (matchId.startsWith('r16_')) return advKO.r16.size > 0;
+    if (matchId.startsWith('qf_'))  return advKO.qf.size  > 0;
+    if (matchId.startsWith('sf_'))  return advKO.sf.size  > 0;
+    return false;
+  }
+  function _koScored(matchId, pickedId) {
+    if (matchId === 'final')  return koResults['final']  === pickedId; // exato
+    if (matchId === 'third')  return koResults['third']  === pickedId; // exato
+    if (matchId.startsWith('r32_')) return advKO.r32.has(pickedId);
+    if (matchId.startsWith('r16_')) return advKO.r16.has(pickedId);
+    if (matchId.startsWith('qf_'))  return advKO.qf.has(pickedId);
+    if (matchId.startsWith('sf_'))  return advKO.sf.has(pickedId);
+    return false;
+  }
+
   html += `<div class="bh-section-title">⚽ Fase de Grupos</div>`;
 
   for (const gId of Object.keys(GROUPS)) {
@@ -455,11 +482,12 @@ function _renderBetHistory(groupBets, knockoutBets, results) {
   html += `<div class="bh-section-title" style="margin-top:20px">⚡ Mata-Mata</div>`;
 
   const PHASES = [
-    { prefix: 'r32',   label: '32avos de Final',  exact: false },
-    { prefix: 'r16',   label: 'Oitavas de Final',  exact: false },
-    { prefix: 'qf',    label: 'Quartas de Final',  exact: false },
-    { prefix: 'sf',    label: 'Semifinal',         exact: false },
-    { prefix: 'final', label: '🏆 Final',          exact: true  },
+    { prefix: 'r32',   label: '32avos de Final',       exact: false },
+    { prefix: 'r16',   label: 'Oitavas de Final',       exact: false },
+    { prefix: 'qf',    label: 'Quartas de Final',       exact: false },
+    { prefix: 'sf',    label: 'Semifinal',              exact: false },
+    { prefix: 'third', label: '🥉 Disputa de 3º Lugar', exact: true  },
+    { prefix: 'final', label: '🏆 Final',               exact: true  },
   ];
 
   const koEntries = Object.entries(knockoutBets);
@@ -478,23 +506,27 @@ function _renderBetHistory(groupBets, knockoutBets, results) {
         <div class="bh-ko-phase-list">`;
 
       for (const [matchId, pickedId] of entries) {
-        const real   = koResults[matchId];
-        const picked = TEAMS[pickedId];
+        const picked   = TEAMS[pickedId];
+        const roundDone = _koRoundHasResult(matchId);
         let cls = 'bh-placed', icon = '📌', pts = 0;
-        if (real) {
-          if (pickedId === real) { cls = 'bh-exact'; icon = '✅'; pts = 2; koHits++; }
-          else                   { cls = 'bh-wrong'; icon = '❌'; }
+        if (roundDone) {
+          if (_koScored(matchId, pickedId)) { cls = 'bh-exact'; icon = '✅'; pts = 2; koHits++; }
+          else                              { cls = 'bh-wrong'; icon = '❌'; }
         }
-        const realTeam = real ? TEAMS[real] : null;
+        // Mostra o vencedor real daquele slot como informação contextual
+        const slotWinner = koResults[matchId];
+        const slotTeam   = slotWinner ? TEAMS[slotWinner] : null;
 
         html += `<div class="bh-ko-card ${cls}">
           <span class="bh-si">${icon}</span>
           <div class="bh-ko-pick">
             <span class="fi fi-${picked?.iso || 'un'} bh-flag"></span>
-            <span class="bh-team-name">${picked?.name || pickedId}</span>
+            <span class="bh-team-name">${escapeHtml(picked?.name || pickedId)}</span>
           </div>
-          ${realTeam
-            ? `<span class="bh-ko-real"><span class="fi fi-${realTeam.iso} bh-flag"></span> ${realTeam.name}</span>`
+          ${roundDone
+            ? (slotTeam
+                ? `<span class="bh-ko-real"><span class="fi fi-${slotTeam.iso} bh-flag"></span> ${escapeHtml(slotTeam.name)}</span>`
+                : `<span class="bh-ko-real">–</span>`)
             : `<span class="bh-waiting">⏳ Aguardando</span>`}
           ${pts ? `<span class="bh-pts">+${pts}</span>` : '<span class="bh-pts bh-pts-empty"></span>'}
         </div>`;
@@ -513,14 +545,14 @@ function _renderBetHistory(groupBets, knockoutBets, results) {
     }
   }
 
-  const bonusPts = (knockoutBets['final'] && koResults['final'] && knockoutBets['final'] === koResults['final']) ? 5 : 0;
-  const total = exact * 3 + correct + koHits * 2 + bonusPts;
+  const champBonus = (knockoutBets['final'] && koResults['final'] && knockoutBets['final'] === koResults['final']) ? 5 : 0;
+  const total = exact * 3 + correct + koHits * 2 + champBonus;
   html += `
   <div class="bh-summary">
     <div class="bh-summary-item"><span class="bh-sum-lbl">✅ Placares exatos</span><strong>${exact} <em>(+${exact * 3} pts)</em></strong></div>
     <div class="bh-summary-item"><span class="bh-sum-lbl">✓ Resultados certos</span><strong>${correct} <em>(+${correct} pts)</em></strong></div>
     <div class="bh-summary-item"><span class="bh-sum-lbl">⚡ Mata-mata</span><strong>${koHits} <em>(+${koHits * 2} pts)</em></strong></div>
-    ${bonusPts ? `<div class="bh-summary-item"><span class="bh-sum-lbl">🏆 Bônus campeão</span><strong>+${bonusPts} pts</strong></div>` : ''}
+    ${champBonus ? `<div class="bh-summary-item"><span class="bh-sum-lbl">🏆 Bônus campeão</span><strong>+${champBonus} pts</strong></div>` : ''}
     <div class="bh-summary-total">Total: <strong>${total} pts</strong></div>
   </div>`;
 

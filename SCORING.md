@@ -270,19 +270,44 @@ O mata-mata tem 31 jogos no total:
 
 ---
 
-### 💰 Quanto vale cada aposta de mata-mata
+### 💰 Regra de pontuação — "o time avançou de fase?"
+
+O palpite do mata-mata pontua se o **time apostado avançou para a fase seguinte**,
+independentemente de em qual partida/slot específica ele esteve no bracket real.
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  Condição                          │  Pontos ganhos  │
-├─────────────────────────────────────────────────────┤
-│  Apostou no time que GANHOU        │    + 2 pts      │
-│  (qualquer rodada R32 até Final)   │                 │
-├─────────────────────────────────────────────────────┤
-│  Apostou no time que PERDEU        │    + 0 pts      │
-├─────────────────────────────────────────────────────┤
-│  Jogo ainda não disputado          │    + 0 pts      │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│  Condição                                        │ Pontos ganhos │
+├──────────────────────────────────────────────────────────────────┤
+│  O time que você apostou AVANÇOU de fase         │    + 2 pts    │
+│  (ganhou a partida daquela rodada, seja qual for │               │
+│   o slot que ele ocupou no bracket real)         │               │
+├──────────────────────────────────────────────────────────────────┤
+│  O time que você apostou foi ELIMINADO           │    + 0 pts    │
+├──────────────────────────────────────────────────────────────────┤
+│  Fase ainda não disputada                        │    + 0 pts    │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+> **Por que "avançou" e não "ganhou a partida exata"?**
+> O bracket do mata-mata é gerado automaticamente a partir dos palpites
+> da fase de grupos. Se os grupos reais ficarem diferentes do que você
+> apostou, os times aparecem em slots diferentes no bracket. A regra
+> "avançou de fase" garante que você seja recompensado por ter apostado
+> no time certo, mesmo que ele esteja num slot diferente do previsto.
+
+---
+
+### 🧪 Exemplo da regra "avançou"
+
+```
+Situação:
+  Você apostou:   r32_01 → Brasil   (slot 01 da R32)
+  Resultado real: r32_01 → Argentina ganhou
+                  r32_05 → Brasil ganhou  ← Brasil estava neste slot no bracket real
+
+Pontuação antiga (exato): 0 pts  — Brasil não venceu r32_01
+Pontuação nova  (avançou): +2 pts — Brasil avançou da R32, independente do slot
 ```
 
 ---
@@ -290,22 +315,18 @@ O mata-mata tem 31 jogos no total:
 ### 🏆 Bônus especial — Campeão
 
 ```
-Este bônus é SEPARADO e ACUMULATIVO sobre o palpite da Final:
+A Final é o único caso onde o slot importa — você deve apostar
+no time correto para a Final (e ele deve vencer):
 
   Se você apostou no vencedor da Final:
-    + 2 pts   (regra normal do mata-mata)
+    + 2 pts   (regra normal de avanço)
     + 5 pts   (bônus por acertar o CAMPEÃO)
     ──────────
-    + 7 pts   no total pelo jogo da Final ← MÁXIMO POSSÍVEL EM 1 JOGO
+    + 7 pts   no total pela Final ← MÁXIMO POSSÍVEL EM 1 APOSTA
 
   Se errou o vencedor da Final:
-    + 0 pts   (nenhum ponto, nem bônus)
+    + 0 pts
 ```
-
-> **Por que 7 pts e não 5?**
-> O sistema primeiro calcula +2 pts por qualquer acerto no mata-mata
-> (incluindo a final), e depois adiciona +5 separadamente como bônus.
-> São duas condições independentes no código.
 
 ---
 
@@ -313,18 +334,18 @@ Este bônus é SEPARADO e ACUMULATIVO sobre o palpite da Final:
 
 ```
 ┌───────────────────────────────────────────────────────┐
-│  Fase             │ Jogos  │ Pts/jogo │ Máx. na fase  │
+│  Fase             │ Apostas│ Pts/avanço│ Máx. na fase │
 ├───────────────────────────────────────────────────────┤
-│  Rodada de 32     │   16   │    × 2   │    32 pts     │
-│  Oitavas de Final │    8   │    × 2   │    16 pts     │
-│  Quartas de Final │    4   │    × 2   │     8 pts     │
-│  Semifinais       │    2   │    × 2   │     4 pts     │
-│  Final            │    1   │    × 2   │     2 pts     │
+│  Rodada de 32     │   16   │    × 2    │    32 pts    │
+│  Oitavas de Final │    8   │    × 2    │    16 pts    │
+│  Quartas de Final │    4   │    × 2    │     8 pts    │
+│  Semifinais       │    2   │    × 2    │     4 pts    │
+│  Final            │    1   │    × 2    │     2 pts    │
 ├───────────────────────────────────────────────────────┤
-│  Subtotal KO      │   31   │          │    62 pts     │
-│  Bônus Campeão    │    —   │          │  +  5 pts     │
+│  Subtotal KO      │   31   │           │    62 pts    │
+│  Bônus Campeão    │    —   │           │  +  5 pts    │
 ├───────────────────────────────────────────────────────┤
-│  TOTAL MÁXIMO KO  │        │          │    67 pts     │
+│  TOTAL MÁXIMO KO  │        │           │    67 pts    │
 └───────────────────────────────────────────────────────┘
 ```
 
@@ -366,10 +387,14 @@ G(i) — pontos do jogo i dos grupos:
   G(i) = 0   caso contrário
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-K(j) — pontos do jogo j do mata-mata:
+K(j) — pontos da aposta j do mata-mata:
 
-  K(j) = 2   quando  aposta_j = vencedor_real_j
+  A(r, t) = 1  se o time t avançou de fase na rodada r,  0 caso contrário
+
+  K(j) = 2   quando  A(rodada(j), aposta_j) = 1   [time avançou de fase]
   K(j) = 0   caso contrário
+
+  Exceto na Final: K(final) = 2  quando  aposta_final = campeão_real
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 B — bônus campeão:

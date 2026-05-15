@@ -46,6 +46,11 @@ const KO_ROUND_DEFS = [
     matches: ['sf_01', 'sf_02'],
   },
   {
+    id: 'third',
+    label: '🥉 Disputa de 3º Lugar',
+    matches: ['third'],
+  },
+  {
     id: 'final',
     label: '🏆 Final',
     matches: ['final'],
@@ -87,7 +92,7 @@ function _renderResultsPanel(container) {
   const gsCount  = Object.keys(_resGs).length;
   const koCount  = Object.keys(_resKo).length;
   const gsTotal  = 72;
-  const koTotal  = 31;
+  const koTotal  = 32; // 16 R32 + 8 R16 + 4 QF + 2 SF + 1 terceiro + 1 final
 
   container.innerHTML = `
     <div class="res-stats-bar">

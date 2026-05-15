@@ -141,6 +141,9 @@ const KNOCKOUT_ROUNDS = [
     { id: 'sf_01', home: 'W:qf_01', away: 'W:qf_02' },
     { id: 'sf_02', home: 'W:qf_03', away: 'W:qf_04' },
   ]},
+  { name: 'Terceiro Lugar', matches: [
+    { id: 'third', home: 'L:sf_01', away: 'L:sf_02' },
+  ]},
   { name: 'Final', matches: [
     { id: 'final', home: 'W:sf_01', away: 'W:sf_02' },
   ]},
@@ -162,22 +165,62 @@ function generateGroupGames(gId) {
   ];
 }
 
+function _h2hStats(teamIds, results) {
+  const set = new Set(teamIds);
+  const s = {};
+  for (const id of teamIds) s[id] = { pts:0, gf:0, ga:0, gd:0 };
+  for (const r of results) {
+    if (!set.has(r.home)||!set.has(r.away)) continue;
+    s[r.home].gf+=r.hg; s[r.home].ga+=r.ag;
+    s[r.away].gf+=r.ag; s[r.away].ga+=r.hg;
+    if      (r.hg>r.ag) s[r.home].pts+=3;
+    else if (r.hg===r.ag){ s[r.home].pts+=1; s[r.away].pts+=1; }
+    else                 s[r.away].pts+=3;
+  }
+  for (const id of teamIds) s[id].gd=s[id].gf-s[id].ga;
+  return s;
+}
+
+function _rankGroupTeams(teams, results) {
+  teams.sort((a,b)=>b.pts-a.pts);
+  const ranked=[];
+  let i=0;
+  while (i<teams.length) {
+    let j=i;
+    while (j<teams.length&&teams[j].pts===teams[i].pts) j++;
+    const tied=teams.slice(i,j);
+    if (tied.length===1) { ranked.push(tied[0]); }
+    else {
+      const h2h=_h2hStats(tied.map(t=>t.id),results);
+      tied.sort((a,b)=>{
+        const ha=h2h[a.id],hb=h2h[b.id];
+        return hb.pts-ha.pts||hb.gd-ha.gd||hb.gf-ha.gf||b.gd-a.gd||b.gf-a.gf;
+      });
+      ranked.push(...tied);
+    }
+    i=j;
+  }
+  return ranked;
+}
+
 function calcGroupStandings(bets) {
   const standings = {};
   for (const gId of Object.keys(GROUPS)) {
     const table = {};
     for (const t of GROUPS[gId]) table[t] = { id:t, pts:0, gf:0, ga:0, gd:0 };
+    const results = [];
     for (const game of generateGroupGames(gId)) {
       const bet = bets[game.id];
-      if (!bet || bet.homeGoals==='' || bet.awayGoals==='') continue;
+      if (!bet||bet.homeGoals===''||bet.awayGoals==='') continue;
       const hg=parseInt(bet.homeGoals,10), ag=parseInt(bet.awayGoals,10);
       if (isNaN(hg)||isNaN(ag)) continue;
+      results.push({ home:game.home, away:game.away, hg, ag });
       const h=table[game.home], a=table[game.away];
       h.gf+=hg; h.ga+=ag; a.gf+=ag; a.ga+=hg;
       if (hg>ag) h.pts+=3; else if (hg===ag){h.pts+=1;a.pts+=1;} else a.pts+=3;
       h.gd=h.gf-h.ga; a.gd=a.gf-a.ga;
     }
-    standings[gId] = Object.values(table).sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf);
+    standings[gId]=_rankGroupTeams(Object.values(table),results);
   }
   return standings;
 }
@@ -203,9 +246,20 @@ function buildR32(q) {
   return KNOCKOUT_SLOTS.map(s=>({ id:s.id, home:resolveSlot(s.homeSlot,q), away:resolveSlot(s.awaySlot,q) }));
 }
 
-function resolveKnockoutRound(matches, bets) {
+function resolveKnockoutRound(matches, bets, prevResolved={}) {
   return matches.map(m=>{
-    const r=ref=>ref.startsWith('W:')?(bets[ref.slice(2)]||null):ref;
+    const r=ref=>{
+      if (!ref) return null;
+      if (ref.startsWith('W:')) return bets[ref.slice(2)]||null;
+      if (ref.startsWith('L:')) {
+        const prev=prevResolved[ref.slice(2)];
+        if (!prev) return null;
+        const w=bets[ref.slice(2)];
+        if (!w) return null;
+        return prev.home===w ? prev.away : prev.home;
+      }
+      return ref;
+    };
     return { id:m.id, home:r(m.home), away:r(m.away) };
   });
 }
@@ -220,10 +274,14 @@ function randomGroupBets() {
 
 function randomKnockoutBets(r32) {
   const bets={};
-  for (const m of r32) { if (m.home&&m.away) bets[m.id]=pick([m.home,m.away]); }
+  const resolved={};
+  for (const m of r32) {
+    if (m.home&&m.away) { bets[m.id]=pick([m.home,m.away]); resolved[m.id]={home:m.home,away:m.away}; }
+  }
   for (const round of KNOCKOUT_ROUNDS) {
-    for (const m of resolveKnockoutRound(round.matches,bets))
-      if (m.home&&m.away) bets[m.id]=pick([m.home,m.away]);
+    for (const m of resolveKnockoutRound(round.matches,bets,resolved)) {
+      if (m.home&&m.away) { bets[m.id]=pick([m.home,m.away]); resolved[m.id]={home:m.home,away:m.away}; }
+    }
   }
   return bets;
 }
@@ -238,10 +296,31 @@ function calcScore(gBets, kBets, realGroup, realKo) {
     if (bH===rH&&bA===rA){ pts+=SCORING.exactScore; bd.exact++; }
     else if (Math.sign(bH-bA)===Math.sign(rH-rA)){ pts+=SCORING.correctResult; bd.result++; }
   }
-  for (const [id,w] of Object.entries(realKo))
-    if (kBets[id]===w){ pts+=SCORING.knockoutWinner; bd.ko++; }
+  // Mata-mata: pontua se o time apostado avançou de fase
+  const adv={r32:new Set(),r16:new Set(),qf:new Set(),sf:new Set()};
+  for (const [mid,wid] of Object.entries(realKo)) {
+    if      (mid.startsWith('r32_')) adv.r32.add(wid);
+    else if (mid.startsWith('r16_')) adv.r16.add(wid);
+    else if (mid.startsWith('qf_'))  adv.qf.add(wid);
+    else if (mid.startsWith('sf_'))  adv.sf.add(wid);
+  }
+  for (const [mid,betTeam] of Object.entries(kBets)) {
+    if (!betTeam||mid==='final'||mid==='third') continue;
+    let scored=false;
+    if      (mid.startsWith('r32_')&&adv.r32.has(betTeam)) scored=true;
+    else if (mid.startsWith('r16_')&&adv.r16.has(betTeam)) scored=true;
+    else if (mid.startsWith('qf_') &&adv.qf.has(betTeam))  scored=true;
+    else if (mid.startsWith('sf_') &&adv.sf.has(betTeam))  scored=true;
+    if (scored){ pts+=SCORING.knockoutWinner; bd.ko++; }
+  }
+  // 3º Lugar: acerto exato
+  if (realKo['third']&&kBets['third']===realKo['third']){ pts+=SCORING.knockoutWinner; bd.ko++; }
+  // Final: campeão exato + bônus
   const champ=realKo['final'];
-  if (champ&&kBets['final']===champ){ pts+=SCORING.championBonus; bd.bonus=SCORING.championBonus; }
+  if (champ&&kBets['final']===champ){
+    pts+=SCORING.knockoutWinner; bd.ko++;
+    pts+=SCORING.championBonus; bd.bonus=SCORING.championBonus;
+  }
   return { pts, breakdown:bd };
 }
 
@@ -250,15 +329,17 @@ function simulateRealResults() {
   const standings    = calcGroupStandings(groupResults);
   const qualified    = getQualified(standings);
   const r32          = buildR32(qualified);
-  const koResults={}, picks={};
+  const koResults={}, picks={}, resolved={};
   for (const m of r32) {
     if (!m.home||!m.away) continue;
-    const w=pick([m.home,m.away]); koResults[m.id]=w; picks[m.id]=w;
+    const w=pick([m.home,m.away]);
+    koResults[m.id]=w; picks[m.id]=w; resolved[m.id]={home:m.home,away:m.away};
   }
   for (const round of KNOCKOUT_ROUNDS) {
-    for (const m of resolveKnockoutRound(round.matches,picks)) {
+    for (const m of resolveKnockoutRound(round.matches,picks,resolved)) {
       if (!m.home||!m.away) continue;
-      const w=pick([m.home,m.away]); koResults[m.id]=w; picks[m.id]=w;
+      const w=pick([m.home,m.away]);
+      koResults[m.id]=w; picks[m.id]=w; resolved[m.id]={home:m.home,away:m.away};
     }
   }
   return { groupResults, koResults, r32, qualified };
