@@ -258,7 +258,7 @@ async function _loadPremierLeagueCard() {
 
   try {
     const resp = await fetch(
-      `https://v3.football.api-sports.io/fixtures?league=39&season=2025&date=${today}`,
+      `https://v3.football.api-sports.io/fixtures?league=39&season=2024&date=${today}`,
       { headers: { 'x-apisports-key': 'b89962f0944bdce04ad5fec40c67e32d' } }
     );
     const data = await resp.json();
