@@ -3394,14 +3394,15 @@ body {
 .cal-pill-day { font-size: .68rem; text-transform: capitalize; color: inherit; }
 .cal-pill-num { font-weight: 700; font-size: .8rem; color: inherit; }
 
-/* Lista de cards */
+/* Lista de cards — scroll horizontal snap (um card por vez) */
 .cal-matches-wrap {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 10px;
   padding: 10px;
-  max-height: 480px;
-  overflow-y: auto;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
@@ -3422,6 +3423,10 @@ body {
   color: #fff;
   cursor: pointer;
   transition: transform .15s, box-shadow .15s;
+  /* scroll snap */
+  scroll-snap-align: center;
+  flex-shrink: 0;
+  min-width: calc(100% - 20px);
   /* Campo de futebol */
   background:
     linear-gradient(180deg,
