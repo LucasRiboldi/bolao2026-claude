@@ -254,11 +254,12 @@ async function _loadPremierLeagueCard() {
   const anchor = document.getElementById('pl-card-anchor');
   if (!anchor) return;
 
-  const today = new Date().toLocaleDateString('fr-CA', { timeZone: 'America/Sao_Paulo' });
+  const today  = new Date().toLocaleDateString('fr-CA', { timeZone: 'America/Sao_Paulo' });
+  const season = parseInt(today.split('-')[0]) - 1; // 2026 → 2025 (PL 2025-26), 2025 → 2024 (PL 2024-25)
 
   try {
     const resp = await fetch(
-      `https://v3.football.api-sports.io/fixtures?league=39&season=2024&date=${today}`,
+      `https://v3.football.api-sports.io/fixtures?league=39&season=${season}&date=${today}`,
       { headers: { 'x-apisports-key': 'b89962f0944bdce04ad5fec40c67e32d' } }
     );
     const data = await resp.json();
@@ -267,7 +268,7 @@ async function _loadPremierLeagueCard() {
     );
 
     if (fixtures.length === 0) {
-      const dbg = JSON.stringify({ date: today, errors: data.errors, results: data.results, paging: data.paging }).substring(0, 300);
+      const dbg = JSON.stringify({ url: `league=39&season=${season}&date=${today}`, errors: data.errors, results: data.results }).substring(0, 400);
       anchor.innerHTML = `<div class="today-matches-card today-matches-card--auth">
         <div class="tdm-header"><span>🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League — Hoje</span></div>
         <div class="tdm-body"><p class="tdm-empty" style="padding:16px 10px;font-size:.75rem">
