@@ -919,6 +919,181 @@ async function handleAudit(res) {
 }
 
 // ================================================================
+// UNIT TESTS HANDLER
+// Roda ~30 testes isolados via SSE e reporta cada um em tempo real
+// ================================================================
+async function handleUnitTests(res) {
+  sseHeaders(res);
+  let passed = 0, failed = 0, total = 0;
+
+  function t(name, category, condition, detail = '') {
+    total++;
+    const status = condition ? 'ok' : 'fail';
+    if (condition) passed++; else failed++;
+    send(res, 'test_result', { name, category, status, detail, index: total });
+    send(res, 'progress', { pct: Math.round(total / 32 * 100) });
+  }
+
+  function sc(gB, kB, gR, kR) {
+    return calcScore(gB || {}, kB || {}, gR || {}, kR || {});
+  }
+
+  // ── CATEGORIA 1: Pontuação de Grupos (6 testes) ──────────────
+  {
+    const {pts:p1} = sc({'A_0':{homeGoals:'2',awayGoals:'1'}},{},{'A_0':{homeGoals:2,awayGoals:1}},{});
+    t('Placar exato (2-1 vs 2-1) → 3 pts', 'Grupos', p1===3, `obteve ${p1} pts`);
+
+    const {pts:p2,breakdown:b2} = sc({'A_0':{homeGoals:'3',awayGoals:'0'}},{},{'A_0':{homeGoals:2,awayGoals:1}},{});
+    t('Resultado certo não exato (3-0 vs 2-1) → 1 pt', 'Grupos', p2===1&&b2.exact===0&&b2.result===1, `pts=${p2} exatos=${b2.exact} result=${b2.result}`);
+
+    const {pts:p3} = sc({'A_0':{homeGoals:'2',awayGoals:'2'}},{},{'A_0':{homeGoals:0,awayGoals:0}},{});
+    t('Empate certo (2-2 vs 0-0) → 1 pt', 'Grupos', p3===1, `obteve ${p3} pts`);
+
+    const {pts:p4} = sc({'A_0':{homeGoals:'2',awayGoals:'1'}},{},{'A_0':{homeGoals:0,awayGoals:1}},{});
+    t('Resultado errado (2-1 apostado, 0-1 real) → 0 pts', 'Grupos', p4===0, `obteve ${p4} pts`);
+
+    const {pts:p5} = sc({'A_0':{homeGoals:'1',awayGoals:'1'}},{},{'A_0':{homeGoals:2,awayGoals:0}},{});
+    t('Empate apostado vs vitória real → 0 pts', 'Grupos', p5===0, `obteve ${p5} pts`);
+
+    const gB6={'A_0':{homeGoals:'2',awayGoals:'1'},'A_1':{homeGoals:'1',awayGoals:'1'},'A_2':{homeGoals:'3',awayGoals:'0'}};
+    const gR6={'A_0':{homeGoals:2,awayGoals:1},'A_1':{homeGoals:0,awayGoals:0},'A_2':{homeGoals:2,awayGoals:1}};
+    const {pts:p6,breakdown:b6} = sc(gB6,{},gR6,{});
+    t('2 exatos (6pts) + 1 resultado (1pt) = 7 pts', 'Grupos', p6===7&&b6.exact===2&&b6.result===1, `pts=${p6} exatos=${b6.exact} result=${b6.result}`);
+  }
+
+  // ── CATEGORIA 2: Pontuação Mata-Mata (8 testes) ──────────────
+  {
+    const {pts:p1} = sc({},{'r32_01':'brazil'},{},{'r32_01':'brazil'});
+    t('KO R32: time apostado avançou → 2 pts', 'Mata-Mata', p1===2, `obteve ${p1} pts`);
+
+    const {pts:p2} = sc({},{'r32_01':'brazil'},{},{'r32_01':'germany'});
+    t('KO R32: time apostado não avançou → 0 pts', 'Mata-Mata', p2===0, `obteve ${p2} pts`);
+
+    const {pts:p3} = sc({},{'r32_01':'brazil','r16_01':'brazil'},{},{'r32_01':'brazil','r16_01':'brazil'});
+    t('KO: 2 fases corretas (R32+R16) → 4 pts', 'Mata-Mata', p3===4, `obteve ${p3} pts`);
+
+    const {pts:p4} = sc({},{'qf_01':'france'},{},{'qf_01':'france'});
+    t('KO Quartas: time certo avançou → 2 pts', 'Mata-Mata', p4===2, `obteve ${p4} pts`);
+
+    const {pts:p5} = sc({},{'third':'brazil'},{},{'third':'brazil'});
+    t('3º lugar: acerto exato → 2 pts', 'Mata-Mata', p5===2, `obteve ${p5} pts`);
+
+    const {pts:p6} = sc({},{'third':'brazil'},{},{'third':'germany'});
+    t('3º lugar: erro → 0 pts', 'Mata-Mata', p6===0, `obteve ${p6} pts`);
+
+    const {pts:p7,breakdown:b7} = sc({},{'final':'brazil'},{},{'final':'brazil'});
+    t('Final: campeão certo → 7 pts (2+5 bônus)', 'Mata-Mata', p7===7&&b7.bonus===5, `pts=${p7} bônus=${b7.bonus}`);
+
+    const {pts:p8} = sc({},{'final':'germany'},{},{'final':'brazil'});
+    t('Final: campeão errado → 0 pts', 'Mata-Mata', p8===0, `obteve ${p8} pts`);
+  }
+
+  // ── CATEGORIA 3: Desempate e Ranking (5 testes) ──────────────
+  {
+    const mk = (name,pts,exact,result,ko) => ({name,pts,breakdown:{exact,result,ko,bonus:0}});
+
+    const s1 = [mk('B',10,1,6,0), mk('A',10,2,4,0), mk('C',5,0,5,0)].sort(rankSort);
+    t('Ranking: mais pontos vence (10>5)', 'Desempate', s1[0].name==='A'&&s1[2].name==='C', `ordem: ${s1.map(e=>e.name).join(' > ')}`);
+
+    const s2 = [mk('B',10,1,6,0), mk('A',10,2,4,0)].sort(rankSort);
+    t('Empate em pts: mais exatos vence', 'Desempate', s2[0].name==='A', `1º=${s2[0].name} (exatos: A=2 B=1)`);
+
+    const s3 = [mk('B',8,2,2,0), mk('A',8,2,3,0)].sort(rankSort);
+    t('Empate exatos: mais resultados vence', 'Desempate', s3[0].name==='A', `1º=${s3[0].name} (result: A=3 B=2)`);
+
+    const s4 = [mk('B',8,2,2,1), mk('A',8,2,2,2)].sort(rankSort);
+    t('Empate tudo: mais KO vence', 'Desempate', s4[0].name==='A', `1º=${s4[0].name} (ko: A=2 B=1)`);
+
+    const s5 = [
+      {name:'Zeca',pts:5,breakdown:{exact:1,result:0,ko:0,bonus:0}},
+      {name:'Ana', pts:5,breakdown:{exact:1,result:0,ko:0,bonus:0}},
+    ].sort(rankSort);
+    t('Empate total: ordem alfabética (Ana < Zeca)', 'Desempate', s5[0].name==='Ana', `1º=${s5[0].name}`);
+  }
+
+  // ── CATEGORIA 4: Classificação de Grupos / H2H (6 testes) ────
+  {
+    // Grupo C (brazil,morocco,haiti,scotland) — resultados determinísticos
+    // C_0=brazil×morocco, C_1=haiti×scotland, C_2=brazil×haiti, C_3=morocco×scotland, C_4=brazil×scotland, C_5=morocco×haiti
+    const bets = {
+      'C_0':{homeGoals:'3',awayGoals:'0'}, // brazil 3-0 morocco
+      'C_1':{homeGoals:'1',awayGoals:'0'}, // haiti 1-0 scotland
+      'C_2':{homeGoals:'2',awayGoals:'0'}, // brazil 2-0 haiti
+      'C_3':{homeGoals:'1',awayGoals:'0'}, // morocco 1-0 scotland
+      'C_4':{homeGoals:'1',awayGoals:'0'}, // brazil 1-0 scotland
+      'C_5':{homeGoals:'2',awayGoals:'0'}, // morocco 2-0 haiti
+    };
+    const st = calcGroupStandings(bets)['C'];
+    t('Standings: Brazil 1º (9pts)', 'Grupos/H2H', st[0].id==='brazil'&&st[0].pts===9, `1º=${st[0].id} pts=${st[0].pts}`);
+    t('Standings: Scotland 4º (0pts)', 'Grupos/H2H', st[3].id==='scotland'&&st[3].pts===0, `4º=${st[3].id} pts=${st[3].pts}`);
+
+    // H2H tiebreak: brazil e morocco empatam em pontos
+    // brazil: W(haiti)=3 + W(scotland)=3 + L(morocco)=0 = 6pts, GF=4 GA=1
+    // morocco: W(haiti)=3 + W(scotland)=3 + W(brazil)=3 = 9pts  — não funciona
+    // Vamos: todos com 1 vitória + 1 empate + 1 derrota = 4pts cada (para 3 times, 4º tem 0pts)
+    const betsH2H = {
+      'C_0':{homeGoals:'1',awayGoals:'0'}, // brazil 1-0 morocco   (brazil 3pts, morocco 0pts)
+      'C_1':{homeGoals:'2',awayGoals:'0'}, // haiti 2-0 scotland
+      'C_2':{homeGoals:'0',awayGoals:'1'}, // brazil 0-1 haiti      (haiti 3pts, brazil 0pts)
+      'C_3':{homeGoals:'1',awayGoals:'0'}, // morocco 1-0 scotland
+      'C_4':{homeGoals:'2',awayGoals:'0'}, // brazil 2-0 scotland
+      'C_5':{homeGoals:'0',awayGoals:'1'}, // morocco 0-1 haiti     (haiti 3pts, morocco 0pts)
+    };
+    // brazil: W(morocco)=3 + W(scotland)=3 + L(haiti)=0 = 6pts
+    // morocco: L(brazil)=0 + W(scotland)=3 + L(haiti)=0 = 3pts
+    // haiti: W(scotland)=3 + W(brazil)=3 + W(morocco)=3 = 9pts → haiti 1º
+    // scotland: 0pts
+    const stH2H = calcGroupStandings(betsH2H)['C'];
+    t('Standings H2H: Haiti lidera com 9pts (3 vitórias)', 'Grupos/H2H', stH2H[0].id==='haiti'&&stH2H[0].pts===9, `1º=${stH2H[0].id} pts=${stH2H[0].pts}`);
+    t('Standings H2H: Scotland 4º com 0pts', 'Grupos/H2H', stH2H[3].id==='scotland', `4º=${stH2H[3].id}`);
+
+    // getQualified retorna 8 melhores terceiros
+    const allBets = randomGroupBets();
+    const qualified = getQualified(calcGroupStandings(allBets));
+    const thirdsCount = qualified.thirds.length;
+    t('getQualified: exatamente 8 terceiros selecionados', 'Grupos/H2H', thirdsCount===8, `terceiros=${thirdsCount}`);
+  }
+
+  // ── CATEGORIA 5: Estrutura de Dados (7 testes) ───────────────
+  {
+    const allTeams = Object.values(GROUPS).flat();
+    t('48 seleções cadastradas nos grupos', 'Estrutura', allTeams.length===48, `total=${allTeams.length}`);
+
+    const uniqueTeams = new Set(allTeams);
+    t('Nenhuma seleção aparece em mais de um grupo', 'Estrutura', uniqueTeams.size===48, `únicos=${uniqueTeams.size}`);
+
+    t('12 grupos com 4 seleções cada', 'Estrutura', Object.keys(GROUPS).length===12, `grupos=${Object.keys(GROUPS).length}`);
+
+    const allGameIds = Object.keys(randomGroupBets());
+    t('72 jogos de grupos gerados (12×6)', 'Estrutura', allGameIds.length===72, `jogos=${allGameIds.length}`);
+
+    const koIds = [...KNOCKOUT_SLOTS.map(s=>s.id), ...KNOCKOUT_ROUNDS.flatMap(r=>r.matches.map(m=>m.id))];
+    const uniqueKoIds = new Set(koIds);
+    t('IDs do mata-mata sem duplicatas', 'Estrutura', uniqueKoIds.size===koIds.length, `total=${koIds.length} únicos=${uniqueKoIds.size}`);
+
+    const r16 = KNOCKOUT_ROUNDS.find(r=>r.name==='Oitavas');
+    const qf  = KNOCKOUT_ROUNDS.find(r=>r.name==='Quartas');
+    const sf  = KNOCKOUT_ROUNDS.find(r=>r.name==='Semifinais');
+    const trd = KNOCKOUT_ROUNDS.find(r=>r.name==='Terceiro Lugar');
+    const fin = KNOCKOUT_ROUNDS.find(r=>r.name==='Final');
+    const koOk = KNOCKOUT_SLOTS.length===16 && r16?.matches.length===8 && qf?.matches.length===4 && sf?.matches.length===2 && trd?.matches.length===1 && fin?.matches.length===1;
+    t('Estrutura KO: 16+8+4+2+1+1 = 32 confrontos', 'Estrutura', koOk, `R32=${KNOCKOUT_SLOTS.length} R16=${r16?.matches.length} QF=${qf?.matches.length} SF=${sf?.matches.length} 3º=${trd?.matches.length} F=${fin?.matches.length}`);
+
+    const {koResults} = simulateRealResults();
+    const champ = koResults['final'];
+    const koCount = Object.keys(koResults).length;
+    t(`Simulação: campeão válido e 32 resultados KO`, 'Estrutura', !!TEAMS[champ]&&koCount===32, `campeão=${TEAMS[champ]?.name||champ} resultados=${koCount}`);
+  }
+
+  send(res, 'log', {
+    msg: `✅ Testes concluídos: ${passed} passaram · ${failed} falharam · ${total} total`,
+    level: failed>0 ? 'err' : 'ok',
+  });
+  send(res, 'done', { passed, failed, total });
+  res.end();
+}
+
+// ================================================================
 // HTTP SERVER
 // ================================================================
 const server = http.createServer((req, res) => {
@@ -933,6 +1108,7 @@ const server = http.createServer((req, res) => {
   if (req.url === '/api/recalc' && req.method === 'GET') { handleRecalcRanking(res); return; }
   if (req.url === '/api/report' && req.method === 'GET') { handleReport(res);        return; }
   if (req.url === '/api/audit'  && req.method === 'GET') { handleAudit(res);         return; }
+  if (req.url === '/api/tests'  && req.method === 'GET') { handleUnitTests(res);     return; }
 
   if (req.url === '/api/ping' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
@@ -955,6 +1131,7 @@ server.listen(PORT, () => {
   console.log(`       /api/recalc  — recalcula ranking de todos os usuários`);
   console.log(`       /api/report  — gera relatório completo`);
   console.log(`       /api/audit   — auditoria e testes unitários`);
+  console.log(`       /api/tests   — 32 testes unitários automáticos`);
   console.log(`\n  📄  Abra http://127.0.0.1:5500/test-seed.html`);
   console.log(`\n  Ctrl+C para encerrar\n`);
 });

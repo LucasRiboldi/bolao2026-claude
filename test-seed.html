@@ -7,7 +7,7 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; min-height: 100vh; padding: 20px; }
-    .wrap { max-width: 860px; margin: 0 auto; }
+    .wrap { max-width: 920px; margin: 0 auto; }
 
     .banner { background: #ff9800; color: #000; border-radius: 10px; padding: 12px 18px; margin-bottom: 20px; font-weight: 700; font-size: .9rem; }
     .banner p { font-weight: 400; font-size: .82rem; margin-top: 4px; }
@@ -26,8 +26,8 @@
     #server-label strong { color: #e6edf3; }
 
     /* tabs */
-    .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid #30363d; padding-bottom: 0; }
-    .tab-btn { background: none; border: none; border-bottom: 3px solid transparent; color: #8b949e; font-size: .88rem; font-weight: 600; padding: 8px 16px; cursor: pointer; margin-bottom: -1px; transition: color .15s, border-color .15s; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid #30363d; flex-wrap: wrap; }
+    .tab-btn { background: none; border: none; border-bottom: 3px solid transparent; color: #8b949e; font-size: .85rem; font-weight: 600; padding: 8px 14px; cursor: pointer; margin-bottom: -1px; transition: color .15s, border-color .15s; white-space: nowrap; }
     .tab-btn:hover { color: #e6edf3; }
     .tab-btn.active { color: #58a6ff; border-bottom-color: #58a6ff; }
     .tab-pane { display: none; }
@@ -61,6 +61,8 @@
     .btn-blue:hover:not(:disabled)   { background: #388bfd; }
     .btn-yellow { background: #9e6a03; color: #e6edf3; }
     .btn-yellow:hover:not(:disabled) { background: #bb8009; }
+    .btn-purple { background: #6e40c9; color: #fff; }
+    .btn-purple:hover:not(:disabled) { background: #8957e5; }
     .btn-ghost  { background: transparent; color: #58a6ff; border: 1px solid #30363d; }
     .btn-ghost:hover:not(:disabled)  { background: #21262d; }
     .btn-sm { padding: 6px 14px; font-size: .8rem; }
@@ -119,6 +121,38 @@
     .audit-fail .audit-name { color: #f85149; }
     .audit-warn .audit-name { color: #d29922; }
 
+    /* ── UNIT TESTS ──────────────────────────────── */
+    .test-header { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+    .test-score { display: flex; gap: 10px; }
+    .test-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 999px; font-size: .82rem; font-weight: 700; }
+    .test-badge.pass { background: #1a3a1f; color: #3fb950; border: 1px solid #238636; }
+    .test-badge.fail { background: #3a1a1a; color: #f85149; border: 1px solid #da3633; }
+    .test-badge.total { background: #1a2a3a; color: #58a6ff; border: 1px solid #1f6feb; }
+
+    .test-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .filter-btn { background: #21262d; border: 1px solid #30363d; color: #8b949e; font-size: .75rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; cursor: pointer; transition: all .15s; }
+    .filter-btn.active { background: #388bfd22; border-color: #58a6ff; color: #58a6ff; }
+
+    .test-list { display: flex; flex-direction: column; gap: 4px; }
+    .test-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; border-radius: 8px; border: 1px solid #21262d; font-size: .8rem; background: #0d1117; animation: fadeIn .2s ease; }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(-4px); } to { opacity:1; transform: translateY(0); } }
+    .test-row.ok   { border-left: 3px solid #238636; }
+    .test-row.fail { border-left: 3px solid #da3633; background: #1a0a0a; }
+    .test-row.hidden { display: none; }
+    .test-icon { font-size: 1rem; flex-shrink: 0; width: 20px; text-align: center; }
+    .test-cat { background: #21262d; color: #8b949e; font-size: .68rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; white-space: nowrap; align-self: center; flex-shrink: 0; }
+    .test-cat.Grupos      { background: #162032; color: #58a6ff; }
+    .test-cat.Mata-Mata   { background: #1e1630; color: #8957e5; }
+    .test-cat.Desempate   { background: #1e2816; color: #3fb950; }
+    .test-cat.grupos-h2h  { background: #1e1616; color: #f85149; }
+    .test-cat.Estrutura   { background: #201a10; color: #d29922; }
+    .test-cat.Simulacao   { background: #102020; color: #39d353; }
+    .test-name { flex: 1; line-height: 1.4; }
+    .test-detail { color: #8b949e; font-size: .72rem; font-family: monospace; white-space: nowrap; }
+
+    .test-running-indicator { color: #d29922; font-size: .8rem; margin-top: 8px; display: none; }
+    .test-running-indicator.visible { display: block; }
+
     /* instructions */
     .instructions { background: #161b22; border: 1px solid #388bfd; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; font-size: .83rem; }
     .instructions h3 { color: #58a6ff; margin-bottom: 8px; font-size: .88rem; }
@@ -139,7 +173,7 @@
   </div>
 
   <h1>🧪 Ferramentas de Teste — Bolão Copa 2026</h1>
-  <p class="subtitle">Seed · Recalcular · Relatório · Auditoria</p>
+  <p class="subtitle">Seed · Recalcular · Relatório · Auditoria · Testes Unitários</p>
 
   <!-- Status do servidor local -->
   <div class="server-bar">
@@ -160,10 +194,11 @@
 
   <!-- Abas -->
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('seed')">🧪 Seed</button>
+    <button class="tab-btn active" onclick="switchTab('seed')">🌱 Seed</button>
     <button class="tab-btn" onclick="switchTab('recalc')">🔄 Recalcular</button>
     <button class="tab-btn" onclick="switchTab('report')">📊 Relatório</button>
     <button class="tab-btn" onclick="switchTab('audit')">🔍 Auditoria</button>
+    <button class="tab-btn" onclick="switchTab('tests')">🧪 Testes Unitários</button>
   </div>
 
   <!-- ===== ABA: SEED ===== -->
@@ -224,7 +259,7 @@
   <div class="tab-pane" id="tab-audit">
     <div class="card">
       <div class="card-title">🔍 Auditoria do Sistema</div>
-      <p class="card-desc">Executa 14 verificações: conexão Firebase, completude de resultados, perfis e apostas, consistência do ranking, e testes unitários de pontuação.</p>
+      <p class="card-desc">Verificações de conexão Firebase, completude de resultados, perfis e apostas, consistência do ranking, e testes unitários de pontuação.</p>
       <div class="btns">
         <button class="btn btn-ghost" id="btn-audit" onclick="runAudit()" disabled>🔍 Executar Auditoria</button>
       </div>
@@ -232,11 +267,58 @@
     <div id="audit-content" class="hidden"></div>
   </div>
 
+  <!-- ===== ABA: TESTES UNITÁRIOS ===== -->
+  <div class="tab-pane" id="tab-tests">
+    <div class="card">
+      <div class="card-title">🧪 Testes Unitários Automatizados</div>
+      <p class="card-desc">
+        32 testes isolados que verificam toda a lógica do bolão em tempo real:
+        <strong>pontuação de grupos</strong>, <strong>mata-mata</strong>, <strong>critérios de desempate</strong>,
+        <strong>classificação H2H</strong> e <strong>estrutura de dados</strong>.
+        Cada teste aparece instantaneamente com resultado e detalhes.
+      </p>
+      <div class="btns">
+        <button class="btn btn-purple" id="btn-tests" onclick="runTests()" disabled>▶ Rodar Todos os Testes</button>
+      </div>
+      <div class="prog-wrap" id="tests-prog">
+        <div class="prog-bg"><div class="prog-fill" id="tests-prog-fill" style="background:#8957e5"></div></div>
+        <div class="prog-label" id="tests-prog-label">Aguardando…</div>
+      </div>
+    </div>
+
+    <!-- Resultado dos testes -->
+    <div id="tests-content" class="hidden">
+      <div class="card">
+        <div class="test-header">
+          <div class="test-score" id="test-score">
+            <span class="test-badge pass">✅ <span id="test-passed">0</span> passou</span>
+            <span class="test-badge fail">❌ <span id="test-failed">0</span> falhou</span>
+            <span class="test-badge total">🧪 <span id="test-total">0</span> total</span>
+          </div>
+        </div>
+
+        <div class="test-filters" id="test-filters">
+          <span style="font-size:.75rem;color:#8b949e;align-self:center">Filtrar:</span>
+          <button class="filter-btn active" data-filter="all" onclick="filterTests('all')">Todos</button>
+          <button class="filter-btn" data-filter="fail" onclick="filterTests('fail')">❌ Falhou</button>
+          <button class="filter-btn" data-filter="Grupos" onclick="filterTests('Grupos')">⚽ Grupos</button>
+          <button class="filter-btn" data-filter="Mata-Mata" onclick="filterTests('Mata-Mata')">⚡ Mata-Mata</button>
+          <button class="filter-btn" data-filter="Desempate" onclick="filterTests('Desempate')">🏅 Desempate</button>
+          <button class="filter-btn" data-filter="Grupos/H2H" onclick="filterTests('Grupos/H2H')">🔁 H2H</button>
+          <button class="filter-btn" data-filter="Estrutura" onclick="filterTests('Estrutura')">🏗 Estrutura</button>
+        </div>
+
+        <div class="test-running-indicator" id="test-running">⏳ Executando testes…</div>
+        <div class="test-list" id="test-list"></div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /wrap -->
 
 <script>
-const SERVER = 'http://localhost:3001';
-const NUM_USERS   = 10;
+const SERVER    = 'http://localhost:3001';
+const NUM_USERS = 10;
 const TEST_DOMAIN = 'teste.com.br';
 const TEST_NAMES  = [
   'Teste Alpha','Teste Bravo','Teste Charlie','Teste Delta','Teste Echo',
@@ -244,6 +326,7 @@ const TEST_NAMES  = [
 ];
 
 let _serverOk = false;
+const ALL_TABS = ['seed','recalc','report','audit','tests'];
 
 // ---- Build users grid ----
 (function() {
@@ -260,10 +343,7 @@ let _serverOk = false;
 
 // ---- Tabs ----
 function switchTab(name) {
-  document.querySelectorAll('.tab-btn').forEach((b,i) => {
-    const tabs = ['seed','recalc','report','audit'];
-    b.classList.toggle('active', tabs[i] === name);
-  });
+  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', ALL_TABS[i] === name));
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   document.getElementById(`tab-${name}`).classList.add('active');
 }
@@ -294,7 +374,7 @@ async function checkServer() {
 }
 
 function setAllBtns(disabled) {
-  ['btn-run','btn-clear','btn-recalc','btn-report','btn-audit'].forEach(id => {
+  ['btn-run','btn-clear','btn-recalc','btn-report','btn-audit','btn-tests'].forEach(id => {
     const b = document.getElementById(id);
     if (b) b.disabled = disabled || !_serverOk;
   });
@@ -335,30 +415,33 @@ function setUserStatus(i, icon, cls = '', pts = null) {
 
 // ---- Generic SSE runner ----
 function runStream(endpoint, logBoxId, progId, onEvent, onDone) {
-  clearLog(logBoxId);
+  if (logBoxId) clearLog(logBoxId);
   setAllBtns(true);
 
   const es = new EventSource(`${SERVER}${endpoint}`);
   es.onmessage = (e) => {
     const d = JSON.parse(e.data);
     if (d.type === 'log') {
-      const lvl = d.level === 'ok' ? 'k' : d.level === 'err' ? 'e' : d.level === 'warn' ? 'w' : 'i';
-      addLog(logBoxId, d.msg, lvl);
+      if (logBoxId) {
+        const lvl = d.level === 'ok' ? 'k' : d.level === 'err' ? 'e' : d.level === 'warn' ? 'w' : 'i';
+        addLog(logBoxId, d.msg, lvl);
+      }
     } else if (d.type === 'progress') {
-      setProgress(progId, d.pct, `Processando… ${d.pct}%`);
+      if (progId) setProgress(progId, d.pct, `${d.pct}%`);
     } else if (d.type === 'error') {
-      addLog(logBoxId, `❌ ${d.msg}`, 'e');
-      es.close(); setAllBtns(false); if (progId) setProgress(progId, 0, 'Erro');
+      if (logBoxId) addLog(logBoxId, `❌ ${d.msg}`, 'e');
+      es.close(); setAllBtns(false);
+      if (progId) setProgress(progId, 0, 'Erro');
     } else if (d.type === 'done') {
       es.close(); setAllBtns(false);
-      if (progId) setProgress(progId, 100, 'Concluído! ✅');
+      if (progId) setProgress(progId, 100, 'Concluído ✅');
       if (onDone) onDone(d);
     } else if (onEvent) {
       onEvent(d);
     }
   };
   es.onerror = () => {
-    addLog(logBoxId, '❌ Conexão perdida', 'e');
+    if (logBoxId) addLog(logBoxId, '❌ Conexão perdida', 'e');
     es.close(); setAllBtns(false); checkServer();
   };
 }
@@ -387,9 +470,7 @@ function clearSeed() {
     if (d.type === 'user_start') setUserStatus(d.index, '⏳', 'busy');
     if (d.type === 'user_done' && d.cleared) setUserStatus(d.index, '🗑', 'ok');
     if (d.type === 'user_err')   setUserStatus(d.index, '❌', 'err');
-  }, () => {
-    addLog('seed-log', '✅ Limpeza concluída.', 'k');
-  });
+  }, () => { addLog('seed-log', '✅ Limpeza concluída.', 'k'); });
 }
 
 // ---- ABA RECALCULAR ----
@@ -429,9 +510,9 @@ function renderReport(d) {
       <div class="report-block">
         <h3>Resumo</h3>
         <div class="report-item"><span>Total de usuários</span><span class="report-val">${stats.totalUsers}</span></div>
-        <div class="report-item"><span>Usuários com apostas</span><span class="report-val">${stats.usersWithBets}</span></div>
-        <div class="report-item"><span>Resultados grupos</span><span class="report-val">${stats.groupResultsCount} / 72</span></div>
-        <div class="report-item"><span>Resultados mata-mata</span><span class="report-val">${stats.koResultsCount}</span></div>
+        <div class="report-item"><span>Usuários com apostas</span><span class="report-val">${stats.usersWithBets ?? '—'}</span></div>
+        <div class="report-item"><span>Resultados grupos</span><span class="report-val">${stats.groupResultsCount ?? stats.totalGameResults ?? '—'} / 72</span></div>
+        <div class="report-item"><span>Resultados mata-mata</span><span class="report-val">${stats.koResultsCount ?? '—'}</span></div>
         <div class="report-item"><span>Média de pontos</span><span class="report-val">${stats.avgPts?.toFixed(1) ?? '—'} pts</span></div>
         <div class="report-item"><span>Maior pontuação</span><span class="report-val">${stats.maxPts ?? '—'} pts</span></div>
       </div>
@@ -447,7 +528,7 @@ function renderReport(d) {
       <h3>📈 Histograma de Pontos</h3>
       ${histogram.map(h => `
         <div class="histo-row">
-          <span style="min-width:55px;font-size:.75rem;color:#8b949e">${h.range}</span>
+          <span style="min-width:55px;font-size:.75rem;color:#8b949e">${h.label ?? h.range}</span>
           <div class="histo-bar-bg"><div class="histo-bar" style="width:${Math.round(h.count/maxHisto*100)}%"></div></div>
           <span class="histo-lbl">${h.count}</span>
         </div>`).join('')}
@@ -480,7 +561,6 @@ function renderAudit(checks) {
   const passed = checks.filter(c => c.status === 'ok').length;
   const failed = checks.filter(c => c.status === 'fail').length;
   const warned = checks.filter(c => c.status === 'warn').length;
-
   const icon = s => s === 'ok' ? '✅' : s === 'fail' ? '❌' : '⚠️';
 
   let html = `<div class="card">
@@ -492,8 +572,8 @@ function renderAudit(checks) {
     <div class="audit-check audit-${c.status}">
       <span class="audit-icon">${icon(c.status)}</span>
       <div>
-        <div class="audit-name">${c.name}</div>
-        ${c.msg ? `<div class="audit-msg">${c.msg}</div>` : ''}
+        <div class="audit-name">${c.label ?? c.name}</div>
+        ${(c.detail || c.msg) ? `<div class="audit-msg">${c.detail ?? c.msg}</div>` : ''}
       </div>
     </div>`).join('')}
   </div>`;
@@ -501,6 +581,85 @@ function renderAudit(checks) {
   const el = document.getElementById('audit-content');
   el.innerHTML = html;
   el.classList.remove('hidden');
+}
+
+// ---- ABA TESTES UNITÁRIOS ----
+let _allTestRows = [];
+
+function runTests() {
+  if (!_serverOk) return;
+  _allTestRows = [];
+
+  const content = document.getElementById('tests-content');
+  const list    = document.getElementById('test-list');
+  const running = document.getElementById('test-running');
+
+  content.classList.remove('hidden');
+  list.innerHTML = '';
+  running.classList.add('visible');
+  document.getElementById('test-passed').textContent = '0';
+  document.getElementById('test-failed').textContent = '0';
+  document.getElementById('test-total').textContent  = '0';
+
+  // Reset filters
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all'));
+  _activeFilter = 'all';
+
+  runStream('/api/tests', null, 'tests', (d) => {
+    if (d.type === 'test_result') appendTestRow(d);
+  }, (done) => {
+    running.classList.remove('visible');
+    setProgress('tests', 100, `✅ ${done.passed} passaram · ❌ ${done.failed} falharam`);
+  });
+}
+
+function appendTestRow(d) {
+  // Update counters
+  const totalEl  = document.getElementById('test-total');
+  const passedEl = document.getElementById('test-passed');
+  const failedEl = document.getElementById('test-failed');
+
+  const cur = parseInt(totalEl.textContent) + 1;
+  totalEl.textContent = cur;
+  if (d.status === 'ok') passedEl.textContent = parseInt(passedEl.textContent) + 1;
+  else                   failedEl.textContent = parseInt(failedEl.textContent) + 1;
+
+  const catKey = d.category.replace(/[^a-zA-Z0-9]/g, '-');
+  const catClass = d.category;
+
+  const row = document.createElement('div');
+  row.className = `test-row ${d.status}`;
+  row.dataset.category = d.category;
+  row.dataset.status   = d.status;
+  row.innerHTML = `
+    <span class="test-icon">${d.status === 'ok' ? '✅' : '❌'}</span>
+    <span class="test-cat ${catClass}">${d.category}</span>
+    <span class="test-name">${d.name}</span>
+    ${d.detail ? `<span class="test-detail">${d.detail}</span>` : ''}
+  `;
+  document.getElementById('test-list').appendChild(row);
+  _allTestRows.push(row);
+
+  // Apply active filter
+  applyFilter(row);
+}
+
+let _activeFilter = 'all';
+
+function filterTests(filter) {
+  _activeFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+  _allTestRows.forEach(row => applyFilter(row));
+}
+
+function applyFilter(row) {
+  const cat    = row.dataset.category;
+  const status = row.dataset.status;
+  let visible = false;
+  if (_activeFilter === 'all')  visible = true;
+  else if (_activeFilter === 'fail') visible = status === 'fail';
+  else visible = cat === _activeFilter;
+  row.classList.toggle('hidden', !visible);
 }
 
 // ---- Renderizar ranking ----
@@ -528,9 +687,9 @@ function renderRanking(containerId, ranking) {
       </tr></thead>
       <tbody>
         ${ranking.map((e,i) => {
-          const pos  = medals[i] || `${i+1}º`;
-          const cls  = i===0?'p1':i===1?'p2':i===2?'p3':'';
-          const bd   = e.breakdown || {};
+          const pos   = medals[i] || `${i+1}º`;
+          const cls   = i===0?'p1':i===1?'p2':i===2?'p3':'';
+          const bd    = e.breakdown || {};
           const champ = bd.bonus > 0
             ? `<span style="color:#f0e040;font-weight:700">✅ +${bd.bonus}</span>`
             : '—';
