@@ -3394,17 +3394,19 @@ body {
 .cal-pill-day { font-size: .68rem; text-transform: capitalize; color: inherit; }
 .cal-pill-num { font-weight: 700; font-size: .8rem; color: inherit; }
 
-/* Lista de cards — scroll horizontal snap (um card por vez) */
-.cal-matches-wrap {
+/* Wrapper que empilha os cards de jogo verticalmente */
+.today-matches-anchor {
   display: flex;
-  flex-direction: row;
-  gap: 10px;
-  padding: 10px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* O cal-match-card dentro do tdm-body ocupa largura total */
+.tdm-body .cal-match-card {
+  min-width: unset;
+  width: 100%;
+  scroll-snap-align: unset;
+  flex-shrink: unset;
 }
 
 /* =============================================
