@@ -34,7 +34,7 @@ function _renderBracket() {
   for (const m of _r32Matches) resolved[m.id] = { home: m.home, away: m.away };
 
   const rounds = [
-    { label: '32avos de Final', icon: '⚡', matches: _r32Matches },
+    { label: '32avos de Final', icon: '⚡', matches: _r32Matches, isR32: true },
   ];
   for (const r of KNOCKOUT_ROUNDS) {
     const meta    = ROUND_META[r.name] || { label: r.name, icon: '⚡' };
@@ -50,10 +50,26 @@ function _renderBracket() {
       <div class="ko-section-hdr">
         <span class="ko-section-title">${round.label}</span>
         <span class="ko-section-count">${n} jogo${n !== 1 ? 's' : ''}</span>
-      </div>
-      <div class="ko-matches-grid">`;
-    for (const match of round.matches) html += _matchHtml(match);
-    html += `</div></div>`;
+      </div>`;
+
+    if (round.isR32) {
+      // Agrupa os 16 confrontos em 8 pares para facilitar leitura
+      html += `<div class="ko-r32-pairs">`;
+      for (let i = 0; i < round.matches.length; i += 2) {
+        const pair = round.matches.slice(i, i + 2);
+        html += `<div class="ko-r32-pair">
+          <div class="ko-r32-pair-lbl">Confronto ${i / 2 + 1}</div>
+          ${pair.map(m => _matchHtml(m)).join('')}
+        </div>`;
+      }
+      html += `</div>`;
+    } else {
+      html += `<div class="ko-matches-grid">`;
+      for (const match of round.matches) html += _matchHtml(match);
+      html += `</div>`;
+    }
+
+    html += `</div>`;
   }
   html += `</div>`;
   container.innerHTML = html;

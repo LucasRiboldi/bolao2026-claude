@@ -299,7 +299,7 @@ function _renderEditKoPanel() {
   };
 
   const allRounds = [
-    { label: '32avos de Final', matches: r32Matches },
+    { label: '32avos de Final', matches: r32Matches, isR32: true },
     ...KNOCKOUT_ROUNDS.map(r => ({
       label:   ROUND_META[r.name] || r.name,
       matches: resolveKnockoutRound(r.matches, _editKoBets),
@@ -310,6 +310,36 @@ function _renderEditKoPanel() {
   for (const round of allRounds) {
     html += `<div class="eb-ko-section">
       <div class="eb-ko-hdr">${round.label}</div>`;
+
+    if (round.isR32) {
+      html += `<div class="bh-r32-pairs" style="padding:8px;gap:8px">`;
+      for (let i = 0; i < round.matches.length; i += 2) {
+        const pair = round.matches.slice(i, i + 2);
+        html += `<div class="bh-r32-pair">
+          <div class="bh-r32-pair-lbl">Confronto ${i / 2 + 1}</div>`;
+        for (const match of pair) {
+          const pickedId = _editKoBets[match.id];
+          const homeT = match.home ? TEAMS[match.home] : null;
+          const awayT = match.away ? TEAMS[match.away] : null;
+          html += `<div class="eb-ko-row">
+            <div class="eb-ko-teams">
+              ${homeT ? `<span class="fi fi-${homeT.iso} eb-flag"></span> <span>${homeT.short}</span>` : '<span class="eb-tbd">❓</span>'}
+              <span class="eb-ko-vs">vs</span>
+              ${awayT ? `<span>${awayT.short}</span> <span class="fi fi-${awayT.iso} eb-flag"></span>` : '<span class="eb-tbd">❓</span>'}
+            </div>
+            <select class="eb-ko-sel" data-match="${match.id}">
+              <option value="">– vencedor –</option>
+              ${homeT ? `<option value="${match.home}" ${pickedId === match.home ? 'selected' : ''}>${homeT.short}</option>` : ''}
+              ${awayT ? `<option value="${match.away}" ${pickedId === match.away ? 'selected' : ''}>${awayT.short}</option>` : ''}
+            </select>
+          </div>`;
+        }
+        html += `</div>`;
+      }
+      html += `</div></div>`;
+      continue;
+    }
+
     for (const match of round.matches) {
       const pickedId = _editKoBets[match.id];
       const homeT = match.home ? TEAMS[match.home] : null;
@@ -496,10 +526,55 @@ function _renderBetHistory(groupBets, knockoutBets, results) {
     html += `<p class="bh-empty">Nenhum palpite de mata-mata registrado.</p>`;
   } else {
     for (const phase of PHASES) {
-      const entries = phase.exact
-        ? (knockoutBets['final'] ? [['final', knockoutBets['final']]] : [])
-        : koEntries.filter(([id]) => id.startsWith(phase.prefix));
+      let entries;
+      if (phase.prefix === 'third') {
+        entries = knockoutBets['third'] ? [['third', knockoutBets['third']]] : [];
+      } else if (phase.exact) {
+        entries = knockoutBets['final'] ? [['final', knockoutBets['final']]] : [];
+      } else {
+        entries = koEntries.filter(([id]) => id.startsWith(phase.prefix));
+      }
       if (entries.length === 0) continue;
+
+      // R32: agrupar em 8 pares de 2 para melhor leitura
+      if (phase.prefix === 'r32') {
+        html += `<div class="bh-ko-phase">
+          <div class="bh-ko-phase-hdr">${phase.label}</div>
+          <div class="bh-r32-pairs">`;
+        for (let i = 0; i < entries.length; i += 2) {
+          const pair = entries.slice(i, i + 2);
+          html += `<div class="bh-r32-pair">
+            <div class="bh-r32-pair-lbl">Confronto ${i / 2 + 1}</div>
+            <div class="bh-ko-phase-list">`;
+          for (const [matchId, pickedId] of pair) {
+            const picked    = TEAMS[pickedId];
+            const roundDone = _koRoundHasResult(matchId);
+            let cls = 'bh-placed', icon = '📌', pts = 0;
+            if (roundDone) {
+              if (_koScored(matchId, pickedId)) { cls = 'bh-exact'; icon = '✅'; pts = 2; koHits++; }
+              else                              { cls = 'bh-wrong'; icon = '❌'; }
+            }
+            const slotWinner = koResults[matchId];
+            const slotTeam   = slotWinner ? TEAMS[slotWinner] : null;
+            html += `<div class="bh-ko-card ${cls}">
+              <span class="bh-si">${icon}</span>
+              <div class="bh-ko-pick">
+                <span class="fi fi-${picked?.iso || 'un'} bh-flag"></span>
+                <span class="bh-team-name">${escapeHtml(picked?.name || pickedId)}</span>
+              </div>
+              ${roundDone
+                ? (slotTeam
+                    ? `<span class="bh-ko-real"><span class="fi fi-${slotTeam.iso} bh-flag"></span> ${escapeHtml(slotTeam.name)}</span>`
+                    : `<span class="bh-ko-real">–</span>`)
+                : `<span class="bh-waiting">⏳ Aguardando</span>`}
+              ${pts ? `<span class="bh-pts">+${pts}</span>` : '<span class="bh-pts bh-pts-empty"></span>'}
+            </div>`;
+          }
+          html += `</div></div>`;
+        }
+        html += `</div></div>`;
+        continue;
+      }
 
       html += `<div class="bh-ko-phase">
         <div class="bh-ko-phase-hdr">${phase.label}</div>

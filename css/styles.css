@@ -654,7 +654,7 @@ body {
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 20px;
 }
 
 /* Card de cada grupo */
@@ -923,6 +923,64 @@ body {
   transition: border-color var(--transition);
 }
 .bracket-match:hover { border-color: var(--accent); }
+
+/* ── R32 em pares (8 confrontos de 2 jogos cada) ── */
+.ko-r32-pairs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 10px;
+  padding: 12px;
+}
+.ko-r32-pair {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.ko-r32-pair-lbl {
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+.ko-r32-pair .bracket-match {
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+}
+.ko-r32-pair .bracket-match:last-child { border-bottom: none; }
+.ko-r32-pair .bracket-match:hover { background: rgba(255,255,255,.03); }
+
+/* ── Separação no histórico de apostas entre grupos ── */
+.bh-group-block {
+  margin-bottom: 14px;
+}
+.bh-group-block:last-of-type { margin-bottom: 0; }
+
+/* R32 pares no histórico de apostas */
+.bh-r32-pairs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.bh-r32-pair {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.bh-r32-pair-lbl {
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
 
 .bracket-team {
   display: flex;
@@ -1235,7 +1293,7 @@ body {
   .bh-team-name  { font-size: .8rem; }
   .bh-ko-card    { flex-wrap: wrap; }
 
-  .group-panel   { padding: 8px; gap: 8px; }
+  .group-panel   { padding: 8px; gap: 14px; }
   .ko-sections   { padding: 8px; gap: 8px; }
   .nav-tab       { padding: 8px 10px; font-size: .78rem; }
 }
@@ -1252,7 +1310,7 @@ body {
   .standings-container  { grid-template-columns: 1fr 1fr; display: grid; gap: 16px; }
   .section-divider-inner{ max-width: 960px; margin: 0 auto; }
   .ko-matches-grid      { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
-  .group-panel          { padding: 12px 16px; gap: 10px; }
+  .group-panel          { padding: 12px 16px; gap: 24px; }
   .ko-sections          { padding: 12px 16px; gap: 10px; }
 }
 
