@@ -44,6 +44,10 @@ async function _onLogin(user) {
     const name = user.displayName || profile.name || user.email.split('@')[0];
     document.getElementById('hdr-username').textContent = name;
 
+    // Carrega configuração de pontuação do Firestore antes de qualquer cálculo
+    await loadAndApplyScoring();
+    _updateScoringLegend();
+
     await loadGroupBetsUI(user.uid);
     await loadKnockoutBetsUI(user.uid);
 
@@ -57,6 +61,24 @@ async function _onLogin(user) {
     showToast('Erro ao carregar dados. Tente novamente.', 'error');
   } finally {
     hideLoading();
+  }
+}
+
+// Atualiza os valores exibidos na legenda de pontuação
+function _updateScoringLegend() {
+  const map = {
+    'leg-exact':  `+${SCORING.exactScore} pts`,
+    'leg-result': `+${SCORING.correctResult} pts`,
+    'leg-r32':    `+${SCORING.r32Winner} pts`,
+    'leg-r16':    `+${SCORING.r16Winner} pts`,
+    'leg-qf':     `+${SCORING.qfWinner} pts`,
+    'leg-sf':     `+${SCORING.sfWinner} pts`,
+    'leg-champ':  `+${SCORING.championScore} pts`,
+    'leg-bonus':  `+${SCORING.finalistBonus} pts`,
+  };
+  for (const [id, val] of Object.entries(map)) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
   }
 }
 

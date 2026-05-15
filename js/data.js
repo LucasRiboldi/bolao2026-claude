@@ -3,11 +3,16 @@
 // Official FIFA World Cup 2026 draw (December 5 2025)
 // ============================================================
 
-const SCORING = {
-  exactScore:     3,
-  correctResult:  1,
-  knockoutWinner: 2,
-  championBonus:  5,
+// Pontuação padrão — pode ser sobrescrita pelo admin via Firestore config/scoring
+let SCORING = {
+  exactScore:     17,  // Placar exato (grupos)
+  correctResult:   8,  // Resultado certo, placar errado (grupos)
+  r32Winner:       5,  // Classificado para os 32-avos (avança de R32)
+  r16Winner:      11,  // Classificado para as oitavas (avança de R16)
+  qfWinner:       20,  // Classificado para as quartas (avança de QF)
+  sfWinner:       40,  // Classificado para a semifinal (avança de SF → finalista)
+  championScore:  71,  // Acertou o campeão
+  finalistBonus:  26,  // Bônus por acertar as DUAS finalistas
 };
 
 // ---- 48 teams -----------------------------------------------

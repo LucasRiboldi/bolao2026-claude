@@ -26,9 +26,14 @@ service cloud.firestore {
     }
 
     // collectionGroup 'profile' — permite admin listar todos os perfis
-    // (necessário para loadAdminUserList via collectionGroup)
+    // (necessário para loadAdminUserList e loadAllUsersForRanking via collectionGroup)
     match /{path=**}/profile/{doc} {
       allow read: if isAdmin();
+    }
+
+    // collectionGroup 'bets' — admin precisa para ranking completo
+    match /{path=**}/bets/{doc} {
+      allow read: if request.auth != null;
     }
 
     match /results/{doc} {

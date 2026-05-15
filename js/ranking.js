@@ -1,9 +1,20 @@
 // ---- Scoring & Ranking module -------------------------------
 
+// Carrega config de pontuação do Firestore e sobrescreve SCORING padrão
+async function loadAndApplyScoring() {
+  try {
+    const config = await loadScoringConfig();
+    if (config && Object.keys(config).length > 0) {
+      Object.assign(SCORING, config);
+    }
+  } catch {}
+}
+
 function calculateScore(groupBets, knockoutBets, results) {
   let pts = 0;
   const breakdown = { exact: 0, result: 0, ko: 0, bonus: 0 };
 
+  // ---- Fase de grupos ----
   const gsResults = results.groupStage || {};
   for (const [gameId, result] of Object.entries(gsResults)) {
     const bet = groupBets[gameId];
@@ -21,10 +32,10 @@ function calculateScore(groupBets, knockoutBets, results) {
     }
   }
 
-  // Mata-mata: pontua se o time apostado AVANÇOU de fase,
-  // independentemente de qual slot/partida específica ele disputou.
+  // ---- Mata-mata: pontua se o time apostado AVANÇOU de fase ----
   const koResults = results.knockout || {};
 
+  // Sets de times que avançaram em cada fase
   const advanced = { r32: new Set(), r16: new Set(), qf: new Set(), sf: new Set() };
   for (const [matchId, winnerId] of Object.entries(koResults)) {
     if      (matchId.startsWith('r32_')) advanced.r32.add(winnerId);
@@ -34,28 +45,37 @@ function calculateScore(groupBets, knockoutBets, results) {
   }
 
   for (const [matchId, betTeam] of Object.entries(knockoutBets)) {
-    // Final e 3º Lugar são tratados separadamente (não usam lógica de "avançou de fase")
     if (!betTeam || matchId === 'final' || matchId === 'third') continue;
     let scored = false;
-    if      (matchId.startsWith('r32_') && advanced.r32.has(betTeam)) scored = true;
-    else if (matchId.startsWith('r16_') && advanced.r16.has(betTeam)) scored = true;
-    else if (matchId.startsWith('qf_')  && advanced.qf.has(betTeam))  scored = true;
-    else if (matchId.startsWith('sf_')  && advanced.sf.has(betTeam))  scored = true;
-    if (scored) { pts += SCORING.knockoutWinner; breakdown.ko++; }
+    let pointsForHit = 0;
+    if      (matchId.startsWith('r32_') && advanced.r32.has(betTeam)) { scored = true; pointsForHit = SCORING.r32Winner; }
+    else if (matchId.startsWith('r16_') && advanced.r16.has(betTeam)) { scored = true; pointsForHit = SCORING.r16Winner; }
+    else if (matchId.startsWith('qf_')  && advanced.qf.has(betTeam))  { scored = true; pointsForHit = SCORING.qfWinner;  }
+    else if (matchId.startsWith('sf_')  && advanced.sf.has(betTeam))  { scored = true; pointsForHit = SCORING.sfWinner;  }
+    if (scored) { pts += pointsForHit; breakdown.ko++; }
   }
 
-  // 3º Lugar: acerto exato do vencedor da disputa
+  // 3º Lugar: acerto exato do vencedor
   if (knockoutBets['third'] && koResults['third'] && knockoutBets['third'] === koResults['third']) {
-    pts += SCORING.knockoutWinner; breakdown.ko++;
+    pts += SCORING.r32Winner; breakdown.ko++;
   }
 
-  // Final: precisa acertar o campeão exato
+  // Final: campeão exato
   const champion = koResults['final'];
   if (champion && knockoutBets['final'] === champion) {
-    pts += SCORING.knockoutWinner;
+    pts += SCORING.championScore;
     breakdown.ko++;
-    pts += SCORING.championBonus;
-    breakdown.bonus = SCORING.championBonus;
+  }
+
+  // Bônus: acertou as DUAS finalistas (ambos os vencedores de SF)
+  const betSf01 = knockoutBets['sf_01'];
+  const betSf02 = knockoutBets['sf_02'];
+  const bothFinalistsCorrect =
+    betSf01 && betSf02 &&
+    advanced.sf.has(betSf01) && advanced.sf.has(betSf02);
+  if (bothFinalistsCorrect) {
+    pts += SCORING.finalistBonus;
+    breakdown.bonus = SCORING.finalistBonus;
   }
 
   return { pts, breakdown };
@@ -67,8 +87,11 @@ async function initRanking(currentUid) {
   container.innerHTML = '<p class="muted" style="padding:20px">Carregando ranking…</p>';
 
   try {
+    await loadAndApplyScoring();
+    // Carrega ranking pré-calculado pelo admin (ranking/current)
     let entries = await loadRanking();
-    if (entries.length === 0) {
+    // Se vazio e usuário é admin, computa direto com acesso total
+    if (entries.length === 0 && typeof isAdmin === 'function' && isAdmin()) {
       entries = await _computeRankingClient();
     }
     _renderRanking(entries, currentUid, container);
@@ -118,10 +141,10 @@ function _renderRanking(entries, currentUid, container) {
       <div class="ranking-info">
         <div class="name">${safeName}${isMe ? ' <em style="color:var(--accent);font-size:.8rem">(você)</em>' : ''}</div>
         ${e.breakdown ? `<div class="ranking-breakdown">
-          <span class="breakdown-item" title="Placares exatos">⚽ ${e.breakdown.exact}</span>
-          <span class="breakdown-item" title="Resultados corretos">✓ ${e.breakdown.result}</span>
-          <span class="breakdown-item" title="Mata-mata">⚡ ${e.breakdown.ko}</span>
-          ${e.breakdown.bonus ? `<span class="breakdown-item" style="color:var(--gold)" title="Bônus campeão">🏆 +${e.breakdown.bonus}</span>` : ''}
+          <span class="breakdown-item" title="Placares exatos (${SCORING.exactScore}pts cada)">⚽ ${e.breakdown.exact}</span>
+          <span class="breakdown-item" title="Resultados corretos (${SCORING.correctResult}pts cada)">✓ ${e.breakdown.result}</span>
+          <span class="breakdown-item" title="Acertos mata-mata">⚡ ${e.breakdown.ko}</span>
+          ${e.breakdown.bonus ? `<span class="breakdown-item" style="color:var(--gold)" title="Bônus finalistas">🏆 +${e.breakdown.bonus}</span>` : ''}
         </div>` : ''}
       </div>
       <div class="ranking-right">
@@ -134,14 +157,13 @@ function _renderRanking(entries, currentUid, container) {
   container.innerHTML = html;
 }
 
-// ---- Public ranking on auth screen — com retry automático ----
+// ---- Public ranking on auth screen ----
 async function loadPublicRanking() {
   const el = document.getElementById('public-ranking-list');
   try {
-    let entries = await loadRanking();
-    if (entries.length === 0) {
-      entries = await _computeRankingClient();
-    }
+    await loadAndApplyScoring();
+    // Usa sempre o ranking pré-calculado (ranking/current) — sem requerer auth
+    const entries = await loadRanking();
     if (entries.length === 0) {
       el.innerHTML = '<p class="muted">Nenhum palpite registrado ainda.</p>';
       return;
