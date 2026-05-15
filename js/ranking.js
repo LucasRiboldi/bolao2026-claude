@@ -146,14 +146,20 @@ async function loadPublicRanking() {
       el.innerHTML = '<p class="muted">Nenhum palpite registrado ainda.</p>';
       return;
     }
-    const top10 = entries.slice(0, 10);
+    const top10  = entries.slice(0, 10);
+    const maxPts = top10[0]?.pts || 1;
     el.innerHTML = top10.map((e, i) => {
-      const pos = i + 1;
-      const cls = pos === 1 ? 'gold' : pos === 2 ? 'silver' : pos === 3 ? 'bronze' : '';
-      return `<div class="rank-row">
-        <div class="rank-pos ${cls}">${pos}</div>
-        <div class="rank-name">${escapeHtml(e.name)}</div>
-        <div class="rank-pts">${e.pts} pts</div>
+      const pos     = i + 1;
+      const medal   = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : null;
+      const tierCls = pos === 1 ? 'rank-gold' : pos === 2 ? 'rank-silver' : pos === 3 ? 'rank-bronze' : '';
+      const pct     = maxPts > 0 ? Math.round((e.pts / maxPts) * 100) : 0;
+      return `<div class="rank-entry ${tierCls}">
+        <div class="rank-pos">${medal || `<span class="rank-num">${pos}</span>`}</div>
+        <div class="rank-info">
+          <span class="rank-name">${escapeHtml(e.name)}</span>
+          <div class="rank-bar"><div class="rank-bar-fill" style="width:${pct}%"></div></div>
+        </div>
+        <div class="rank-pts">${e.pts}<span class="rank-pts-unit"> pts</span></div>
       </div>`;
     }).join('');
   } catch {

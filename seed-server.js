@@ -606,10 +606,6 @@ async function handleRecalcRanking(res) {
 // campeão, completude dos palpites, métricas por usuário
 // ================================================================
 async function handleReport(res) {
-  sseHeaders(res);
-  send(res, 'log', { msg: '📊 Carregando dados para relatório…', level: 'info' });
-  send(res, 'progress', { pct: 5 });
-
   try {
     const [gsSnap, koSnap, rankSnap] = await Promise.all([
       db.collection('results').doc('groupStage').get(),
@@ -624,11 +620,7 @@ async function handleReport(res) {
     const champName    = champion ? (TEAMS[champion]?.name ?? champion) : null;
     const totalGameResults = groupResults ? Object.keys(groupResults).length : 0;
 
-    send(res, 'progress', { pct: 15 });
-
     const profilesSnap = await db.collectionGroup('profile').get();
-    send(res, 'log', { msg: `👥 ${profilesSnap.size} usuários encontrados`, level: 'info' });
-    send(res, 'progress', { pct: 20 });
 
     const users = [];
     await Promise.all(profilesSnap.docs.map(async (doc) => {
@@ -668,7 +660,6 @@ async function handleReport(res) {
     }));
 
     users.sort(rankSort);
-    send(res, 'progress', { pct: 75 });
 
     // Distribuição de palpites do campeão
     const champPicksMap = {};
@@ -706,13 +697,12 @@ async function handleReport(res) {
       totalGameResults,
     };
 
-    send(res, 'progress', { pct: 100 });
-    send(res, 'log', { msg: '✅ Relatório gerado com sucesso', level: 'ok' });
-    send(res, 'done', { stats, users, champPicksSorted, histogram });
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.end(JSON.stringify({ stats, champPicksSorted, histogram }));
   } catch(e) {
-    send(res, 'error', { msg: e.message });
+    res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.end(JSON.stringify({ error: e.message }));
   }
-  res.end();
 }
 
 // ================================================================
@@ -720,17 +710,9 @@ async function handleReport(res) {
 // Roda uma bateria de verificações e retorna resultado de cada uma
 // ================================================================
 async function handleAudit(res) {
-  sseHeaders(res);
-  send(res, 'log', { msg: '🔍 Iniciando auditoria completa…', level: 'info' });
-
   const checks = [];
   function check(id, label, status, detail = '') {
     checks.push({ id, label, status, detail });
-    send(res, 'audit_check', { id, label, status, detail });
-    send(res, 'log', {
-      msg: `  [${status === 'ok' ? '✅' : status === 'warn' ? '⚠️' : '❌'}] ${label}${detail ? ': ' + detail : ''}`,
-      level: status === 'ok' ? 'ok' : status === 'warn' ? 'warn' : 'err',
-    });
   }
 
   // ── 1. Conexão com Firebase ──────────────────────────────────
@@ -909,13 +891,8 @@ async function handleAudit(res) {
     fail:  checks.filter(c => c.status === 'fail').length,
   };
 
-  send(res, 'progress', { pct: 100 });
-  send(res, 'log', {
-    msg: `📋 Auditoria concluída: ${summary.ok} ok · ${summary.warn} avisos · ${summary.fail} falhas`,
-    level: summary.fail > 0 ? 'err' : summary.warn > 0 ? 'warn' : 'ok',
-  });
-  send(res, 'done', { checks, summary });
-  res.end();
+  res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  res.end(JSON.stringify({ checks, summary }));
 }
 
 // ================================================================
