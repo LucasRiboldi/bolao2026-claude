@@ -179,6 +179,11 @@
   <!-- ======= DASHBOARD SCREEN ======= -->
   <section id="dashboard-screen" class="screen hidden">
 
+    <!-- Orbs de fundo (mesmo estilo da tela inicial) -->
+    <div class="dash-glow dash-glow-gold" aria-hidden="true"></div>
+    <div class="dash-glow dash-glow-green" aria-hidden="true"></div>
+    <div class="dash-glow dash-glow-blue" aria-hidden="true"></div>
+
     <header class="app-header">
       <div class="header-inner">
         <span class="header-title">🏆 Copa 2026</span>
@@ -260,13 +265,21 @@
         <p>Clique em 📋 para ver as apostas de cada participante</p>
       </div>
       <div id="ranking-content"></div>
-      <div class="scoring-legend card" style="margin:0 16px 20px;">
+      <div class="scoring-legend card">
         <h3>📋 Regras de Pontuação</h3>
+        <div class="scoring-legend-section">⚽ Fase de Grupos</div>
         <ul>
-          <li><strong>+3 pts</strong> — Placar exato (grupos)</li>
-          <li><strong>+1 pt</strong>  — Resultado correto, placar errado (grupos)</li>
-          <li><strong>+2 pts</strong> — Vencedor correto (mata-mata)</li>
-          <li><strong>+5 pts</strong> — Bônus: acertar o campeão</li>
+          <li><strong id="leg-exact">+17 pts</strong> — Placar exato</li>
+          <li><strong id="leg-result">+8 pts</strong>  — Resultado certo (vitória/empate), placar errado</li>
+        </ul>
+        <div class="scoring-legend-section">⚡ Mata-Mata</div>
+        <ul>
+          <li><strong id="leg-r32">+5 pts</strong>  — Classificado nos 32-avos de final</li>
+          <li><strong id="leg-r16">+11 pts</strong> — Classificado nas oitavas de final</li>
+          <li><strong id="leg-qf">+20 pts</strong>  — Classificado nas quartas de final</li>
+          <li><strong id="leg-sf">+40 pts</strong>  — Classificado na semifinal (finalista)</li>
+          <li><strong id="leg-champ" class="pts-gold">+71 pts</strong> — Acertou o campeão</li>
+          <li><strong id="leg-bonus" class="pts-gold">+26 pts</strong> — Bônus: acertou as duas finalistas</li>
         </ul>
       </div>
     </section>
@@ -309,6 +322,16 @@
         <div style="display:flex;gap:10px;flex-wrap:wrap;padding:0 16px 14px">
           <button id="btn-close-reg" class="btn btn-adm-lock"   onclick="adminToggleRegistration(false)">🔐 Fechar Cadastro</button>
           <button id="btn-open-reg"  class="btn btn-adm-unlock hidden" onclick="adminToggleRegistration(true)">🔓 Abrir Cadastro</button>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title">⚙️ Configurar Pontuação</div>
+        <p class="admin-card-desc">Defina quantos pontos vale cada elemento. As alterações recalculam o ranking automaticamente.</p>
+        <div id="scoring-config-inputs" class="scoring-config-grid"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;padding:8px 16px 14px">
+          <button class="btn btn-primary" onclick="adminSaveScoring()">💾 Salvar Pontuação</button>
+          <button class="btn btn-ghost btn-sm" onclick="adminResetScoring()">↩ Resetar padrão</button>
         </div>
       </div>
 

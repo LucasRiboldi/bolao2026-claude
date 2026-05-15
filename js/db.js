@@ -70,19 +70,44 @@ function invalidateResultsCache() {
 }
 
 async function loadAllUsersForRanking() {
-  const usersSnap = await db.collection('users').get();
   const list = [];
-  for (const userDoc of usersSnap.docs) {
-    const uid = userDoc.id;
-    const profileSnap = await userDoc.ref.collection('profile').doc('info').get();
-    const gsSnap = await userDoc.ref.collection('bets').doc('groupStage').get();
-    const koSnap = await userDoc.ref.collection('bets').doc('knockout').get();
-    list.push({
-      uid,
-      profile:      profileSnap.exists ? profileSnap.data() : {},
-      groupBets:    gsSnap.exists ? gsSnap.data() : {},
-      knockoutBets: koSnap.exists ? koSnap.data() : {},
-    });
+  const seen = new Set();
+
+  // Usa collectionGroup para garantir que TODOS os usuários com perfil apareçam no ranking
+  try {
+    const profilesSnap = await db.collectionGroup('profile').get();
+    for (const doc of profilesSnap.docs) {
+      if (doc.id !== 'info') continue;
+      const uid = doc.ref.parent.parent.id;
+      if (seen.has(uid)) continue;
+      seen.add(uid);
+      const userRef = doc.ref.parent.parent;
+      const gsSnap  = await userRef.collection('bets').doc('groupStage').get();
+      const koSnap  = await userRef.collection('bets').doc('knockout').get();
+      list.push({
+        uid,
+        profile:      doc.data(),
+        groupBets:    gsSnap.exists ? gsSnap.data() : {},
+        knockoutBets: koSnap.exists ? koSnap.data() : {},
+      });
+    }
+  } catch {
+    // Fallback: lista via users collection
+    const usersSnap = await db.collection('users').get();
+    for (const userDoc of usersSnap.docs) {
+      const uid = userDoc.id;
+      if (seen.has(uid)) continue;
+      seen.add(uid);
+      const profileSnap = await userDoc.ref.collection('profile').doc('info').get();
+      const gsSnap      = await userDoc.ref.collection('bets').doc('groupStage').get();
+      const koSnap      = await userDoc.ref.collection('bets').doc('knockout').get();
+      list.push({
+        uid,
+        profile:      profileSnap.exists ? profileSnap.data() : {},
+        groupBets:    gsSnap.exists ? gsSnap.data() : {},
+        knockoutBets: koSnap.exists ? koSnap.data() : {},
+      });
+    }
   }
   return list;
 }
@@ -218,4 +243,19 @@ async function deleteUserData(uid) {
 
 async function setRegistrationOpen(open) {
   await saveAdminConfig({ registrationOpen: open });
+}
+
+// ---- Configuração de pontuação (admin) ----------------------
+
+async function loadScoringConfig() {
+  try {
+    const snap = await db.collection('config').doc('scoring').get();
+    return snap.exists ? snap.data() : {};
+  } catch {
+    return {};
+  }
+}
+
+async function saveScoringConfig(data) {
+  await db.collection('config').doc('scoring').set(data, { merge: true });
 }

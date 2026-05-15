@@ -28,6 +28,8 @@ async function initAdminPanel() {
     initResultsPanel();
   }
 
+  initScoringConfig();
+
   try {
     const users = await loadAdminUserList();
     _renderAdminUsers(users, container);
@@ -128,6 +130,74 @@ async function adminToggleRegistration(open) {
   }
 }
 
+// ---- Configuração de pontuação (admin) ----------------------
+async function initScoringConfig() {
+  try {
+    const config = await loadScoringConfig();
+    if (config && Object.keys(config).length > 0) {
+      Object.assign(SCORING, config);
+    }
+    _renderScoringInputs();
+  } catch {}
+}
+
+function _renderScoringInputs() {
+  const fields = [
+    { key: 'exactScore',     label: '⚽ Placar exato (grupos)' },
+    { key: 'correctResult',  label: '✓ Resultado certo (grupos)' },
+    { key: 'r32Winner',      label: '⚡ Avança nos 32-avos' },
+    { key: 'r16Winner',      label: '⚡ Avança nas oitavas' },
+    { key: 'qfWinner',       label: '⚡ Avança nas quartas' },
+    { key: 'sfWinner',       label: '⚡ Avança na semifinal (finalista)' },
+    { key: 'championScore',  label: '🏆 Acertou o campeão' },
+    { key: 'finalistBonus',  label: '🎯 Bônus pelas duas finalistas' },
+  ];
+  const container = document.getElementById('scoring-config-inputs');
+  if (!container) return;
+  container.innerHTML = fields.map(f => `
+    <div class="scoring-field">
+      <label class="scoring-field-lbl">${f.label}</label>
+      <input class="scoring-field-inp" type="number" min="0" max="999"
+             data-key="${f.key}" value="${SCORING[f.key] || 0}">
+      <span class="scoring-field-unit">pts</span>
+    </div>`).join('');
+}
+
+async function adminSaveScoring() {
+  const inputs = document.querySelectorAll('#scoring-config-inputs .scoring-field-inp');
+  const newConfig = {};
+  inputs.forEach(inp => {
+    const val = parseInt(inp.value, 10);
+    if (!isNaN(val) && val >= 0) newConfig[inp.dataset.key] = val;
+  });
+  try {
+    await saveScoringConfig(newConfig);
+    Object.assign(SCORING, newConfig);
+    showToast('Pontuação salva! ✅', 'success');
+    // Recalcula ranking automaticamente com nova pontuação
+    adminRecalcRanking({ silent: true });
+  } catch (e) {
+    showToast('Erro ao salvar: ' + e.message, 'error');
+  }
+}
+
+async function adminResetScoring() {
+  if (!confirm('Resetar para os valores padrão?')) return;
+  const defaults = {
+    exactScore: 17, correctResult: 8, r32Winner: 5, r16Winner: 11,
+    qfWinner: 20, sfWinner: 40, championScore: 71, finalistBonus: 26,
+  };
+  try {
+    await saveScoringConfig(defaults);
+    Object.assign(SCORING, defaults);
+    _renderScoringInputs();
+    showToast('Pontuação resetada! ✅', 'success');
+    adminRecalcRanking({ silent: true });
+  } catch (e) {
+    showToast('Erro: ' + e.message, 'error');
+  }
+}
+
 // ---- Recalcular ranking com resultados atuais ---------------
 async function adminRecalcRanking(opts = {}) {
   const { silent = false, btn = null } = opts;
@@ -136,6 +206,7 @@ async function adminRecalcRanking(opts = {}) {
   if (!silent) showLoading();
   try {
     invalidateResultsCache();
+    await loadAndApplyScoring();
     const entries = await _computeRankingClient();
     await updateRankingDoc(entries);
     if (!silent) showToast(`Ranking atualizado! ${entries.length} participante(s) recalculado(s). ✅`, 'success');
@@ -424,9 +495,9 @@ function _renderBetHistory(groupBets, knockoutBets, results) {
   const gsResults = results.groupStage || {};
   const koResults = results.knockout   || {};
   let html = '';
-  let exact = 0, correct = 0, koHits = 0;
+  let exactCount = 0, correctCount = 0, koTotalPts = 0;
 
-  // Sets de times que avançaram em cada fase (mesma lógica de calculateScore)
+  // Sets de times que avançaram em cada fase
   const advKO = { r32: new Set(), r16: new Set(), qf: new Set(), sf: new Set() };
   for (const [mid, wid] of Object.entries(koResults)) {
     if      (mid.startsWith('r32_')) advKO.r32.add(wid);
@@ -434,9 +505,10 @@ function _renderBetHistory(groupBets, knockoutBets, results) {
     else if (mid.startsWith('qf_'))  advKO.qf.add(wid);
     else if (mid.startsWith('sf_'))  advKO.sf.add(wid);
   }
+
   function _koRoundHasResult(matchId) {
-    if (matchId === 'final')  return 'final'  in koResults;
-    if (matchId === 'third')  return 'third'  in koResults;
+    if (matchId === 'final')        return 'final' in koResults;
+    if (matchId === 'third')        return 'third' in koResults;
     if (matchId.startsWith('r32_')) return advKO.r32.size > 0;
     if (matchId.startsWith('r16_')) return advKO.r16.size > 0;
     if (matchId.startsWith('qf_'))  return advKO.qf.size  > 0;
@@ -444,17 +516,26 @@ function _renderBetHistory(groupBets, knockoutBets, results) {
     return false;
   }
   function _koScored(matchId, pickedId) {
-    if (matchId === 'final')  return koResults['final']  === pickedId; // exato
-    if (matchId === 'third')  return koResults['third']  === pickedId; // exato
+    if (matchId === 'final')        return koResults['final'] === pickedId;
+    if (matchId === 'third')        return koResults['third'] === pickedId;
     if (matchId.startsWith('r32_')) return advKO.r32.has(pickedId);
     if (matchId.startsWith('r16_')) return advKO.r16.has(pickedId);
     if (matchId.startsWith('qf_'))  return advKO.qf.has(pickedId);
     if (matchId.startsWith('sf_'))  return advKO.sf.has(pickedId);
     return false;
   }
+  function _koPoints(matchId) {
+    if (matchId === 'final')        return SCORING.championScore;
+    if (matchId === 'third')        return SCORING.r32Winner;
+    if (matchId.startsWith('r32_')) return SCORING.r32Winner;
+    if (matchId.startsWith('r16_')) return SCORING.r16Winner;
+    if (matchId.startsWith('qf_'))  return SCORING.qfWinner;
+    if (matchId.startsWith('sf_'))  return SCORING.sfWinner;
+    return 0;
+  }
 
+  // ---- Fase de Grupos ----
   html += `<div class="bh-section-title">⚽ Fase de Grupos</div>`;
-
   for (const gId of Object.keys(GROUPS)) {
     const color = (typeof GROUP_COLORS !== 'undefined' && GROUP_COLORS[gId]) || '#888';
     html += `<div class="bh-group-block" style="border-left:3px solid ${color}">
@@ -471,9 +552,13 @@ function _renderBetHistory(groupBets, knockoutBets, results) {
         const bH = parseInt(bet.homeGoals, 10), bA = parseInt(bet.awayGoals, 10);
         const rH = parseInt(res.homeGoals,  10), rA = parseInt(res.awayGoals,  10);
         if (!isNaN(bH) && !isNaN(bA) && !isNaN(rH) && !isNaN(rA)) {
-          if (bH === rH && bA === rA)                          { cls = 'bh-exact';   icon = '✅'; pts = 3; exact++;   }
-          else if (Math.sign(bH - bA) === Math.sign(rH - rA)) { cls = 'bh-correct'; icon = '✓';  pts = 1; correct++; }
-          else                                                 { cls = 'bh-wrong';   icon = '❌'; }
+          if (bH === rH && bA === rA) {
+            cls = 'bh-exact';   icon = '✅'; pts = SCORING.exactScore;    exactCount++;
+          } else if (Math.sign(bH - bA) === Math.sign(rH - rA)) {
+            cls = 'bh-correct'; icon = '✓';  pts = SCORING.correctResult; correctCount++;
+          } else {
+            cls = 'bh-wrong'; icon = '❌';
+          }
         }
       } else if (bet) {
         cls = 'bh-placed'; icon = '📌';
@@ -504,20 +589,19 @@ function _renderBetHistory(groupBets, knockoutBets, results) {
         ${pts ? `<span class="bh-pts">+${pts}</span>` : '<span class="bh-pts bh-pts-empty"></span>'}
       </div>`;
     }
-
     html += `</div>`;
   }
 
-  // ---- Mata-Mata agrupado por fase -------------------------
+  // ---- Mata-Mata ----
   html += `<div class="bh-section-title" style="margin-top:20px">⚡ Mata-Mata</div>`;
 
-  const PHASES = [
-    { prefix: 'r32',   label: '32avos de Final',       exact: false },
-    { prefix: 'r16',   label: 'Oitavas de Final',       exact: false },
-    { prefix: 'qf',    label: 'Quartas de Final',       exact: false },
-    { prefix: 'sf',    label: 'Semifinal',              exact: false },
-    { prefix: 'third', label: '🥉 Disputa de 3º Lugar', exact: true  },
-    { prefix: 'final', label: '🏆 Final',               exact: true  },
+  const KO_PHASES = [
+    { prefix: 'r32',   label: '32-avos de Final',      color: '#58a6ff', isExact: false },
+    { prefix: 'r16',   label: 'Oitavas de Final',       color: '#bc8cff', isExact: false },
+    { prefix: 'qf',    label: 'Quartas de Final',       color: '#ffa657', isExact: false },
+    { prefix: 'sf',    label: 'Semifinal',              color: '#ff7b72', isExact: false },
+    { prefix: 'third', label: '🥉 Disputa de 3º Lugar', color: '#8b949e', isExact: true  },
+    { prefix: 'final', label: '🏆 Final — Campeão',     color: '#f0c040', isExact: true  },
   ];
 
   const koEntries = Object.entries(knockoutBets);
@@ -525,111 +609,152 @@ function _renderBetHistory(groupBets, knockoutBets, results) {
   if (koEntries.length === 0) {
     html += `<p class="bh-empty">Nenhum palpite de mata-mata registrado.</p>`;
   } else {
-    for (const phase of PHASES) {
+    for (const phase of KO_PHASES) {
       let entries;
       if (phase.prefix === 'third') {
         entries = knockoutBets['third'] ? [['third', knockoutBets['third']]] : [];
-      } else if (phase.exact) {
+      } else if (phase.prefix === 'final') {
         entries = knockoutBets['final'] ? [['final', knockoutBets['final']]] : [];
       } else {
-        entries = koEntries.filter(([id]) => id.startsWith(phase.prefix));
+        entries = koEntries.filter(([id]) => id.startsWith(phase.prefix + '_'));
       }
       if (entries.length === 0) continue;
 
-      // R32: agrupar em 8 pares de 2 para melhor leitura
+      html += `<div class="bh-ko-phase">
+        <div class="bh-ko-phase-hdr" style="border-left-color:${phase.color};color:${phase.color}">${phase.label}</div>`;
+
+      // R32: agrupa em pares de 2
       if (phase.prefix === 'r32') {
-        html += `<div class="bh-ko-phase">
-          <div class="bh-ko-phase-hdr">${phase.label}</div>
-          <div class="bh-r32-pairs">`;
+        html += `<div class="bh-r32-pairs">`;
         for (let i = 0; i < entries.length; i += 2) {
           const pair = entries.slice(i, i + 2);
           html += `<div class="bh-r32-pair">
-            <div class="bh-r32-pair-lbl">Confronto ${i / 2 + 1}</div>
+            <div class="bh-r32-pair-lbl" style="border-color:${phase.color}">Confronto ${i / 2 + 1}</div>
             <div class="bh-ko-phase-list">`;
           for (const [matchId, pickedId] of pair) {
-            const picked    = TEAMS[pickedId];
-            const roundDone = _koRoundHasResult(matchId);
-            let cls = 'bh-placed', icon = '📌', pts = 0;
-            if (roundDone) {
-              if (_koScored(matchId, pickedId)) { cls = 'bh-exact'; icon = '✅'; pts = 2; koHits++; }
-              else                              { cls = 'bh-wrong'; icon = '❌'; }
-            }
-            const slotWinner = koResults[matchId];
-            const slotTeam   = slotWinner ? TEAMS[slotWinner] : null;
-            html += `<div class="bh-ko-card ${cls}">
-              <span class="bh-si">${icon}</span>
-              <div class="bh-ko-pick">
-                <span class="fi fi-${picked?.iso || 'un'} bh-flag"></span>
-                <span class="bh-team-name">${escapeHtml(picked?.name || pickedId)}</span>
-              </div>
-              ${roundDone
-                ? (slotTeam
-                    ? `<span class="bh-ko-real"><span class="fi fi-${slotTeam.iso} bh-flag"></span> ${escapeHtml(slotTeam.name)}</span>`
-                    : `<span class="bh-ko-real">–</span>`)
-                : `<span class="bh-waiting">⏳ Aguardando</span>`}
-              ${pts ? `<span class="bh-pts">+${pts}</span>` : '<span class="bh-pts bh-pts-empty"></span>'}
-            </div>`;
+            html += _bhKoCard(matchId, pickedId, koResults, _koRoundHasResult, _koScored, _koPoints, koTotalPts);
+            if (_koRoundHasResult(matchId) && _koScored(matchId, pickedId)) koTotalPts += _koPoints(matchId);
           }
           html += `</div></div>`;
         }
-        html += `</div></div>`;
-        continue;
-      }
+        html += `</div>`;
+      } else if (phase.prefix === 'final') {
+        // Final: mostra campeão apostado + 2º colocado inferido dos SF bets
+        const [, pickedChamp] = entries[0];
+        const champT  = TEAMS[pickedChamp];
 
-      html += `<div class="bh-ko-phase">
-        <div class="bh-ko-phase-hdr">${phase.label}</div>
-        <div class="bh-ko-phase-list">`;
+        // Inferir 2º colocado: é o sf bet que NÃO é o campeão apostado
+        const betSf01 = knockoutBets['sf_01'];
+        const betSf02 = knockoutBets['sf_02'];
+        const predictedRunner =
+          betSf01 === pickedChamp ? betSf02 :
+          betSf02 === pickedChamp ? betSf01 : null;
+        const runnerT = predictedRunner ? TEAMS[predictedRunner] : null;
 
-      for (const [matchId, pickedId] of entries) {
-        const picked   = TEAMS[pickedId];
-        const roundDone = _koRoundHasResult(matchId);
-        let cls = 'bh-placed', icon = '📌', pts = 0;
-        if (roundDone) {
-          if (_koScored(matchId, pickedId)) { cls = 'bh-exact'; icon = '✅'; pts = 2; koHits++; }
-          else                              { cls = 'bh-wrong'; icon = '❌'; }
+        const finalDone = 'final' in koResults;
+        const realChamp = koResults['final'];
+        const realChampT = realChamp ? TEAMS[realChamp] : null;
+
+        // Calcular runner-up real (o finalista que perdeu)
+        const realRunner = finalDone && advKO.sf.size === 2
+          ? [...advKO.sf].find(t => t !== realChamp)
+          : null;
+        const realRunnerT = realRunner ? TEAMS[realRunner] : null;
+
+        let champCls = 'bh-placed', champIcon = '📌', champPts = 0;
+        if (finalDone) {
+          if (pickedChamp === realChamp) { champCls = 'bh-exact'; champIcon = '✅'; champPts = SCORING.championScore; koTotalPts += champPts; }
+          else                           { champCls = 'bh-wrong'; champIcon = '❌'; }
         }
-        // Mostra o vencedor real daquele slot como informação contextual
-        const slotWinner = koResults[matchId];
-        const slotTeam   = slotWinner ? TEAMS[slotWinner] : null;
 
-        html += `<div class="bh-ko-card ${cls}">
-          <span class="bh-si">${icon}</span>
-          <div class="bh-ko-pick">
-            <span class="fi fi-${picked?.iso || 'un'} bh-flag"></span>
-            <span class="bh-team-name">${escapeHtml(picked?.name || pickedId)}</span>
+        html += `<div class="bh-final-block">
+          <div class="bh-final-row">
+            <div class="bh-final-label">🥇 Campeão apostado</div>
+            <div class="bh-ko-card ${champCls}" style="flex:1">
+              <span class="bh-si">${champIcon}</span>
+              <div class="bh-ko-pick">
+                ${champT ? `<span class="fi fi-${champT.iso} bh-flag"></span><span class="bh-team-name">${escapeHtml(champT.name)}</span>` : pickedChamp}
+              </div>
+              ${finalDone
+                ? (realChampT ? `<span class="bh-ko-real"><span class="fi fi-${realChampT.iso} bh-flag"></span> ${escapeHtml(realChampT.name)}</span>` : '')
+                : `<span class="bh-waiting">⏳ Aguardando</span>`}
+              ${champPts ? `<span class="bh-pts">+${champPts}</span>` : '<span class="bh-pts bh-pts-empty"></span>'}
+            </div>
           </div>
-          ${roundDone
-            ? (slotTeam
-                ? `<span class="bh-ko-real"><span class="fi fi-${slotTeam.iso} bh-flag"></span> ${escapeHtml(slotTeam.name)}</span>`
-                : `<span class="bh-ko-real">–</span>`)
-            : `<span class="bh-waiting">⏳ Aguardando</span>`}
-          ${pts ? `<span class="bh-pts">+${pts}</span>` : '<span class="bh-pts bh-pts-empty"></span>'}
+          ${runnerT ? `<div class="bh-final-row">
+            <div class="bh-final-label">🥈 2º colocado apostado</div>
+            <div class="bh-ko-card ${finalDone ? (predictedRunner === realRunner ? 'bh-correct' : 'bh-wrong') : 'bh-placed'}" style="flex:1">
+              <span class="bh-si">${!finalDone ? '📌' : predictedRunner === realRunner ? '✓' : '❌'}</span>
+              <div class="bh-ko-pick">
+                <span class="fi fi-${runnerT.iso} bh-flag"></span>
+                <span class="bh-team-name">${escapeHtml(runnerT.name)}</span>
+              </div>
+              ${finalDone
+                ? (realRunnerT ? `<span class="bh-ko-real"><span class="fi fi-${realRunnerT.iso} bh-flag"></span> ${escapeHtml(realRunnerT.name)}</span>` : '')
+                : `<span class="bh-waiting">⏳ Aguardando</span>`}
+              <span class="bh-pts bh-pts-empty"></span>
+            </div>
+          </div>` : ''}
         </div>`;
+      } else {
+        html += `<div class="bh-ko-phase-list">`;
+        for (const [matchId, pickedId] of entries) {
+          const scored = _koRoundHasResult(matchId) && _koScored(matchId, pickedId);
+          if (scored) koTotalPts += _koPoints(matchId);
+          html += _bhKoCard(matchId, pickedId, koResults, _koRoundHasResult, _koScored, _koPoints, 0);
+        }
+        html += `</div>`;
       }
-
-      html += `</div></div>`;
+      html += `</div>`;
     }
 
-    const fp = knockoutBets['final'], fr = koResults['final'];
-    if (fp && fr && fp === fr) {
+    // Bônus finalistas
+    const betSf01 = knockoutBets['sf_01'], betSf02 = knockoutBets['sf_02'];
+    const bothFinalists = betSf01 && betSf02 && advKO.sf.has(betSf01) && advKO.sf.has(betSf02);
+    if (bothFinalists) {
+      koTotalPts += SCORING.finalistBonus;
       html += `<div class="bh-ko-card bh-bonus" style="margin-top:8px">
-        <span class="bh-si">🏆</span>
-        <span style="color:var(--gold);font-weight:700;flex:1">Bônus Campeão!</span>
-        <span class="bh-pts" style="color:var(--gold)">+5</span>
+        <span class="bh-si">🎯</span>
+        <span style="color:var(--gold);font-weight:700;flex:1">Bônus: acertou as duas finalistas!</span>
+        <span class="bh-pts" style="color:var(--gold)">+${SCORING.finalistBonus}</span>
       </div>`;
     }
   }
 
-  const champBonus = (knockoutBets['final'] && koResults['final'] && knockoutBets['final'] === koResults['final']) ? 5 : 0;
-  const total = exact * 3 + correct + koHits * 2 + champBonus;
+  const groupTotalPts = exactCount * SCORING.exactScore + correctCount * SCORING.correctResult;
+  const totalPts = groupTotalPts + koTotalPts;
   html += `
   <div class="bh-summary">
-    <div class="bh-summary-item"><span class="bh-sum-lbl">✅ Placares exatos</span><strong>${exact} <em>(+${exact * 3} pts)</em></strong></div>
-    <div class="bh-summary-item"><span class="bh-sum-lbl">✓ Resultados certos</span><strong>${correct} <em>(+${correct} pts)</em></strong></div>
-    <div class="bh-summary-item"><span class="bh-sum-lbl">⚡ Mata-mata</span><strong>${koHits} <em>(+${koHits * 2} pts)</em></strong></div>
-    ${champBonus ? `<div class="bh-summary-item"><span class="bh-sum-lbl">🏆 Bônus campeão</span><strong>+${champBonus} pts</strong></div>` : ''}
-    <div class="bh-summary-total">Total: <strong>${total} pts</strong></div>
+    <div class="bh-summary-item"><span class="bh-sum-lbl">✅ Placares exatos</span><strong>${exactCount} <em>(+${exactCount * SCORING.exactScore} pts)</em></strong></div>
+    <div class="bh-summary-item"><span class="bh-sum-lbl">✓ Resultados certos</span><strong>${correctCount} <em>(+${correctCount * SCORING.correctResult} pts)</em></strong></div>
+    <div class="bh-summary-item"><span class="bh-sum-lbl">⚡ Mata-mata</span><strong>+${koTotalPts} pts</strong></div>
+    <div class="bh-summary-total">Total: <strong>${totalPts} pts</strong></div>
   </div>`;
 
   return html;
+}
+
+function _bhKoCard(matchId, pickedId, koResults, _koRoundHasResult, _koScored, _koPoints, _ignored) {
+  const picked    = TEAMS[pickedId];
+  const roundDone = _koRoundHasResult(matchId);
+  let cls = 'bh-placed', icon = '📌', pts = 0;
+  if (roundDone) {
+    if (_koScored(matchId, pickedId)) { cls = 'bh-exact'; icon = '✅'; pts = _koPoints(matchId); }
+    else                              { cls = 'bh-wrong'; icon = '❌'; }
+  }
+  const slotWinner = koResults[matchId];
+  const slotTeam   = slotWinner ? TEAMS[slotWinner] : null;
+  return `<div class="bh-ko-card ${cls}">
+    <span class="bh-si">${icon}</span>
+    <div class="bh-ko-pick">
+      <span class="fi fi-${picked?.iso || 'un'} bh-flag"></span>
+      <span class="bh-team-name">${escapeHtml(picked?.name || pickedId)}</span>
+    </div>
+    ${roundDone
+      ? (slotTeam
+          ? `<span class="bh-ko-real"><span class="fi fi-${slotTeam.iso} bh-flag"></span> ${escapeHtml(slotTeam.name)}</span>`
+          : `<span class="bh-ko-real">–</span>`)
+      : `<span class="bh-waiting">⏳ Aguardando</span>`}
+    ${pts ? `<span class="bh-pts">+${pts}</span>` : '<span class="bh-pts bh-pts-empty"></span>'}
+  </div>`;
 }
