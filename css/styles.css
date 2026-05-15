@@ -3037,3 +3037,309 @@ body {
 }
 .btn-bh:hover { background: var(--border); }
 
+/* =============================================
+   BARRA DE PROGRESSO
+   ============================================= */
+.progress-wrap {
+  margin: 0 16px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+}
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: .82rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+#progress-pct { font-weight: 700; color: var(--gold); }
+.progress-track {
+  height: 6px;
+  background: var(--surface2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--gold);
+  border-radius: 3px;
+  transition: width .4s ease, background .3s;
+}
+
+/* =============================================
+   CARD DE CONVITE
+   ============================================= */
+.invite-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 16px 14px;
+  background: linear-gradient(135deg, rgba(35,134,54,.12), rgba(240,192,64,.08));
+  border: 1px solid rgba(35,134,54,.3);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  flex-wrap: wrap;
+}
+.invite-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .88rem;
+  color: var(--text);
+}
+.invite-emoji { font-size: 1.1rem; }
+.btn-invite {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  background: #25d366;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: .84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition);
+  white-space: nowrap;
+}
+.btn-invite:hover { background: #1ebe5a; }
+
+/* =============================================
+   BOTÃO SALVAR POR GRUPO
+   ============================================= */
+.group-save-bar {
+  padding: 8px 12px 4px;
+  text-align: right;
+}
+.btn-group-save {
+  padding: 6px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: .82rem;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+.btn-group-save:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.btn-group-save:disabled { opacity: .4; cursor: not-allowed; }
+
+/* =============================================
+   MINHAS APOSTAS — FULL PAGE
+   ============================================= */
+.mb-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.mb-summary-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.mb-pill {
+  padding: 4px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.mb-pill-pts {
+  background: rgba(35,134,54,.2);
+  border-color: rgba(35,134,54,.4);
+  color: #3fb950;
+}
+.mb-section-title {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 12px 16px 6px;
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.mb-group-block {
+  margin: 10px 10px 0;
+  border-left: 3px solid var(--grp-color, #888);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--grp-color, #888);
+}
+.mb-group-hdr {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+.mb-group-label {
+  font-weight: 700;
+  font-size: .88rem;
+  color: var(--grp-color, var(--text));
+}
+.mb-group-teams { display: flex; gap: 4px; }
+.mb-group-teams .fi { width: 18px; height: 14px; }
+
+.mb-games-table { width: 100%; }
+.mb-table-head {
+  display: grid;
+  grid-template-columns: 1fr 80px 76px 1fr 44px;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: .72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+}
+.mb-game-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 76px 1fr 44px;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-bottom: 1px solid rgba(48,54,61,.5);
+  transition: background var(--transition);
+}
+.mb-game-row:last-child { border-bottom: none; }
+.mb-game-row.mb-exact   { background: rgba(35,134,54,.12); }
+.mb-game-row.mb-correct { background: rgba(31,111,235,.1); }
+.mb-game-row.mb-wrong   { background: rgba(218,54,51,.08); }
+.mb-game-row.mb-placed  { }
+
+.mb-col-home { display: flex; align-items: center; gap: 5px; }
+.mb-col-away { display: flex; align-items: center; gap: 5px; justify-content: flex-end; }
+.mb-col-bet  { text-align: center; font-weight: 700; font-size: .88rem; }
+.mb-col-result { text-align: center; font-size: .82rem; }
+.mb-col-pts  { text-align: center; }
+
+.mb-flag { width: 18px; height: 13px; display: inline-block; }
+.mb-tname { font-size: .82rem; }
+.mb-tname-full  { }
+.mb-tname-short { display: none; }
+@media (max-width: 480px) {
+  .mb-tname-full  { display: none; }
+  .mb-tname-short { display: inline; }
+  .mb-table-head  { display: none; }
+  .mb-game-row    { grid-template-columns: 1fr 72px 64px 1fr 36px; }
+}
+
+.mb-bet-score { font-weight: 700; color: var(--text); font-size: .88rem; }
+.mb-real      { font-weight: 700; color: #3fb950; font-size: .85rem; }
+.mb-waiting   { color: var(--text-muted); font-size: .76rem; font-style: italic; }
+.mb-icon      { font-size: .9rem; }
+.mb-pts-val   { font-weight: 700; color: #3fb950; font-size: .85rem; }
+
+/* KO section */
+.mb-ko-phase {
+  margin: 10px 10px 0;
+  border-left: 3px solid var(--ko-color, #888);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--ko-color, #888);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.mb-ko-phase-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+  font-size: .88rem;
+  color: var(--ko-color, var(--text));
+}
+.mb-ko-pts-hint {
+  font-weight: 400;
+  font-size: .76rem;
+  color: var(--text-muted);
+}
+.mb-ko-list { }
+.mb-ko-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 1fr 52px;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(48,54,61,.5);
+  font-size: .85rem;
+}
+.mb-ko-row:last-child { border-bottom: none; }
+.mb-ko-exact   { background: rgba(35,134,54,.12); }
+.mb-ko-correct { background: rgba(31,111,235,.1); }
+.mb-ko-wrong   { background: rgba(218,54,51,.08); }
+.mb-ko-placed  { }
+.mb-ko-icon { text-align: center; font-size: .9rem; }
+.mb-ko-pick, .mb-ko-real { display: flex; align-items: center; gap: 5px; }
+.mb-ko-label { font-size: .72rem; color: var(--text-muted); margin-left: 4px; }
+.mb-ko-pts { text-align: right; font-weight: 700; color: #3fb950; font-size: .85rem; }
+.mb-ko-pts-empty { opacity: 0; }
+.mb-bonus-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  margin: 10px;
+  background: rgba(240,192,64,.1);
+  border: 1px solid rgba(240,192,64,.3);
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  color: var(--gold);
+  font-size: .88rem;
+}
+.mb-total-bar {
+  text-align: right;
+  padding: 12px 16px;
+  font-size: 1rem;
+  border-top: 1px solid var(--border);
+  margin-top: 10px;
+  color: var(--text-muted);
+}
+.mb-total-bar strong { color: var(--text); font-size: 1.1rem; }
+
+/* =============================================
+   PAGINAÇÃO DO RANKING
+   ============================================= */
+.ranking-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.ranking-page-info {
+  font-size: .82rem;
+  color: var(--text-muted);
+}
+.ranking-you-sep {
+  border-top: 2px dashed var(--border);
+  margin-top: 4px;
+  opacity: .75;
+}
+

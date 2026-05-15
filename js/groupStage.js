@@ -2,7 +2,8 @@
 
 let _groupBets      = {};
 let _gsLocked       = false;
-let _officialResults = {}; // resultados oficiais carregados do Firestore
+let _officialResults = {};
+let _touchedGames   = new Set(); // jogos explicitamente preenchidos/carregados
 
 // Paleta de cores por grupo (A-L) — border-left da seção
 const GROUP_COLORS = {
@@ -15,6 +16,7 @@ function initGroupStage() {
   _renderAllGroups();
   document.getElementById('btn-save-groups').addEventListener('click', _saveAll);
   document.getElementById('btn-export-bets').addEventListener('click', _exportBets);
+  _updateProgress();
 }
 
 // ---- Renderiza TODOS os grupos como lista contínua ----------------
@@ -82,12 +84,19 @@ function _renderAllGroups() {
       }
     }
 
+    if (!_gsLocked) {
+      html += `<div class="group-save-bar">
+        <button class="btn btn-group-save" id="btn-save-group-${gId}"
+                onclick="_saveGroup('${gId}')">💾 Salvar Grupo ${gId}</button>
+      </div>`;
+    }
     html += `</div>`;
   }
 
   panel.innerHTML = html;
   _bindSteppers();
   if (_gsLocked) _applyLockUI(true);
+  _updateProgress();
 }
 
 // ---- Stepper horizontal: [−] [val] [+] — mínimo 0, nunca nulo --
@@ -120,6 +129,7 @@ function _bindSteppers() {
       }
 
       _groupBets[game][field] = String(val);
+      _touchedGames.add(game);
 
       const span = document.querySelector(`.score-val[data-game="${game}"][data-side="${side}"]`);
       if (span) {
@@ -127,6 +137,7 @@ function _bindSteppers() {
         span.classList.add('filled');
       }
 
+      _updateProgress();
       _checkAutoSimulate();
     });
   });
@@ -158,8 +169,25 @@ function _applyLockUI(locked) {
 
   panel.querySelectorAll('.step-btn').forEach(b => b.disabled = locked);
   panel.querySelectorAll('.step-btn').forEach(b => b.style.opacity = locked ? '.35' : '');
+  panel.querySelectorAll('.btn-group-save').forEach(b => b.disabled = locked);
+  panel.querySelectorAll('.group-save-bar').forEach(b => b.classList.toggle('hidden', locked));
   if (saveBtn) saveBtn.classList.toggle('hidden', locked);
   if (banner)  banner.classList.toggle('hidden', !locked);
+}
+
+function _updateProgress() {
+  const totalGames = 72;
+  const filled = _touchedGames.size;
+  const pct    = Math.min(100, Math.round((filled / totalGames) * 100));
+
+  const label = document.getElementById('progress-label');
+  const bar   = document.getElementById('progress-bar-fill');
+  const pctEl = document.getElementById('progress-pct');
+
+  if (label) label.textContent = `${filled} de ${totalGames} jogos preenchidos`;
+  if (pctEl) pctEl.textContent = `${pct}%`;
+  if (bar)   bar.style.width   = `${pct}%`;
+  if (bar)   bar.style.background = pct === 100 ? 'var(--accent)' : 'var(--gold)';
 }
 
 function setGroupStageLocked(locked) {
@@ -189,6 +217,9 @@ async function loadGroupBetsUI(uid) {
     }
   }
 
+  // Inicializa jogos "tocados" com o que já estava salvo no Firestore
+  _touchedGames = new Set(Object.keys(bets));
+
   _gsLocked = await loadGlobalLock();
   _renderAllGroups();
 }
@@ -198,6 +229,33 @@ async function refreshGroupResults() {
   const results = await loadResults(true);
   _officialResults = results.groupStage || {};
   _renderAllGroups();
+}
+
+async function _saveGroup(gId) {
+  if (_gsLocked) return;
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+  const btn = document.getElementById(`btn-save-group-${gId}`);
+  if (btn) btn.disabled = true;
+
+  const groupData = {};
+  for (const g of generateGroupGames(gId)) {
+    if (_groupBets[g.id]) {
+      groupData[g.id] = _groupBets[g.id];
+      _touchedGames.add(g.id);
+    }
+  }
+
+  try {
+    await db.collection('users').doc(uid).collection('bets').doc('groupStage')
+      .set(groupData, { merge: true });
+    showToast(`Grupo ${gId} salvo! ✅`, 'success');
+    _updateProgress();
+  } catch (e) {
+    showToast('Erro ao salvar. Tente novamente.', 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 async function _saveAll() {
