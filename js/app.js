@@ -357,6 +357,7 @@ function _calMatchCard(f) {
   let centerHtml;
   if (isPending) {
     centerHtml = `
+      <div class="cal-score-num">0<span class="cal-score-sep"> : </span>0</div>
       <div class="cal-score-time">${time}<span class="cal-score-tz">BRT</span></div>
       ${venue ? `<div class="cal-venue">${venue}${city ? ` · ${city}` : ''}</div>` : ''}`;
   } else if (isLive) {
@@ -490,9 +491,9 @@ function _renderMyBetsPage(groupBets, knockoutBets, results, uid) {
         <div class="mb-table-head">
           <span class="mb-col-team mb-col-home">Casa</span>
           <span class="mb-col-bet">Palpite</span>
-          <span class="mb-col-result">Resultado</span>
           <span class="mb-col-team mb-col-away">Visitante</span>
           <span class="mb-col-pts">Pts</span>
+          <span class="mb-col-result">Resultado</span>
         </div>`;
 
     for (const game of games) {
@@ -526,7 +527,6 @@ function _renderMyBetsPage(groupBets, knockoutBets, results, uid) {
         <div class="mb-col-bet">
           <span class="mb-bet-score">${betStr}</span>
         </div>
-        <div class="mb-col-result">${resHtml}</div>
         <div class="mb-col-team mb-col-away">
           <span class="mb-tname mb-tname-full">${escapeHtml(away.name)}</span>
           <span class="mb-tname mb-tname-short">${away.short}</span>
@@ -536,6 +536,7 @@ function _renderMyBetsPage(groupBets, knockoutBets, results, uid) {
           ${icon ? `<span class="mb-icon">${icon}</span>` : ''}
           ${pts ? `<span class="mb-pts-val">+${pts}</span>` : ''}
         </div>
+        <div class="mb-col-result">${resHtml}</div>
       </div>`;
     }
 
@@ -675,7 +676,7 @@ function _exportMyBetsPDF(uid) {
     .mb-group-block { margin-bottom:12px; border-left:3px solid var(--grp-color,#888); padding-left:8px; }
     .mb-group-hdr { display:flex; align-items:center; gap:8px; padding:4px 0; font-weight:700; color:var(--grp-color,#333); font-size:.9rem; }
     .mb-games-table { width:100%; }
-    .mb-table-head, .mb-game-row { display:grid; grid-template-columns:1fr 80px 80px 1fr 52px; align-items:center; gap:4px; padding:3px 4px; }
+    .mb-table-head, .mb-game-row { display:grid; grid-template-columns:1fr 80px 1fr 52px 80px; align-items:center; gap:4px; padding:3px 4px; }
     .mb-table-head { font-size:.75rem; color:#777; font-weight:600; border-bottom:1px solid #eee; }
     .mb-game-row { border-bottom:1px solid #f5f5f5; }
     .mb-game-row.mb-exact { background:#d4edda; }
