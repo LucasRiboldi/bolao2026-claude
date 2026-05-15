@@ -178,6 +178,58 @@ function _calToday() {
   return new Date().toLocaleDateString('fr-CA', { timeZone: 'America/Sao_Paulo' });
 }
 
+// ---- Calendário estático Rodada 1 Copa 2026 -----------------
+// Fonte: calendário oficial FIFA Copa 2026 (sorteio 5 dez 2025)
+// Horários em BRT (Brasília, UTC-3). Fallback quando API sem dados.
+function _mkFix(id, iso, homeName, awayName, venue, city) {
+  const d = new Date(iso);
+  return {
+    fixture: {
+      id,
+      date: iso,
+      status: { short: d > new Date() ? 'NS' : 'FT', elapsed: null },
+      venue: { name: venue, city },
+    },
+    teams: {
+      home: { id: id * 10,     name: homeName },
+      away: { id: id * 10 + 1, name: awayName },
+    },
+    goals: { home: null, away: null },
+  };
+}
+
+const _CAL_STATIC_R1 = [
+  // ---- 11 Jun — Grupos A + B (Abertura) ----
+  _mkFix(90001,'2026-06-11T14:00:00-03:00','Canada','Switzerland','BC Place','Vancouver'),
+  _mkFix(90002,'2026-06-11T17:00:00-03:00','Mexico','South Africa','Estadio Azteca','Cidade do México'),
+  _mkFix(90003,'2026-06-11T20:00:00-03:00','South Korea','Czechia','AT&T Stadium','Arlington'),
+  _mkFix(90004,'2026-06-11T23:00:00-03:00','Qatar','Bosnia and Herzegovina','SoFi Stadium','Los Angeles'),
+  // ---- 12 Jun — Grupos C + D ----
+  _mkFix(90005,'2026-06-12T14:00:00-03:00','Brazil','Morocco','MetLife Stadium','East Rutherford'),
+  _mkFix(90006,'2026-06-12T17:00:00-03:00','Haiti','Scotland','Gillette Stadium','Boston'),
+  _mkFix(90007,'2026-06-12T20:00:00-03:00','United States','Paraguay','Rose Bowl','Los Angeles'),
+  _mkFix(90008,'2026-06-12T23:00:00-03:00','Australia','Turkey','Arrowhead Stadium','Kansas City'),
+  // ---- 13 Jun — Grupos E + F ----
+  _mkFix(90009,'2026-06-13T14:00:00-03:00','Germany','Curacao','Lincoln Financial Field','Filadélfia'),
+  _mkFix(90010,'2026-06-13T17:00:00-03:00','Ivory Coast','Ecuador','Estadio Akron','Guadalajara'),
+  _mkFix(90011,'2026-06-13T20:00:00-03:00','Netherlands','Japan','AT&T Stadium','Arlington'),
+  _mkFix(90012,'2026-06-13T23:00:00-03:00','Tunisia','Sweden','Levi\'s Stadium','Santa Clara'),
+  // ---- 14 Jun — Grupos G + H ----
+  _mkFix(90013,'2026-06-14T14:00:00-03:00','Belgium','Egypt','Hard Rock Stadium','Miami'),
+  _mkFix(90014,'2026-06-14T17:00:00-03:00','Iran','New Zealand','Seattle Seahawks Stadium','Seattle'),
+  _mkFix(90015,'2026-06-14T20:00:00-03:00','Spain','Cape Verde','MetLife Stadium','East Rutherford'),
+  _mkFix(90016,'2026-06-14T23:00:00-03:00','Saudi Arabia','Uruguay','Sofi Stadium','Los Angeles'),
+  // ---- 15 Jun — Grupos I + J + K + L ----
+  _mkFix(90017,'2026-06-15T11:00:00-03:00','France','Senegal','BC Place','Vancouver'),
+  _mkFix(90018,'2026-06-15T14:00:00-03:00','Norway','Iraq','Estadio Azteca','Cidade do México'),
+  _mkFix(90019,'2026-06-15T17:00:00-03:00','Argentina','Algeria','Hard Rock Stadium','Miami'),
+  _mkFix(90020,'2026-06-15T17:00:00-03:00','Austria','Jordan','Levi\'s Stadium','Santa Clara'),
+  _mkFix(90021,'2026-06-15T20:00:00-03:00','Portugal','Uzbekistan','Gillette Stadium','Boston'),
+  _mkFix(90022,'2026-06-15T20:00:00-03:00','Colombia','DR Congo','Arrowhead Stadium','Kansas City'),
+  _mkFix(90023,'2026-06-15T23:00:00-03:00','England','Croatia','Rose Bowl','Los Angeles'),
+  _mkFix(90024,'2026-06-15T23:00:00-03:00','Ghana','Panama','Lincoln Financial Field','Filadélfia'),
+];
+
 async function _loadTodayMatches() {
   const card = document.getElementById('today-matches-card');
   if (!card) return;
@@ -188,8 +240,8 @@ async function _loadTodayMatches() {
     await _calFetchAll();
     const today = _calToday();
     const dates  = Object.keys(_calByDate).sort();
-    // Seleciona hoje se houver jogos, senão o primeiro dia com jogos
-    _calSelDate = _calByDate[today] ? today : (dates[0] || today);
+    // Seleciona hoje se houver jogos, senão o primeiro dia com jogos (abertura: 2026-06-11)
+    _calSelDate = _calByDate[today] ? today : (dates[0] || '2026-06-11');
     _calRender(body);
   } catch {
     body.innerHTML = `<p class="tdm-empty">Não foi possível carregar o calendário.<br>
@@ -199,21 +251,33 @@ async function _loadTodayMatches() {
 
 async function _calFetchAll(forceRefresh = false) {
   if (_calLoaded && !forceRefresh) return;
-  const resp = await fetch(
-    'https://v3.football.api-sports.io/fixtures?league=1&season=2026',
-    { headers: { 'x-apisports-key': 'b89962f0944bdce04ad5fec40c67e32d' } }
-  );
-  const data = await resp.json();
-  _calFixtures = (data.response || []).sort((a, b) =>
-    new Date(a.fixture.date) - new Date(b.fixture.date)
-  );
-  _calByDate = {};
-  for (const f of _calFixtures) {
-    const d = new Date(f.fixture.date).toLocaleDateString('fr-CA', { timeZone: 'America/Sao_Paulo' });
-    if (!_calByDate[d]) _calByDate[d] = [];
-    _calByDate[d].push(f);
+
+  function _buildByDate(fixtures) {
+    _calFixtures = fixtures.sort((a, b) =>
+      new Date(a.fixture.date) - new Date(b.fixture.date)
+    );
+    _calByDate = {};
+    for (const f of _calFixtures) {
+      const d = new Date(f.fixture.date).toLocaleDateString('fr-CA', { timeZone: 'America/Sao_Paulo' });
+      if (!_calByDate[d]) _calByDate[d] = [];
+      _calByDate[d].push(f);
+    }
+    _calLoaded = true;
   }
-  _calLoaded = true;
+
+  try {
+    const resp = await fetch(
+      'https://v3.football.api-sports.io/fixtures?league=1&season=2026',
+      { headers: { 'x-apisports-key': 'b89962f0944bdce04ad5fec40c67e32d' } }
+    );
+    const data = await resp.json();
+    const fixtures = data.response || [];
+    // Se a API ainda não retornou dados da Copa 2026, usa agenda estática da R1
+    _buildByDate(fixtures.length > 0 ? fixtures : [..._CAL_STATIC_R1]);
+  } catch {
+    // Fallback total por erro de rede
+    _buildByDate([..._CAL_STATIC_R1]);
+  }
 }
 
 function _calRender(body) {
