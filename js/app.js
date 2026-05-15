@@ -104,6 +104,9 @@ async function _loadTodayMatches() {
   const body = card.querySelector('.tdm-body');
 
   const today = new Date().toISOString().split('T')[0];
+  const todayLabel = new Date().toLocaleDateString('pt-BR', {
+    weekday: 'short', day: 'numeric', month: 'short', timeZone: 'America/Sao_Paulo',
+  });
   try {
     const resp = await fetch(
       `https://v3.football.api-sports.io/fixtures?league=1&season=2026&date=${today}`,
@@ -118,7 +121,7 @@ async function _loadTodayMatches() {
       return;
     }
 
-    let html = '';
+    let cards = '';
     let hasLive = false;
     for (const f of fixtures) {
       const home    = f.teams.home;
@@ -145,7 +148,7 @@ async function _loadTodayMatches() {
                <span class="tdm-live-badge"><span class="tdm-live-dot"></span>AO VIVO</span>
              </div>`;
 
-      html += `<a class="tdm-match${isLive ? ' tdm-match-live' : ''}" href="https://cazetv.com/ao-vivo/" target="_blank" rel="noopener">
+      cards += `<a class="tdm-card${isLive ? ' tdm-match-live' : ''}" href="https://cazetv.com/ao-vivo/" target="_blank" rel="noopener">
         <div class="tdm-side tdm-home">
           <div class="tdm-flag-wrap">${homeIso ? `<span class="fi fi-${homeIso} tdm-flag-lg"></span>` : `<span class="tdm-flag-fallback">?</span>`}</div>
           <span class="tdm-name">${home.name}</span>
@@ -157,7 +160,8 @@ async function _loadTodayMatches() {
         </div>
       </a>`;
     }
-    body.innerHTML = html;
+    body.innerHTML = `<div class="tdm-date-label">${todayLabel} · ${fixtures.length} jogo${fixtures.length !== 1 ? 's' : ''}</div>
+      <div class="tdm-carousel">${cards}</div>`;
     _schedulePoll(hasLive);
   } catch {
     body.innerHTML = `<p class="tdm-empty">Não foi possível carregar os jogos.</p>`;
