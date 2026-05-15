@@ -81,6 +81,11 @@ function calculateScore(groupBets, knockoutBets, results) {
   return { pts, breakdown };
 }
 
+// ---- Paginação do ranking -----------------------------------
+const RANKING_PAGE_SIZE = 10;
+let _rankingPage = 0;
+let _rankingEntries = [];
+
 // ---- Render ranking section ---------------------------------
 async function initRanking(currentUid) {
   const container = document.getElementById('ranking-content');
@@ -88,12 +93,12 @@ async function initRanking(currentUid) {
 
   try {
     await loadAndApplyScoring();
-    // Carrega ranking pré-calculado pelo admin (ranking/current)
     let entries = await loadRanking();
-    // Se vazio e usuário é admin, computa direto com acesso total
     if (entries.length === 0 && typeof isAdmin === 'function' && isAdmin()) {
       entries = await _computeRankingClient();
     }
+    _rankingEntries = entries;
+    _rankingPage    = 0;
     _renderRanking(entries, currentUid, container);
   } catch (e) {
     container.innerHTML = `
@@ -129,11 +134,20 @@ function _renderRanking(entries, currentUid, container) {
     return;
   }
 
+  const totalPages = Math.ceil(entries.length / RANKING_PAGE_SIZE);
+  const page       = Math.max(0, Math.min(_rankingPage, totalPages - 1));
+  const start      = page * RANKING_PAGE_SIZE;
+  const pageItems  = entries.slice(start, start + RANKING_PAGE_SIZE);
+
+  // Encontrar posição do usuário atual para sempre exibir mesmo fora da página
+  const myIdx  = entries.findIndex(e => e.uid === currentUid);
+  const myEntry = myIdx >= 0 && (myIdx < start || myIdx >= start + RANKING_PAGE_SIZE) ? entries[myIdx] : null;
+
   let html = `<div class="ranking-table">`;
-  entries.forEach((e, i) => {
-    const pos   = i + 1;
-    const medal = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}º`;
-    const isMe  = e.uid === currentUid;
+  pageItems.forEach((e, pageIdx) => {
+    const pos      = start + pageIdx + 1;
+    const medal    = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}º`;
+    const isMe     = e.uid === currentUid;
     const safeName = escapeHtml(e.name || '');
 
     html += `<div class="ranking-row ${isMe ? 'me' : ''}">
@@ -141,8 +155,8 @@ function _renderRanking(entries, currentUid, container) {
       <div class="ranking-info">
         <div class="name">${safeName}${isMe ? ' <em style="color:var(--accent);font-size:.8rem">(você)</em>' : ''}</div>
         ${e.breakdown ? `<div class="ranking-breakdown">
-          <span class="breakdown-item" title="Placares exatos (${SCORING.exactScore}pts cada)">⚽ ${e.breakdown.exact}</span>
-          <span class="breakdown-item" title="Resultados corretos (${SCORING.correctResult}pts cada)">✓ ${e.breakdown.result}</span>
+          <span class="breakdown-item" title="Placares exatos">⚽ ${e.breakdown.exact}</span>
+          <span class="breakdown-item" title="Resultados certos">✓ ${e.breakdown.result}</span>
           <span class="breakdown-item" title="Acertos mata-mata">⚡ ${e.breakdown.ko}</span>
           ${e.breakdown.bonus ? `<span class="breakdown-item" style="color:var(--gold)" title="Bônus finalistas">🏆 +${e.breakdown.bonus}</span>` : ''}
         </div>` : ''}
@@ -153,8 +167,41 @@ function _renderRanking(entries, currentUid, container) {
       </div>
     </div>`;
   });
+
+  // Linha "você" fora da página atual
+  if (myEntry) {
+    const myPos = myIdx + 1;
+    const safeName = escapeHtml(myEntry.name || '');
+    html += `<div class="ranking-row me ranking-you-sep">
+      <div class="pos">${myPos}º</div>
+      <div class="ranking-info">
+        <div class="name">${safeName} <em style="color:var(--accent);font-size:.8rem">(você)</em></div>
+      </div>
+      <div class="ranking-right"><span class="pts">${myEntry.pts} pts</span></div>
+    </div>`;
+  }
+
   html += `</div>`;
+
+  // Paginação
+  if (totalPages > 1) {
+    html += `<div class="ranking-pagination">
+      <button class="btn btn-ghost btn-sm" onclick="_rankingGoPage(${page - 1})" ${page === 0 ? 'disabled' : ''}>← Anterior</button>
+      <span class="ranking-page-info">${page + 1} / ${totalPages} &nbsp;·&nbsp; ${entries.length} participantes</span>
+      <button class="btn btn-ghost btn-sm" onclick="_rankingGoPage(${page + 1})" ${page >= totalPages - 1 ? 'disabled' : ''}>Próxima →</button>
+    </div>`;
+  } else {
+    html += `<p class="muted" style="text-align:center;font-size:.8rem;padding:6px 0">${entries.length} participante(s)</p>`;
+  }
+
   container.innerHTML = html;
+}
+
+function _rankingGoPage(page) {
+  _rankingPage = page;
+  const container = document.getElementById('ranking-content');
+  const uid = auth.currentUser?.uid || '';
+  _renderRanking(_rankingEntries, uid, container);
 }
 
 // ---- Public ranking on auth screen ----

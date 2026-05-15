@@ -13,6 +13,10 @@
       const section = tab.dataset.section;
       showSection(section);
 
+      // Limpa caches de sessão ao trocar de aba para sempre exibir dados frescos
+      invalidateResultsCache();
+      sessionStorage.removeItem('bolao_ranking');
+
       if (section === 'ranking' && auth.currentUser) {
         await initRanking(auth.currentUser.uid);
       }
@@ -99,6 +103,16 @@ async function _refreshUserScore(uid) {
     document.getElementById('hdr-score').textContent = `${pts} pts`;
   } catch {
     document.getElementById('hdr-score').textContent = '0 pts';
+  }
+}
+
+function _shareInvite() {
+  const appUrl = 'https://bolao2026-a76c7.web.app';
+  const text   = `⚽ Participe do nosso Bolão Copa 2026!\nAposte nos 72 jogos, monte seu bracket e dispute com a galera.\nAcesse: ${appUrl}`;
+  if (navigator.share) {
+    navigator.share({ title: 'Bolão Copa 2026', text, url: appUrl }).catch(() => {});
+  } else {
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
   }
 }
 
@@ -212,10 +226,320 @@ async function initMyBets(uid) {
   try {
     const [{ groupBets, knockoutBets }, results] = await Promise.all([
       loadUserBetsForHistory(uid),
-      loadResults(),
+      loadResults(true),
     ]);
-    container.innerHTML = _renderBetHistory(groupBets, knockoutBets, results);
+    container.innerHTML = _renderMyBetsPage(groupBets, knockoutBets, results, uid);
   } catch (e) {
     container.innerHTML = `<p class="muted" style="padding:20px">Erro ao carregar apostas: ${e.message}</p>`;
   }
+}
+
+function _renderMyBetsPage(groupBets, knockoutBets, results, uid) {
+  const gsResults = results.groupStage || {};
+  const koResults = results.knockout   || {};
+
+  const advKO = { r32: new Set(), r16: new Set(), qf: new Set(), sf: new Set() };
+  for (const [mid, wid] of Object.entries(koResults)) {
+    if      (mid.startsWith('r32_')) advKO.r32.add(wid);
+    else if (mid.startsWith('r16_')) advKO.r16.add(wid);
+    else if (mid.startsWith('qf_'))  advKO.qf.add(wid);
+    else if (mid.startsWith('sf_'))  advKO.sf.add(wid);
+  }
+
+  let exactCount = 0, correctCount = 0, koTotalPts = 0, totalGroupPts = 0;
+
+  // Pre-compute group stats for summary
+  for (const gId of Object.keys(GROUPS)) {
+    for (const game of generateGroupGames(gId)) {
+      const bet = groupBets[game.id];
+      const res = gsResults[game.id];
+      if (!bet || !res) continue;
+      const bH = parseInt(bet.homeGoals, 10), bA = parseInt(bet.awayGoals, 10);
+      const rH = parseInt(res.homeGoals,  10), rA = parseInt(res.awayGoals,  10);
+      if (isNaN(bH) || isNaN(bA) || isNaN(rH) || isNaN(rA)) continue;
+      if (bH === rH && bA === rA) { exactCount++; totalGroupPts += SCORING.exactScore; }
+      else if (Math.sign(bH - bA) === Math.sign(rH - rA)) { correctCount++; totalGroupPts += SCORING.correctResult; }
+    }
+  }
+
+  // Pre-compute KO points
+  const koEntries = Object.entries(knockoutBets);
+  for (const [mid, pid] of koEntries) {
+    if (mid === 'final' || mid === 'third') continue;
+    const pts = _koPointsForId(mid);
+    const scored =
+      (mid.startsWith('r32_') && advKO.r32.has(pid)) ||
+      (mid.startsWith('r16_') && advKO.r16.has(pid)) ||
+      (mid.startsWith('qf_')  && advKO.qf.has(pid))  ||
+      (mid.startsWith('sf_')  && advKO.sf.has(pid));
+    if (scored) koTotalPts += pts;
+  }
+  if (knockoutBets['third'] && koResults['third'] === knockoutBets['third']) koTotalPts += SCORING.r32Winner;
+  if (knockoutBets['final'] && koResults['final'] === knockoutBets['final']) koTotalPts += SCORING.championScore;
+  const sf01 = knockoutBets['sf_01'], sf02 = knockoutBets['sf_02'];
+  if (sf01 && sf02 && advKO.sf.has(sf01) && advKO.sf.has(sf02)) koTotalPts += SCORING.finalistBonus;
+  const totalPts = totalGroupPts + koTotalPts;
+
+  // ---- Summary bar ----
+  let html = `<div class="mb-topbar">
+    <div class="mb-summary-pills">
+      <span class="mb-pill mb-pill-pts">${totalPts} pts</span>
+      <span class="mb-pill">✅ ${exactCount} exatos</span>
+      <span class="mb-pill">✓ ${correctCount} certos</span>
+      <span class="mb-pill">⚡ ${koTotalPts} pts mata-mata</span>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="_exportMyBetsPDF('${uid}')">📥 Baixar PDF</button>
+  </div>`;
+
+  // ---- Fase de Grupos ----
+  html += `<div class="mb-section-title">⚽ Fase de Grupos</div>`;
+  for (const gId of Object.keys(GROUPS)) {
+    const color = (typeof GROUP_COLORS !== 'undefined' && GROUP_COLORS[gId]) || '#888';
+    const games = generateGroupGames(gId);
+
+    html += `<div class="mb-group-block" style="--grp-color:${color}">
+      <div class="mb-group-hdr">
+        <span class="mb-group-label">Grupo ${gId}</span>
+        <span class="mb-group-teams">${GROUPS[gId].map(t =>
+          `<span class="fi fi-${TEAMS[t].iso}"></span>`).join('')}</span>
+      </div>
+      <div class="mb-games-table">
+        <div class="mb-table-head">
+          <span class="mb-col-team mb-col-home">Casa</span>
+          <span class="mb-col-bet">Palpite</span>
+          <span class="mb-col-result">Resultado</span>
+          <span class="mb-col-team mb-col-away">Visitante</span>
+          <span class="mb-col-pts">Pts</span>
+        </div>`;
+
+    for (const game of games) {
+      const bet  = groupBets[game.id];
+      const res  = gsResults[game.id];
+      const home = TEAMS[game.home];
+      const away = TEAMS[game.away];
+      const roundDate = ROUND_DATES[game.round] || '';
+
+      let cls = 'mb-pending', icon = '', pts = 0;
+      let betStr = bet ? `${bet.homeGoals ?? '–'} × ${bet.awayGoals ?? '–'}` : '– × –';
+      let resHtml = `<span class="mb-waiting">⏳ ${roundDate}</span>`;
+
+      if (bet && res) {
+        const bH = parseInt(bet.homeGoals, 10), bA = parseInt(bet.awayGoals, 10);
+        const rH = parseInt(res.homeGoals,  10), rA = parseInt(res.awayGoals,  10);
+        resHtml = `<span class="mb-real">${rH}–${rA}</span>`;
+        if (!isNaN(bH) && !isNaN(bA) && !isNaN(rH) && !isNaN(rA)) {
+          if (bH === rH && bA === rA)                               { cls = 'mb-exact';   icon = '✅'; pts = SCORING.exactScore; }
+          else if (Math.sign(bH - bA) === Math.sign(rH - rA))      { cls = 'mb-correct'; icon = '✓';  pts = SCORING.correctResult; }
+          else                                                       { cls = 'mb-wrong';  icon = '❌'; }
+        }
+      } else if (bet) { cls = 'mb-placed'; icon = '📌'; }
+
+      html += `<div class="mb-game-row ${cls}">
+        <div class="mb-col-team mb-col-home">
+          <span class="fi fi-${home.iso} mb-flag"></span>
+          <span class="mb-tname mb-tname-full">${escapeHtml(home.name)}</span>
+          <span class="mb-tname mb-tname-short">${home.short}</span>
+        </div>
+        <div class="mb-col-bet">
+          <span class="mb-bet-score">${betStr}</span>
+        </div>
+        <div class="mb-col-result">${resHtml}</div>
+        <div class="mb-col-team mb-col-away">
+          <span class="mb-tname mb-tname-full">${escapeHtml(away.name)}</span>
+          <span class="mb-tname mb-tname-short">${away.short}</span>
+          <span class="fi fi-${away.iso} mb-flag"></span>
+        </div>
+        <div class="mb-col-pts">
+          ${icon ? `<span class="mb-icon">${icon}</span>` : ''}
+          ${pts ? `<span class="mb-pts-val">+${pts}</span>` : ''}
+        </div>
+      </div>`;
+    }
+
+    html += `</div></div>`;
+  }
+
+  // ---- Mata-Mata ----
+  const KO_PHASES = [
+    { prefix: 'r32',   label: '32-avos de Final',      color: '#58a6ff', pts: SCORING.r32Winner  },
+    { prefix: 'r16',   label: 'Oitavas de Final',       color: '#bc8cff', pts: SCORING.r16Winner  },
+    { prefix: 'qf',    label: 'Quartas de Final',       color: '#ffa657', pts: SCORING.qfWinner   },
+    { prefix: 'sf',    label: 'Semifinal',              color: '#ff7b72', pts: SCORING.sfWinner   },
+    { prefix: 'third', label: '🥉 3º Lugar',            color: '#8b949e', pts: SCORING.r32Winner  },
+    { prefix: 'final', label: '🏆 Final',               color: '#f0c040', pts: SCORING.championScore },
+  ];
+
+  html += `<div class="mb-section-title" style="margin-top:20px">⚡ Mata-Mata</div>`;
+
+  if (koEntries.length === 0) {
+    html += `<p class="muted" style="padding:16px">Nenhum palpite de mata-mata registrado.</p>`;
+  } else {
+    for (const phase of KO_PHASES) {
+      let entries;
+      if (phase.prefix === 'third') entries = knockoutBets['third'] ? [['third', knockoutBets['third']]] : [];
+      else if (phase.prefix === 'final') entries = knockoutBets['final'] ? [['final', knockoutBets['final']]] : [];
+      else entries = koEntries.filter(([id]) => id.startsWith(phase.prefix + '_'));
+      if (entries.length === 0) continue;
+
+      html += `<div class="mb-ko-phase" style="--ko-color:${phase.color}">
+        <div class="mb-ko-phase-hdr">${phase.label} <span class="mb-ko-pts-hint">+${phase.pts} pts/acerto</span></div>
+        <div class="mb-ko-list">`;
+
+      for (const [mid, pid] of entries) {
+        const t = TEAMS[pid];
+        let scored = false, roundDone = false;
+
+        if      (mid === 'final')        { roundDone = 'final' in koResults; scored = koResults['final'] === pid; }
+        else if (mid === 'third')        { roundDone = 'third' in koResults; scored = koResults['third'] === pid; }
+        else if (mid.startsWith('r32_')) { roundDone = advKO.r32.size > 0;  scored = advKO.r32.has(pid); }
+        else if (mid.startsWith('r16_')) { roundDone = advKO.r16.size > 0;  scored = advKO.r16.has(pid); }
+        else if (mid.startsWith('qf_'))  { roundDone = advKO.qf.size  > 0;  scored = advKO.qf.has(pid); }
+        else if (mid.startsWith('sf_'))  { roundDone = advKO.sf.size  > 0;  scored = advKO.sf.has(pid); }
+
+        const icon = !roundDone ? '📌' : scored ? '✅' : '❌';
+        const ptsVal = scored ? phase.prefix === 'final' ? SCORING.championScore : phase.pts : 0;
+        const cls = !roundDone ? 'mb-ko-placed' : scored ? 'mb-ko-exact' : 'mb-ko-wrong';
+
+        const realId = koResults[mid];
+        const realT  = realId ? TEAMS[realId] : null;
+
+        html += `<div class="mb-ko-row ${cls}">
+          <span class="mb-ko-icon">${icon}</span>
+          <div class="mb-ko-pick">
+            ${t ? `<span class="fi fi-${t.iso} mb-flag"></span><span class="mb-tname">${escapeHtml(t.name)}</span>` : pid}
+          </div>
+          <div class="mb-ko-real">
+            ${roundDone
+              ? (realT ? `<span class="fi fi-${realT.iso} mb-flag"></span><span class="mb-tname">${escapeHtml(realT.name)}</span>` : '–')
+              : `<span class="mb-waiting">⏳ Aguardando</span>`}
+          </div>
+          ${ptsVal ? `<span class="mb-ko-pts">+${ptsVal}</span>` : '<span class="mb-ko-pts mb-ko-pts-empty"></span>'}
+        </div>`;
+      }
+
+      // 2º colocado inferido (para a Final)
+      if (phase.prefix === 'final' && knockoutBets['final']) {
+        const champId  = knockoutBets['final'];
+        const runnerUp = sf01 === champId ? sf02 : sf02 === champId ? sf01 : null;
+        const runnerT  = runnerUp ? TEAMS[runnerUp] : null;
+        if (runnerT) {
+          const finalDone   = 'final' in koResults;
+          const realRunner  = finalDone && advKO.sf.size === 2 ? [...advKO.sf].find(t => t !== koResults['final']) : null;
+          const realRunnerT = realRunner ? TEAMS[realRunner] : null;
+          const runnerOk    = finalDone && realRunner === runnerUp;
+          html += `<div class="mb-ko-row ${!finalDone ? 'mb-ko-placed' : runnerOk ? 'mb-ko-correct' : 'mb-ko-wrong'}">
+            <span class="mb-ko-icon">${!finalDone ? '📌' : runnerOk ? '✓' : '❌'}</span>
+            <div class="mb-ko-pick" style="opacity:.8">
+              <span class="fi fi-${runnerT.iso} mb-flag"></span>
+              <span class="mb-tname">${escapeHtml(runnerT.name)}</span>
+              <span class="mb-ko-label">🥈 2º</span>
+            </div>
+            <div class="mb-ko-real">
+              ${finalDone
+                ? (realRunnerT ? `<span class="fi fi-${realRunnerT.iso} mb-flag"></span><span class="mb-tname">${escapeHtml(realRunnerT.name)}</span>` : '–')
+                : `<span class="mb-waiting">⏳ Aguardando</span>`}
+            </div>
+            <span class="mb-ko-pts mb-ko-pts-empty"></span>
+          </div>`;
+        }
+      }
+
+      html += `</div></div>`;
+    }
+
+    // Bônus finalistas
+    if (sf01 && sf02 && advKO.sf.has(sf01) && advKO.sf.has(sf02)) {
+      html += `<div class="mb-bonus-row">
+        <span>🎯 Bônus: acertou as duas finalistas!</span>
+        <span class="mb-ko-pts">+${SCORING.finalistBonus}</span>
+      </div>`;
+    }
+  }
+
+  html += `<div class="mb-total-bar">Total: <strong>${totalPts} pts</strong></div>`;
+  return html;
+}
+
+function _koPointsForId(mid) {
+  if (mid === 'final')        return SCORING.championScore;
+  if (mid === 'third')        return SCORING.r32Winner;
+  if (mid.startsWith('r32_')) return SCORING.r32Winner;
+  if (mid.startsWith('r16_')) return SCORING.r16Winner;
+  if (mid.startsWith('qf_'))  return SCORING.qfWinner;
+  if (mid.startsWith('sf_'))  return SCORING.sfWinner;
+  return 0;
+}
+
+function _exportMyBetsPDF(uid) {
+  const container = document.getElementById('mybets-content');
+  const userName  = document.getElementById('hdr-username')?.textContent || 'Participante';
+  const content   = container ? container.innerHTML : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Apostas — ${escapeHtml(userName)} — Copa 2026</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/6.11.0/css/flag-icons.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; color: #111; background: #fff; padding: 20px; font-size: 13px; }
+    h1 { font-size: 1.3rem; border-bottom: 2px solid #eee; padding-bottom: 8px; margin-bottom: 4px; }
+    .mb-topbar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:12px 0; }
+    .mb-pill { background:#f0f0f0; border-radius:20px; padding:3px 10px; font-size:.82rem; font-weight:600; }
+    .mb-pill-pts { background:#1a7f37; color:#fff; }
+    .mb-section-title { font-size:1rem; font-weight:700; margin:16px 0 6px; padding:4px 0; border-bottom:2px solid #eee; }
+    .mb-group-block { margin-bottom:12px; border-left:3px solid var(--grp-color,#888); padding-left:8px; }
+    .mb-group-hdr { display:flex; align-items:center; gap:8px; padding:4px 0; font-weight:700; color:var(--grp-color,#333); font-size:.9rem; }
+    .mb-games-table { width:100%; }
+    .mb-table-head, .mb-game-row { display:grid; grid-template-columns:1fr 80px 80px 1fr 52px; align-items:center; gap:4px; padding:3px 4px; }
+    .mb-table-head { font-size:.75rem; color:#777; font-weight:600; border-bottom:1px solid #eee; }
+    .mb-game-row { border-bottom:1px solid #f5f5f5; }
+    .mb-game-row.mb-exact { background:#d4edda; }
+    .mb-game-row.mb-correct { background:#d1ecf1; }
+    .mb-game-row.mb-wrong { background:#f8d7da; }
+    .mb-col-home { display:flex; align-items:center; gap:4px; }
+    .mb-col-away { display:flex; align-items:center; gap:4px; justify-content:flex-end; }
+    .mb-col-bet { text-align:center; font-weight:700; }
+    .mb-col-result { text-align:center; }
+    .mb-col-pts { text-align:center; }
+    .mb-flag { width:18px; height:14px; display:inline-block; }
+    .mb-tname-short { display:none; }
+    .mb-bet-score { font-weight:700; }
+    .mb-real { font-weight:700; color:#1a7f37; }
+    .mb-waiting { color:#aaa; font-size:.8rem; }
+    .mb-icon { font-size:.9rem; }
+    .mb-pts-val { font-weight:700; color:#1a7f37; font-size:.85rem; }
+    .mb-ko-phase { margin:8px 0; border-left:3px solid var(--ko-color,#888); padding-left:8px; }
+    .mb-ko-phase-hdr { font-weight:700; font-size:.88rem; color:var(--ko-color,#333); padding:4px 0; }
+    .mb-ko-list { }
+    .mb-ko-row { display:grid; grid-template-columns:24px 1fr 1fr 52px; align-items:center; gap:4px; padding:3px 4px; border-bottom:1px solid #f5f5f5; }
+    .mb-ko-exact { background:#d4edda; }
+    .mb-ko-correct { background:#d1ecf1; }
+    .mb-ko-wrong { background:#f8d7da; }
+    .mb-ko-pick, .mb-ko-real { display:flex; align-items:center; gap:4px; }
+    .mb-ko-pts { text-align:right; font-weight:700; color:#1a7f37; }
+    .mb-ko-pts-empty { opacity:0; }
+    .mb-bonus-row { background:#fff8dc; border:1px solid #ffd700; border-radius:4px; padding:6px 10px; display:flex; justify-content:space-between; margin:6px 0; font-weight:700; color:#7a6000; }
+    .mb-total-bar { text-align:right; font-size:1.1rem; margin-top:16px; padding-top:8px; border-top:2px solid #eee; }
+    .mb-summary-pills { display:none; }
+    .btn { display:none; }
+    @media print { .mb-topbar button { display:none; } }
+  </style>
+</head>
+<body>
+  <h1>🏆 Bolão Copa 2026 — Apostas de ${escapeHtml(userName)}</h1>
+  <p style="color:#888;font-size:.8rem;margin:4px 0 12px">Gerado em ${new Date().toLocaleString('pt-BR')}</p>
+  <button onclick="window.print()" style="padding:7px 16px;background:#238636;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-bottom:16px;font-size:.9rem">🖨️ Imprimir / Salvar PDF</button>
+  ${content}
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `apostas-copa2026-${userName.replace(/\s+/g, '-')}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
 }

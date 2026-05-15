@@ -434,8 +434,12 @@ async function _saveGroupResult(gameId, homeGoals, awayGoals) {
     },
   };
   await db.collection('results').doc('groupStage').set(data, { merge: true });
-  // Atualiza o estado local imediatamente (sem precisar recarregar do Firestore)
   _resGs[gameId] = { homeGoals: String(homeGoals), awayGoals: String(awayGoals) };
+  invalidateResultsCache();
+  // Recalcula ranking automaticamente após cada resultado
+  if (typeof adminRecalcRanking === 'function') {
+    adminRecalcRanking({ silent: true }).catch(() => {});
+  }
 }
 
 /**
@@ -455,6 +459,10 @@ async function _saveKoResult(matchId, winnerId) {
   await db.collection('results').doc('knockout')
     .set({ [matchId]: winnerId }, { merge: true });
   _resKo[matchId] = winnerId;
+  invalidateResultsCache();
+  if (typeof adminRecalcRanking === 'function') {
+    adminRecalcRanking({ silent: true }).catch(() => {});
+  }
 }
 
 /**
