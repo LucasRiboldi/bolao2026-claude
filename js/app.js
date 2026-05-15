@@ -8,6 +8,8 @@
 
   loadPublicRanking();
 
+  _loadPremierLeagueCard();
+
   document.querySelectorAll('.nav-tab').forEach(tab => {
     tab.addEventListener('click', async () => {
       const section = tab.dataset.section;
@@ -245,6 +247,49 @@ async function _loadTodayMatches() {
       <div class="tdm-body"><p class="tdm-empty">Não foi possível carregar os jogos.<br>
         <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="_loadTodayMatches()">🔄 Tentar novamente</button></p>
       </div></div>`;
+  }
+}
+
+async function _loadPremierLeagueCard() {
+  const anchor = document.getElementById('pl-card-anchor');
+  if (!anchor) return;
+
+  const today = new Date().toLocaleDateString('fr-CA', { timeZone: 'America/Sao_Paulo' });
+
+  try {
+    const resp = await fetch(
+      `https://v3.football.api-sports.io/fixtures?league=39&season=2025&date=${today}`,
+      { headers: { 'x-apisports-key': 'b89962f0944bdce04ad5fec40c67e32d' } }
+    );
+    const data = await resp.json();
+    const fixtures = (data.response || []).sort((a, b) =>
+      new Date(a.fixture.date) - new Date(b.fixture.date)
+    );
+
+    if (fixtures.length === 0) {
+      anchor.innerHTML = `<div class="today-matches-card today-matches-card--auth">
+        <div class="tdm-header"><span>🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League — Hoje</span></div>
+        <div class="tdm-body"><p class="tdm-empty" style="padding:16px 10px">Sem jogos da Premier League hoje.</p></div>
+      </div>`;
+      return;
+    }
+
+    anchor.innerHTML = fixtures.map(f => `
+      <div class="today-matches-card today-matches-card--auth">
+        <div class="tdm-header">
+          <span>🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League</span>
+          <a class="tdm-watch-btn" href="https://www.youtube.com/@CazeTV" target="_blank" rel="noopener">🔴 Ao vivo</a>
+        </div>
+        <div class="tdm-body">${_calMatchCard(f)}</div>
+      </div>`).join('');
+  } catch (e) {
+    anchor.innerHTML = `<div class="today-matches-card today-matches-card--auth">
+      <div class="tdm-header"><span>🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League — Hoje</span></div>
+      <div class="tdm-body"><p class="tdm-empty" style="padding:16px 10px;font-size:.8rem">
+        Erro ao carregar: ${e.message}<br>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="_loadPremierLeagueCard()">🔄 Tentar novamente</button>
+      </p></div>
+    </div>`;
   }
 }
 
