@@ -267,9 +267,13 @@ async function _loadPremierLeagueCard() {
     );
 
     if (fixtures.length === 0) {
+      const dbg = JSON.stringify({ date: today, errors: data.errors, results: data.results, paging: data.paging }).substring(0, 300);
       anchor.innerHTML = `<div class="today-matches-card today-matches-card--auth">
         <div class="tdm-header"><span>🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League — Hoje</span></div>
-        <div class="tdm-body"><p class="tdm-empty" style="padding:16px 10px">Sem jogos da Premier League hoje.</p></div>
+        <div class="tdm-body"><p class="tdm-empty" style="padding:16px 10px;font-size:.75rem">
+          Sem jogos retornados.<br><code style="word-break:break-all">${dbg}</code><br>
+          <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="_loadPremierLeagueCard()">🔄 Tentar novamente</button>
+        </p></div>
       </div>`;
       return;
     }
