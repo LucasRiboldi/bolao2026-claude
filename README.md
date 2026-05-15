@@ -1,83 +1,103 @@
 <div align="center">
 
-# 🏆 Bolão Copa 2026
+<img src="https://img.shields.io/badge/⚽-Copa_do_Mundo_2026-brightgreen?style=for-the-badge" />
+<img src="https://img.shields.io/badge/🔥-Bolão_dos_Amigos-orange?style=for-the-badge" />
+<img src="https://img.shields.io/badge/🏆-Quem_vai_ganhar%3F-yellow?style=for-the-badge" />
 
-**Dispute com amigos quem conhece mais de futebol.**  
-Aposte nos 72 jogos, monte seu bracket e suba no ranking ao vivo.
+# 🎉 Bolão Copa 2026
 
-[![Demo ao vivo](https://img.shields.io/badge/▶%20Jogar%20agora-bolao2026--a76c7.web.app-orange?style=for-the-badge&logo=firebase&logoColor=white)](https://bolao2026-a76c7.web.app)
+### _Quem sabe mais de futebol no grupo? Chegou a hora de provar!_ ⚽🔥
+
+Aposte nos **72 jogos** da fase de grupos, monte seu **bracket completo** até o campeão e suba no **ranking ao vivo** com seus amigos.
+É rápido, é grátis, é divertido — e você vai querer mandar o link agora mesmo no WhatsApp. 📲
+
+[![🚀 Jogar agora!](https://img.shields.io/badge/▶%20Jogar%20agora!-bolao2026--a76c7.web.app-FF6B35?style=for-the-badge&logo=firebase&logoColor=white)](https://bolao2026-a76c7.web.app)
 
 </div>
 
 ---
 
-## ✨ O que tem no bolão
+## 🎮 O que tem de bom aqui
 
-| | Funcionalidade | Detalhe |
-|---|---|---|
-| ⚽ | **72 jogos de grupos** | Todos os jogos dos 12 grupos, com stepper +/− para celular |
-| ⚡ | **Bracket interativo** | Clique para avançar times do R32 até a Final |
-| 🏅 | **Ranking em tempo real** | Atualiza a cada resultado lançado pelo admin |
-| 📋 | **Ver apostas de todos** | Bolão 100% transparente — veja o palpite de qualquer participante |
-| 🔒 | **Bloqueio de apostas** | Admin trava antes da Copa começar; desbloqueio individual disponível |
-| 🔧 | **Painel admin completo** | Resultados, ranking, usuários, editar apostas de qualquer um |
-| 📄 | **Exportar boletim** | Download em HTML com todos os seus palpites |
+> Tudo que um bolão decente precisa — sem complicação, sem planilha de Excel, sem dor de cabeça.
 
----
-
-## 🎯 Como pontua
-
-### Fase de grupos
-
-| Acerto | Pontos |
-|--------|:------:|
-| ✅ Placar exato — ex: apostou `2×1`, saiu `2×1` | **+3** |
-| ✓ Resultado certo — ex: apostou `3×0`, saiu `2×1` (Brasil ganhou nos dois) | **+1** |
-| ❌ Errou o vencedor | 0 |
-
-### Mata-mata
-
-O palpite vale se o **time que você escolheu avançar de fase avançou**, independente do slot no bracket.
-
-| Acerto | Pontos |
-|--------|:------:|
-| ⚡ Time avançou para a próxima fase | **+2** |
-| 🥉 Acertou o vencedor do 3° lugar (exato) | **+2** |
-| 🏆 Acertou o campeão (exato) | **+2 +5 bônus** |
-
-> **Pontuação máxima:** 285 pts — [ver cálculo completo em SCORING.md](SCORING.md)
+| | O que é | Como funciona |
+|:---:|---|---|
+| ⚽ | **72 jogos de grupos** | Aposte no placar de cada jogo dos 12 grupos. Botõezinhos +/− que funcionam no celular. Sem teclado numérico, juro! |
+| ⚡ | **Bracket interativo** | Clique e arraste seus favoritos do R32 até a Grande Final. Veja seu bracket ganhar vida! |
+| 🏅 | **Ranking ao vivo** | O admin lança os resultados e os pontos aparecem na hora. Quem tá na frente não dorme. |
+| 👀 | **Apostas transparentes** | Todo mundo vê o palpite de todo mundo. Aquele amigo que diz "eu já sabia" não tem mais escapatória. |
+| 🔒 | **Trava automática** | Admin trava as apostas antes da Copa começar. Sem editar depois, sem desculpa! |
+| 🛠️ | **Painel admin completo** | Resultados, ranking, usuários, bloqueio individual — tudo numa tela só. |
+| 📊 | **Exportar boletim** | Baixe seus palpites em HTML pra mostrar que você acertou desde o começo. |
 
 ---
 
-## 🚀 Rodar localmente
+## 🏆 Como ganhar pontos
+
+### ⚽ Fase de Grupos — 72 jogos para pontuar!
+
+| Você apostou | Deu | Resultado | Pontos |
+|:---:|:---:|:---:|:---:|
+| `2 × 1` | `2 × 1` | ✅ **Placar exato** — você é um vidente | **+17** |
+| `3 × 0` | `2 × 0` | ✓ **Resultado certo** — pelo menos a direção tava certa | **+8** |
+| `1 × 0` | `0 × 2` | ❌ **Errou feio** — sem pontos, sem choro | **0** |
+
+> ℹ️ Acertou o placar exato? Recebe os **17 pontos** — não acumula com o de resultado. Já é suficiente! 😄
+
+---
+
+### ⚡ Mata-Mata — aposte na trajetória dos times!
+
+Aqui você aposta **quem vai avançar** em cada confronto. Se o time que você escolheu passar de fase, você pontua — não importa de qual posição do chaveamento ele veio!
+
+| Fase | Pontos por time acertado |
+|------|:---:|
+| 🟤 Time avança para os **32-avos** | **+5** |
+| 🔵 Time avança para os **16-avos** | **+11** |
+| 🟣 Time avança para as **Quartas** | **+20** |
+| 🟠 Time avança para a **Semi** | **+40** |
+| 🥉 Acertou o **3º lugar** | **+5** |
+| 🏆 Acertou o **Campeão** | **+71** |
+| 🎊 Acertou os **dois finalistas** | **+26 bônus!** |
+
+> 🤯 Pontuação máxima possível? É muita coisa. [Ver cálculo completo em SCORING.md](SCORING.md)
+
+---
+
+## 🚀 Quero rodar na minha máquina!
 
 ```bash
-# 1. Clone
+# Clone o projeto
 git clone https://github.com/LucasRiboldi/bolao2026-claude.git
 cd bolao2026-claude
 
-# 2. Instale as dependências do seed (Node.js, apenas dev)
+# Instala dependências (só pra ferramentas de dev)
 npm install
 
-# 3. Sirva o frontend (qualquer servidor estático)
+# Sobe o frontend
 npx serve .
-# → http://localhost:3000
+# Acesse: http://localhost:3000
 ```
+
+Pronto! É só isso. Sem webpack, sem Vite, sem magia negra. HTML + CSS + JS puro e Firebase. 🙏
 
 ---
 
-## ⚙️ Configurar seu próprio bolão
+## ⚙️ Quero criar o meu próprio bolão!
 
-### 1. Criar projeto Firebase
+Quer fazer um bolão com seus amigos e usar seu próprio Firebase? Segue o passo a passo:
 
-1. Acesse [console.firebase.google.com](https://console.firebase.google.com) → **Criar projeto**
-2. Ative **Authentication → E-mail/Senha**
-3. Crie banco **Firestore** em modo produção
-4. Em **Project Settings → Apps → Web**, copie as credenciais
+### 1️⃣ Cria o projeto no Firebase
 
-### 2. Colar credenciais
+1. Vai em [console.firebase.google.com](https://console.firebase.google.com) → **Criar projeto**
+2. Ativa **Authentication → E-mail/Senha**
+3. Cria o banco **Firestore** em modo produção
+4. Em **Project Settings → Apps → Web**, copia as credenciais
 
-Edite [`js/config.js`](js/config.js):
+### 2️⃣ Cola as credenciais no projeto
+
+Edita [`js/config.js`](js/config.js):
 
 ```js
 const FIREBASE_CONFIG = {
@@ -90,115 +110,139 @@ const FIREBASE_CONFIG = {
 };
 ```
 
-### 3. Definir o e-mail admin
+### 3️⃣ Define quem é o admin
 
-Em [`js/admin.js`](js/admin.js) e [`firestore.rules`](firestore.rules):
+Em [`js/admin.js`](js/admin.js) e [`firestore.rules`](firestore.rules) — troca o e-mail pelo seu:
 
 ```js
 // js/admin.js
 const ADMIN_EMAIL = 'seu@email.com';
 ```
 ```
-// firestore.rules
+// firestore.rules — linha da função isAdmin()
 && request.auth.token.email == 'seu@email.com'
 ```
 
-### 4. Deploy
+### 4️⃣ Faz o deploy e chama os amigos!
 
 ```bash
 npm install -g firebase-tools
 firebase login
 firebase deploy
+# 🎉 Tá no ar!
 ```
 
 ---
 
-## 🧪 Seed de teste
+## 🌱 Seed de teste — simula participantes reais
 
-Simula 10 participantes com apostas aleatórias para testar o sistema sem usuários reais.
+Quer testar sem precisar de 10 amigos online agora? O seed cria usuários fictícios com apostas aleatórias!
 
 ```bash
-# 1. Baixe o service account:
-#    Firebase Console → Project Settings → Service Accounts → Gerar nova chave
-#    Salve como service-account.json na raiz (já está no .gitignore)
+# 1. Baixa a chave do Firebase:
+#    Console → Project Settings → Service Accounts → Gerar nova chave privada
+#    Salva como service-account.json na raiz (já tá no .gitignore, pode ficar tranquilo)
 
-# 2. Inicie o servidor de seed
+# 2. Sobe o servidor de seed
 node seed-server.js
 
-# 3. Abra no browser
-open http://localhost:5500/test-seed.html
+# 3. Abre no browser
+http://localhost:5500/test-seed.html
 ```
 
-**O que você encontra em `test-seed.html`:**
+O `test-seed.html` tem 5 abas que fazem de tudo:
 
 | Aba | O que faz |
-|-----|-----------|
-| 🌱 Seed | Cria 10 usuários + simula resultados + calcula ranking |
-| 🔄 Recalcular | Recalcula ranking com os resultados atuais do Firestore |
-| 📊 Relatório | Histograma de pontos, distribuição de palpites de campeão |
-| 🔍 Auditoria | Verifica Firebase, completude de dados e consistência |
-| 🧪 Testes Unitários | 32 testes automáticos com resultado ao vivo |
+|:---:|---|
+| 🌱 **Seed** | Cria 10 usuários falsos + apostas aleatórias + resultados + ranking |
+| 🔄 **Recalcular** | Recalcula ranking com os resultados atuais do Firestore |
+| 📊 **Relatório** | Histograma de pontos, quem apostou em qual campeão |
+| 🔍 **Auditoria** | Verifica se está tudo consistente no banco |
+| 🧪 **Testes** | 32 testes automáticos rodando ao vivo — green = tá ótimo |
 
 ---
 
-## 🗂️ Estrutura do projeto
+## 🗂️ Mapa do projeto
 
 ```
 bolao2026/
-├── index.html           # SPA — toda a UI
-├── css/styles.css       # Tema dark, variáveis CSS, mobile-first
-├── js/
-│   ├── config.js        # Firebase init
-│   ├── data.js          # Times, grupos, bracket, pontuação, H2H
-│   ├── utils.js         # Toast, loading, escapeHtml
-│   ├── db.js            # CRUD Firestore
-│   ├── auth.js          # Login/cadastro
-│   ├── groupStage.js    # Fase de grupos
-│   ├── knockout.js      # Bracket mata-mata
-│   ├── standings.js     # Classificação oficial (API)
-│   ├── ranking.js       # Cálculo de pontuação
-│   ├── admin.js         # Painel admin
-│   ├── results.js       # Lançamento de resultados (admin)
-│   └── app.js           # Orquestrador
-├── firestore.rules      # Regras de segurança
-├── firebase.json        # Hosting + Firestore config
-├── seed-server.js       # Servidor local de seed (porta 3001)
-├── test-seed.html       # UI de teste com 5 abas
-└── SCORING.md           # Sistema matemático completo
+├── 📄 index.html           → SPA completa — toda a UI num arquivo só
+├── 🎨 css/styles.css       → Tema dark, animações, mobile-first
+├── ⚙️ js/
+│   ├── config.js           → Firebase init
+│   ├── data.js             → Times, grupos, bracket, pontuação
+│   ├── utils.js            → Toast, loading, helpers
+│   ├── db.js               → CRUD Firestore
+│   ├── auth.js             → Login e cadastro
+│   ├── groupStage.js       → Fase de grupos (72 jogos)
+│   ├── knockout.js         → Bracket mata-mata
+│   ├── standings.js        → Classificação oficial (API externa)
+│   ├── ranking.js          → Cálculo de pontuação + ranking
+│   ├── admin.js            → Painel completo do admin
+│   ├── results.js          → Lançar resultados reais (só admin)
+│   └── app.js              → Orquestrador central
+├── 🔐 firestore.rules      → Quem pode ler/escrever o quê
+├── 🔧 firebase.json        → Hosting + Firestore config
+├── 🌱 seed-server.js       → Servidor local de seed (porta 3001)
+├── 🧪 test-seed.html       → UI de teste com 5 abas
+└── 📊 SCORING.md           → Sistema de pontuação completo
 ```
 
 ---
 
-## 🔐 Modelo de dados (Firestore)
+## 🔐 Estrutura do banco de dados (Firestore)
 
 ```
 users/{uid}/
   profile/info    → { name, email, betsLocked, betsSavedAt }
-  bets/groupStage → { [gameId]: { homeGoals, awayGoals } }   // 72 jogos
-  bets/knockout   → { [matchId]: teamId }                    // R32 → Final
+  bets/groupStage → { [gameId]: { homeGoals, awayGoals } }   // 72 apostas
+  bets/knockout   → { [matchId]: teamId }                    // R32 até Final
 
 results/
-  groupStage → { [gameId]: { homeGoals, awayGoals } }  // admin escreve
-  knockout   → { [matchId]: teamId }                   // admin escreve
+  groupStage → { [gameId]: { homeGoals, awayGoals } }   // admin lança
+  knockout   → { [matchId]: teamId }                    // admin lança
 
 ranking/
-  current → { entries: [{ uid, name, pts, breakdown }] }
+  current → { entries: [{ uid, name, pts, breakdown }] }  // pré-calculado
 
 config/
-  admin → { whatsapp, globalLocked, registrationOpen }
+  scoring → { exactScore, correctResult, r32Winner, ... }  // pontuação do admin
+  admin   → { whatsapp, globalLocked, registrationOpen }
 ```
 
-### Regras de acesso resumidas
+**Quem acessa o quê:**
 
 ```
-users/{uid}/bets     → leitura: qualquer autenticado (bolão transparente)
-results/*            → leitura: autenticado  ·  escrita: só admin
-ranking/current      → leitura: autenticado  ·  escrita: só admin
-config/admin         → leitura: autenticado  ·  escrita: só admin
+apostas de qualquer usuário  →  qualquer pessoa logada pode ver (bolão transparente!)
+resultados e ranking         →  leitura: logado  |  escrita: só admin
+configurações                →  leitura: logado  |  escrita: só admin
 ```
 
 ---
 
-## 📜 Licença
+## 🛠️ Stack
 
-MIT © [Lucas Riboldi](https://github.com/LucasRiboldi)
+Nada de framework, nada de bundler. Só o essencial:
+
+| Tecnologia | Por quê |
+|---|---|
+| **HTML + CSS + JS puro** | Roda em qualquer lugar, sem build step |
+| **Firebase Auth** | Login sem dor de cabeça |
+| **Firebase Firestore** | Banco em tempo real, regras de segurança declarativas |
+| **Firebase Hosting** | Deploy em segundos com CDN global |
+| **flag-icon-css** | Bandeirinhas bonitinhas dos 48 países |
+| **API-Football** | Placar ao vivo dos jogos de hoje |
+
+---
+
+<div align="center">
+
+**Feito com ☕ muito café e ⚽ paixão pelo futebol**
+
+[![MIT License](https://img.shields.io/badge/Licença-MIT-green?style=flat-square)](LICENSE)
+[![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange?style=flat-square&logo=firebase)](https://firebase.google.com)
+[![Vanilla JS](https://img.shields.io/badge/Zero-Frameworks-yellow?style=flat-square&logo=javascript)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+
+MIT © [Lucas Riboldi](https://github.com/LucasRiboldi) — pode usar, pode copiar, pode melhorar! 🙌
+
+</div>
