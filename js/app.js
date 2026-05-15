@@ -231,21 +231,20 @@ const _CAL_STATIC_R1 = [
 ];
 
 async function _loadTodayMatches() {
-  const card = document.getElementById('today-matches-card');
-  if (!card) return;
-  const body = card.querySelector('.tdm-body');
-  body.innerHTML = '<p class="tdm-empty" style="padding:24px 16px">Carregando calendário…</p>';
+  const anchor = document.getElementById('today-matches-anchor');
+  if (!anchor) return;
 
   try {
     await _calFetchAll();
     const today = _calToday();
     const dates  = Object.keys(_calByDate).sort();
-    // Seleciona hoje se houver jogos, senão o primeiro dia com jogos (abertura: 2026-06-11)
     _calSelDate = _calByDate[today] ? today : (dates[0] || '2026-06-11');
-    _calRender(body);
+    _calRenderCards(anchor);
   } catch {
-    body.innerHTML = `<p class="tdm-empty">Não foi possível carregar o calendário.<br>
-      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="_loadTodayMatches()">🔄 Tentar novamente</button></p>`;
+    anchor.innerHTML = `<div class="today-matches-card today-matches-card--auth">
+      <div class="tdm-body"><p class="tdm-empty">Não foi possível carregar os jogos.<br>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="_loadTodayMatches()">🔄 Tentar novamente</button></p>
+      </div></div>`;
   }
 }
 
@@ -280,53 +279,27 @@ async function _calFetchAll(forceRefresh = false) {
   }
 }
 
-function _calRender(body) {
-  const today = _calToday();
-  const dates  = Object.keys(_calByDate).sort();
-
-  const pills = dates.map(d => {
-    const dt      = new Date(d + 'T12:00:00');
-    const dayName = dt.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
-    const dayNum  = dt.getDate();
-    const month   = dt.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
-    const isSel   = d === _calSelDate;
-    const isToday = d === today;
-    return `<button class="cal-pill${isSel ? ' cal-pill-sel' : ''}${isToday ? ' cal-pill-today' : ''}"
-                    data-date="${d}" onclick="_calSelectDate('${d}')">
-      <span class="cal-pill-day">${dayName}</span>
-      <span class="cal-pill-num">${dayNum}/${month}</span>
-    </button>`;
-  }).join('');
-
-  body.innerHTML = `
-    <div class="cal-carousel-wrap">
-      <div class="cal-carousel" id="cal-carousel">${pills}</div>
-    </div>
-    <div class="cal-matches-wrap" id="cal-matches">
-      ${_calMatchesHtml(_calSelDate)}
+function _calRenderCards(anchor) {
+  const fixtures = _calByDate[_calSelDate] || [];
+  if (fixtures.length === 0) {
+    anchor.innerHTML = `<div class="today-matches-card today-matches-card--auth">
+      <div class="tdm-body"><p class="tdm-empty" style="padding:20px">Sem jogos hoje.</p></div>
     </div>`;
+    return;
+  }
 
-  requestAnimationFrame(() => {
-    const sel = document.querySelector('.cal-pill-sel');
-    if (sel) sel.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
-  });
+  const dt        = new Date(_calSelDate + 'T12:00:00');
+  const dateLabel = dt.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 
-  _calSchedulePoll();
-}
+  anchor.innerHTML = fixtures.map(f => `
+    <div class="today-matches-card today-matches-card--auth">
+      <div class="tdm-header">
+        <span>⚽ ${dateLabel}</span>
+        <a class="tdm-watch-btn" href="https://www.youtube.com/@CazeTV" target="_blank" rel="noopener">🔴 Ao vivo</a>
+      </div>
+      <div class="tdm-body">${_calMatchCard(f)}</div>
+    </div>`).join('');
 
-function _calMatchesHtml(date) {
-  const fixtures = _calByDate[date] || [];
-  if (fixtures.length === 0) return '<p class="tdm-empty" style="padding:20px">Sem jogos neste dia.</p>';
-  return fixtures.map(f => _calMatchCard(f)).join('');
-}
-
-function _calSelectDate(date) {
-  _calSelDate = date;
-  document.querySelectorAll('.cal-pill').forEach(p => {
-    p.classList.toggle('cal-pill-sel', p.dataset.date === date);
-  });
-  const wrap = document.getElementById('cal-matches');
-  if (wrap) wrap.innerHTML = _calMatchesHtml(date);
   _calSchedulePoll();
 }
 
@@ -397,8 +370,8 @@ function _calSchedulePoll() {
     _calHasLive = false;
     _calLoaded  = false;
     await _calFetchAll();
-    const wrap = document.getElementById('cal-matches');
-    if (wrap && _calSelDate) wrap.innerHTML = _calMatchesHtml(_calSelDate);
+    const anchor = document.getElementById('today-matches-anchor');
+    if (anchor) _calRenderCards(anchor);
     _calSchedulePoll();
   }, delay);
 }
