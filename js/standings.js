@@ -16,7 +16,8 @@ const API_FOOTBALL_BASE = 'https://v3.football.api-sports.io';
 const WC_LEAGUE_ID      = 1;
 const WC_SEASON         = 2026;
 
-let _standingsLoaded = false;
+const STANDINGS_TTL_MS   = 5 * 60 * 1000; // 5 minutos
+let _standingsLoadedAt   = 0;
 
 // ---- Helper para fetch com timeout 8s --------------------------
 async function _apiFetch(url) {
@@ -34,7 +35,8 @@ async function _apiFetch(url) {
 
 // ---- Inicializa a aba de classificação --------------------------
 async function initStandings() {
-  if (_standingsLoaded) return;
+  const now = Date.now();
+  if (now - _standingsLoadedAt < STANDINGS_TTL_MS) return;
 
   const container = document.getElementById('standings-content');
   container.innerHTML = '<div class="standings-loading"><div class="spinner"></div><p>Carregando classificação oficial…</p></div>';
@@ -56,11 +58,11 @@ async function initStandings() {
     if (hasData) {
       const leagueData = data.response[0].league;
       container.innerHTML = _renderApiStandings(leagueData.standings);
-      _standingsLoaded = true;
     } else {
       // Competição ainda não começou ou sem dados: mostra tabela local (zerada)
       container.innerHTML = _renderPreTournament();
     }
+    _standingsLoadedAt = Date.now();
 
   } catch (e) {
     console.warn('Classificação API-Football indisponível:', e.message);
@@ -71,6 +73,8 @@ async function initStandings() {
         <span>Classificação ao vivo indisponível. Exibindo grupos com dados locais.</span>
       </div>
       ${_renderLocalGroups()}`;
+    // Em caso de erro, permite retry em 1 minuto
+    _standingsLoadedAt = Date.now() - STANDINGS_TTL_MS + 60_000;
   }
 }
 
