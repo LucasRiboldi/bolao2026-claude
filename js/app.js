@@ -139,6 +139,7 @@ let _calByDate    = {};
 let _calSelDate   = null;
 let _calLoaded    = false;
 let _calPollTimer = null;
+let _calHasLive   = false;
 
 const _API_NAME_MAP = {
   'south korea': 'southkorea', 'korea republic': 'southkorea', 'korea (republic)': 'southkorea',
@@ -405,8 +406,6 @@ function _calMatchCard(f) {
     </div>
   </a>`;
 }
-
-let _calHasLive = false;
 
 function _calSchedulePoll() {
   if (_calPollTimer) clearTimeout(_calPollTimer);
