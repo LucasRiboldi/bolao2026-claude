@@ -327,26 +327,103 @@ async function _calFetchAll(forceRefresh = false) {
   }
 }
 
+function _buildMatchCard(match) {
+  const isLive     = match.status === 'live';
+  const isFinished = match.status === 'finished';
+
+  const scoreHtml = isLive
+    ? `<span class="tdm-score tdm-score-live">${match.home} : ${match.away}</span>`
+    : isFinished
+    ? `<span class="tdm-score tdm-score-done">${match.home} : ${match.away}</span>`
+    : `<span class="tdm-score tdm-score-soon">&times;</span>`;
+
+  const ribbonHtml = isLive
+    ? `<span class="tdm-live-label"><span class="tdm-live-dot"></span>AO VIVO</span>
+       <div class="tdm-time-chip">${match.minute || ''}'</div>`
+    : isFinished
+    ? `<div class="tdm-dt"><span>&#10003; Encerrado &middot; ${match.dateStr || ''}</span><div class="tdm-dt-sep"></div><span>${match.timeStr || ''}</span></div>`
+    : `<div class="tdm-dt"><span>${match.dateStr || ''}</span><div class="tdm-dt-sep"></div><span class="tdm-dt-hora">${match.timeStr || ''}</span></div>`;
+
+  const watchTxt   = isLive ? 'Assistir ao vivo' : isFinished ? 'Ver replay' : 'Vai transmitir';
+  const watchStyle = isFinished ? 'style="opacity:.55"' : isLive ? '' : 'style="background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08)"';
+
+  const flagClass   = isLive ? 'tdm-flag tdm-live' : 'tdm-flag';
+  const plaqueClass = isLive ? 'tdm-plaque tdm-plaque-live' : 'tdm-plaque';
+  const cardStyle   = isFinished ? ' style="opacity:.65"' : '';
+
+  return `<div class="tdm-card"${cardStyle}>
+    <div class="tdm-grass"></div><div class="tdm-circle"></div>
+    <div class="tdm-inner">
+      <div class="tdm-ribbon">${ribbonHtml}</div>
+      <div class="tdm-row">
+        <div class="tdm-team">
+          <div class="${flagClass}">${match.homeFlag || ''}</div>
+          <div class="tdm-name">${match.homeName || ''}</div>
+        </div>
+        <div class="${plaqueClass}">
+          ${scoreHtml}
+          <span class="tdm-score-sublabel">${isLive ? 'placar' : isFinished ? 'encerrado' : 'em breve'}</span>
+        </div>
+        <div class="tdm-team">
+          <div class="${flagClass}">${match.awayFlag || ''}</div>
+          <div class="tdm-name">${match.awayName || ''}</div>
+        </div>
+      </div>
+      <a class="tdm-watch" href="https://www.youtube.com/@CazéTV" target="_blank" rel="noopener" ${watchStyle}>
+        <div class="tdm-yt-icon"><div class="tdm-yt-play"></div></div>
+        <span class="tdm-watch-txt">${watchTxt}</span>
+        <span class="tdm-watch-sub">CazéTV</span>
+      </a>
+    </div>
+  </div>`;
+}
+
 function _calRenderCards(anchor) {
   const fixtures = _calByDate[_calSelDate] || [];
   if (fixtures.length === 0) {
-    anchor.innerHTML = `<div class="today-matches-card today-matches-card--auth">
-      <div class="tdm-body"><p class="tdm-empty" style="padding:20px">Sem jogos hoje.</p></div>
-    </div>`;
+    anchor.innerHTML = `<p class="tdm-empty" style="padding:20px">Sem jogos hoje.</p>`;
     return;
   }
 
   const dt        = new Date(_calSelDate + 'T12:00:00');
   const dateLabel = dt.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 
-  anchor.innerHTML = fixtures.map(f => `
-    <div class="today-matches-card today-matches-card--auth">
-      <div class="tdm-header">
-        <span>⚽ ${dateLabel}</span>
-        <a class="tdm-watch-btn" href="https://www.youtube.com/@CazeTV" target="_blank" rel="noopener">🔴 Ao vivo</a>
-      </div>
-      <div class="tdm-body">${_calMatchCard(f)}</div>
-    </div>`).join('');
+  anchor.innerHTML = fixtures.map(f => {
+    const home   = f.teams.home;
+    const away   = f.teams.away;
+    const status = f.fixture.status.short;
+    const DONE   = ['FT', 'AET', 'PEN'];
+    const LIVE_NOT = ['NS', 'FT', 'AET', 'PEN', 'PST', 'CANC', 'ABD', 'AWD', 'WO'];
+    const isLive     = !LIVE_NOT.includes(status);
+    const isFinished = DONE.includes(status);
+    if (isLive) _calHasLive = true;
+
+    const homeIso = _findTeamIso(home.name);
+    const awayIso = _findTeamIso(away.name);
+
+    const flagHtml = iso =>
+      iso ? `<span class="fi fi-${iso} cal-flag-xl"></span>`
+          : `<span class="cal-flag-fallback"></span>`;
+
+    const time = new Date(f.fixture.date).toLocaleTimeString('pt-BR', {
+      hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo',
+    });
+
+    const matchStatus = isLive ? 'live' : isFinished ? 'finished' : 'pending';
+
+    return _buildMatchCard({
+      status:    matchStatus,
+      home:      f.goals.home ?? 0,
+      away:      f.goals.away ?? 0,
+      homeName:  home.name,
+      awayName:  away.name,
+      homeFlag:  flagHtml(homeIso),
+      awayFlag:  flagHtml(awayIso),
+      dateStr:   dateLabel,
+      timeStr:   time,
+      minute:    f.fixture.status.elapsed ?? '',
+    });
+  }).join('');
 
   _calSchedulePoll();
 }

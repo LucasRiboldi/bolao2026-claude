@@ -10,11 +10,14 @@ function initAuth() {
 
   tabs.forEach(tab => tab.addEventListener('click', async () => {
     _currentTab = tab.dataset.tab;
-    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === _currentTab));
+    tabs.forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === _currentTab);
+      t.setAttribute('aria-selected', t.dataset.tab === _currentTab ? 'true' : 'false');
+    });
     nameF.classList.toggle('hidden', _currentTab === 'login');
     document.getElementById('inp-password').autocomplete =
       _currentTab === 'login' ? 'current-password' : 'new-password';
-    submit.textContent = _currentTab === 'login' ? 'Entrar' : 'Cadastrar';
+    submit.textContent = _currentTab === 'login' ? 'Entrar no Bolão ⚽' : 'Criar conta ⚽';
     errEl.classList.add('hidden');
 
     const banner = document.getElementById('reg-closed-banner');
@@ -67,6 +70,21 @@ function initAuth() {
   });
 
   document.getElementById('btn-logout').addEventListener('click', () => auth.signOut());
+
+  // Google Sign-In
+  const btnGoogle = document.getElementById('btn-google-signin');
+  if (btnGoogle) {
+    btnGoogle.addEventListener('click', async () => {
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await auth.signInWithPopup(provider);
+      } catch (e) {
+        if (e.code !== 'auth/popup-closed-by-user') {
+          showToast('Erro ao entrar com Google: ' + e.message, 'error');
+        }
+      }
+    });
+  }
 }
 
 function showError(msg) {
