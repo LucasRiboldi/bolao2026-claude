@@ -448,7 +448,7 @@ async function _saveGroupResult(gameId, homeGoals, awayGoals) {
  */
 async function _clearGroupResult(gameId) {
   const update = { [gameId]: firebase.firestore.FieldValue.delete() };
-  await db.collection('results').doc('groupStage').update(update);
+  await db.collection('results').doc('groupStage').set(update, { merge: true });
   delete _resGs[gameId];
 }
 
@@ -470,7 +470,7 @@ async function _saveKoResult(matchId, winnerId) {
  */
 async function _clearKoResult(matchId) {
   const update = { [matchId]: firebase.firestore.FieldValue.delete() };
-  await db.collection('results').doc('knockout').update(update);
+  await db.collection('results').doc('knockout').set(update, { merge: true });
   delete _resKo[matchId];
 }
 
