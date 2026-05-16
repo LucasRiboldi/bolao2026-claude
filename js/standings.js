@@ -63,6 +63,14 @@ async function initStandings() {
 
 // ---- Renderiza classificação retornada pela API ----------------
 function _renderApiStandings(groups) {
+  // Helper para escapar valores em atributos inline JS
+  const safeAttr = (s) => String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
   let html = `<div class="standings-container">`;
 
   for (const group of groups) {
@@ -99,9 +107,9 @@ function _renderApiStandings(groups) {
         <td class="col-pos">${entry.rank}</td>
         <td class="col-team">
           <div class="team-cell-st">
-            <img src="${entry.team.logo}" alt="${entry.team.name}"
+            <img src="${entry.team.logo}" alt="${safeAttr(entry.team.name)}"
                  class="team-logo-sm" loading="lazy"
-                 onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'fi fi-'+(_isoByName('${entry.team.name}'))+' team-flag-icon'}))">
+                 onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'fi fi-'+(_isoByName('${safeAttr(entry.team.name)}'))+' team-flag-icon'}))">
             <span class="team-name-st">${entry.team.name}</span>
           </div>
         </td>
