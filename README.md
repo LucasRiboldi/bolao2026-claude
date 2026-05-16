@@ -17,6 +17,18 @@ Aposte nos **72 jogos** da fase de grupos, monte seu **bracket completo** até o
 
 ---
 
+## 🛡️ Qualidade & Segurança
+
+| Categoria | O que foi feito |
+|:---:|---|
+| 🔐 **Segurança** | Chave de API centralizada, escape de XSS no standings, seed-server restrito ao localhost, timeout de 8s em todas as chamadas externas |
+| 🐛 **Bugs** | Bracket não apaga apostas ao corrigir placar, null-check em sessão expirada, clear de resultado idempotente, saveGroupBets consistente |
+| ⚡ **Performance** | `defer` em todos os scripts — Firebase SDK não bloqueia mais o render |
+| ♿ **Acessibilidade** | ARIA completo em modais e tabs, `:focus-visible` para navegação por teclado, `prefers-reduced-motion` respeitado |
+| 📊 **Dados** | Standings com TTL de 5min (sem stale e sem quota desnecessária), progresso e auto-simulate consistentes, 4º critério de desempate para 3ºs lugares |
+
+---
+
 ## 🎮 O que tem de bom aqui
 
 > Tudo que um bolão decente precisa — sem complicação, sem planilha de Excel, sem dor de cabeça.
@@ -237,7 +249,7 @@ Nada de framework, nada de bundler. Só o essencial:
 
 <div align="center">
 
-**Feito com ☕ muito café e ⚽ paixão pelo futebol**
+**Feito com ☕ muito café, ⚽ paixão pelo futebol e 🤖 Claude Code**
 
 [![MIT License](https://img.shields.io/badge/Licença-MIT-green?style=flat-square)](LICENSE)
 [![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange?style=flat-square&logo=firebase)](https://firebase.google.com)
