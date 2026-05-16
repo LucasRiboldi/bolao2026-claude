@@ -260,7 +260,7 @@ async function _loadPremierLeagueCard() {
   try {
     const resp = await fetch(
       `https://v3.football.api-sports.io/fixtures?league=39&season=${season}&date=${today}`,
-      { headers: { 'x-apisports-key': 'b89962f0944bdce04ad5fec40c67e32d' } }
+      { headers: { 'x-apisports-key': API_FOOTBALL_KEY } }
     );
     const data = await resp.json();
     const fixtures = (data.response || []).sort((a, b) =>
@@ -317,7 +317,7 @@ async function _calFetchAll(forceRefresh = false) {
   try {
     const resp = await fetch(
       'https://v3.football.api-sports.io/fixtures?league=1&season=2026',
-      { headers: { 'x-apisports-key': 'b89962f0944bdce04ad5fec40c67e32d' } }
+      { headers: { 'x-apisports-key': API_FOOTBALL_KEY } }
     );
     const data = await resp.json();
     const fixtures = data.response || [];
