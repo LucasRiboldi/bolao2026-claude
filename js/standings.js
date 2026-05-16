@@ -116,8 +116,11 @@ function _renderApiStandings(groups) {
           <tbody>`;
 
     group.forEach((entry, idx) => {
-      const qualCls = idx === 0 ? 'q-1' : idx === 1 ? 'q-2' : idx === 2 ? 'q-3' : '';
-      const gd      = entry.goalsDiff >= 0 ? `+${entry.goalsDiff}` : entry.goalsDiff;
+      const qualCls   = idx === 0 ? 'q-1' : idx === 1 ? 'q-2' : idx === 2 ? 'q-3' : '';
+      const gd        = entry.goalsDiff >= 0 ? `+${entry.goalsDiff}` : entry.goalsDiff;
+      // Pre-compute iso so no user-controlled API data lands inside executable JS attributes
+      const teamIso   = safeAttr(_isoByName(entry.team.name));
+      const flagClass = `fi fi-${teamIso} team-flag-icon`;
 
       html += `
       <tr class="${qualCls}">
@@ -126,7 +129,7 @@ function _renderApiStandings(groups) {
           <div class="team-cell-st">
             <img src="${entry.team.logo}" alt="${safeAttr(entry.team.name)}"
                  class="team-logo-sm" loading="lazy"
-                 onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'fi fi-'+(_isoByName('${safeAttr(entry.team.name)}'))+' team-flag-icon'}))">
+                 onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'${flagClass}'}))">
             <span class="team-name-st">${entry.team.name}</span>
           </div>
         </td>
