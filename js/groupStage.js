@@ -155,7 +155,9 @@ function _checkAutoSimulate() {
     }
   }
   if (filled === totalGames) {
-    if (typeof _simulate === 'function') _simulate();
+    const hasKoBets = typeof getCurrentKnockoutBets === 'function' &&
+                      Object.keys(getCurrentKnockoutBets()).length > 0;
+    if (!hasKoBets && typeof _simulate === 'function') _simulate();
     const status = document.getElementById('ko-status');
     if (status) status.textContent = '✅ Grupos completos! Bracket gerado automaticamente.';
   }
