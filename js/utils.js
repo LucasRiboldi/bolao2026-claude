@@ -21,8 +21,10 @@ function showScreen(id) {
 // ---- Section switching inside dashboard ---------------------
 function showSection(id) {
   document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
-  document.getElementById(`section-${id}`).classList.remove('hidden');
-  document.querySelectorAll('.nav-tab').forEach(t => {
+  const sec = document.getElementById(`section-${id}`);
+  if (sec) sec.classList.remove('hidden');
+
+  document.querySelectorAll('.bottom-nav-item').forEach(t => {
     const isActive = t.dataset.section === id;
     t.classList.toggle('active', isActive);
     t.setAttribute('aria-selected', isActive ? 'true' : 'false');

@@ -8,6 +8,9 @@ function isAdmin() {
 function initAdminUI() {
   if (!isAdmin()) return;
   document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+  document.querySelectorAll('.non-admin-only').forEach(el => {
+    el.classList.toggle('hidden', isAdmin());
+  });
 }
 
 // ---- Painel admin -------------------------------------------

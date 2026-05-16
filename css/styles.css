@@ -3671,3 +3671,113 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* =============================================
+   BOTTOM NAV
+   ============================================= */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: var(--nav-h);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr 60px 1fr 1fr;
+  align-items: end;
+  z-index: 100;
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 8px;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  opacity: .55;
+  transition: opacity var(--transition);
+  min-height: var(--nav-h);
+}
+.bottom-nav-item.active {
+  opacity: 1;
+}
+.bottom-nav-item.active .bnav-lbl {
+  color: var(--gold);
+}
+
+.bnav-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+.bnav-icon svg {
+  display: block;
+}
+.bnav-lbl {
+  font-size: .52rem;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: color var(--transition);
+}
+
+/* Botão COPA elevado */
+.bottom-nav-copa {
+  opacity: 1;
+  padding-bottom: 6px;
+  justify-content: flex-end;
+}
+.bnav-copa-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1.5px solid rgba(212,170,44,.6);
+  box-shadow: 0 0 7px rgba(212,170,44,.65), 0 0 18px rgba(212,170,44,.15);
+  font-size: 1.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -20px;
+  line-height: 1;
+}
+.bottom-nav-copa.active .bnav-copa-btn {
+  box-shadow: 0 0 12px rgba(212,170,44,.9), 0 0 28px rgba(212,170,44,.3);
+}
+.bottom-nav-copa .bnav-lbl {
+  margin-top: 2px;
+}
+
+/* Ocultar nav-tabs antiga se ainda existir */
+.nav-tabs { display: none !important; }
+
+/* Padding inferior do conteúdo para não ficar sob o nav */
+.content-section {
+  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
+}
+
+/* Header sem nav dentro */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  gap: 8px;
+}
+.header-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text);
+}

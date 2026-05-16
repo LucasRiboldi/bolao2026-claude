@@ -10,12 +10,11 @@
 
   _loadPremierLeagueCard();
 
-  document.querySelectorAll('.nav-tab').forEach(tab => {
+  document.querySelectorAll('.bottom-nav-item').forEach(tab => {
     tab.addEventListener('click', async () => {
       const section = tab.dataset.section;
       showSection(section);
 
-      // Limpa caches de sessão ao trocar de aba para sempre exibir dados frescos
       invalidateResultsCache();
       sessionStorage.removeItem('bolao_ranking');
 
