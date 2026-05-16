@@ -265,7 +265,11 @@ async function _saveAll() {
   btn.disabled = true;
   showLoading();
   try {
-    const uid = auth.currentUser.uid;
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+      showToast('Sessão expirada. Faça login novamente.', 'error');
+      return;
+    }
     await saveGroupBets(uid, _groupBets);
     if (typeof getCurrentKnockoutBets === 'function') {
       const koBets = getCurrentKnockoutBets();
