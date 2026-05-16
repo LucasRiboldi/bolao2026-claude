@@ -3,7 +3,7 @@
 async function saveGroupBets(uid, bets) {
   await db.collection('users').doc(uid)
     .collection('bets').doc('groupStage')
-    .set(bets, { merge: true });
+    .set(bets);
 }
 
 async function loadGroupBets(uid) {
