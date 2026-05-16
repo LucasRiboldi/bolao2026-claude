@@ -1,8 +1,24 @@
 import { useAuth } from './contexts/AuthContext'
 import { AuthScreen } from './screens/AuthScreen'
+import { AppShell } from './components/layout/AppShell'
+import type { Section } from './components/layout/AppShell'
 
-// Dashboard shell will be added after layout approval
-// import { AppShell } from './components/layout/AppShell'
+// Placeholder screens — replaced as each layout is approved
+function PlaceholderScreen({ section }: { section: Section }) {
+  const labels: Record<Section, string> = {
+    groups:    '⚽ Apostar',
+    mybets:    '📋 Minhas Apostas',
+    standings: '🌐 Classificação Copa',
+    ranking:   '🏆 Ranking',
+    convidar:  '↗ Convidar Amigos',
+    admin:     '⚙️ Admin',
+  }
+  return (
+    <div style={{ padding: '32px 16px', color: 'var(--text-muted)', fontSize: '.875rem', textAlign: 'center' }}>
+      {labels[section]} — em desenvolvimento
+    </div>
+  )
+}
 
 export default function App() {
   const { user, loading } = useAuth()
@@ -17,12 +33,9 @@ export default function App() {
 
   if (!user) return <AuthScreen />
 
-  // Placeholder until AppShell is approved and implemented
   return (
-    <div style={{ padding: 24, color: 'var(--text)' }}>
-      <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-        Logado como {user.email}. AppShell em desenvolvimento.
-      </p>
-    </div>
+    <AppShell>
+      {(section) => <PlaceholderScreen section={section} />}
+    </AppShell>
   )
 }
