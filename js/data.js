@@ -298,7 +298,12 @@ function getQualified(standings) {
     }
   }
 
-  thirds.sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf);
+  thirds.sort((a, b) =>
+    b.pts - a.pts ||
+    b.gd  - a.gd  ||
+    b.gf  - a.gf  ||
+    a.ga  - b.ga  // menor gols contra = melhor
+  );
   const best8 = thirds.slice(0, 8);
 
   return { winners, runners, thirds: best8 };
