@@ -9,7 +9,10 @@
       "Read(//c/Users/01096244080/Desktop/bolao2026-claude/**)",
       "Bash(firebase deploy *)",
       "Bash(gh pr create --title 'feat: dashboard premium, KO visual melhorado, pontuação configurável, ranking completo' --body ' *)",
-      "Bash(git fetch *)"
+      "Bash(git fetch *)",
+      "Bash(git rm *)",
+      "Bash(npm install *)",
+      "Bash(npm test *)"
     ]
   }
 }

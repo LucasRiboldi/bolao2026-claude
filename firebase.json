@@ -3,20 +3,14 @@
     "rules": "firestore.rules"
   },
   "hosting": {
-    "public": ".",
+    "public": "dist",
     "ignore": [
       "firebase.json",
-      ".firebaserc",
-      ".gitignore",
-      "CLAUDE.md",
-      "README.md",
-      "node_modules/**",
-      ".git/**",
-      "package*.json",
-      "seed*.js",
-      "seed*.html",
-      "service-account.json",
-      "*.serviceAccount.json"
+      "**/.*",
+      "**/node_modules/**",
+      "tools/**",
+      "src/**",
+      "tests/**"
     ],
     "rewrites": [
       {
@@ -26,8 +20,12 @@
     ],
     "headers": [
       {
-        "source": "**/*.@(js|css)",
-        "headers": [{ "key": "Cache-Control", "value": "public,max-age=3600" }]
+        "source": "**/*.@(js|css|woff2)",
+        "headers": [{ "key": "Cache-Control", "value": "public,max-age=31536000,immutable" }]
+      },
+      {
+        "source": "/index.html",
+        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
       }
     ]
   }

@@ -1,3 +1,7 @@
+# Build
+dist/
+dist-ssr/
+
 # Dependências
 node_modules/
 
@@ -13,6 +17,7 @@ service-account.json
 # Ambiente
 .env
 .env.*
+!.env.example
 
 # OS
 .DS_Store
@@ -21,4 +26,9 @@ Thumbs.db
 # Editor
 .vscode/settings.json
 *.swp
-.claude/ 
+
+# Claude Code worktrees
+.claude/
+
+# Vitest
+coverage/

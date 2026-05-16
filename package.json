@@ -1,20 +1,36 @@
 {
-  "name": "bolao2026-claude",
-  "version": "1.0.0",
-  "description": "Bolao de palpites da Copa do Mundo FIFA 2026",
-  "main": "seed.js",
+  "name": "bolao2026",
+  "version": "2.0.0",
+  "description": "Bolão de palpites da Copa do Mundo FIFA 2026",
+  "type": "module",
   "scripts": {
-    "seed": "node seed.js",
-    "clear": "node seed.js --clear",
-    "server": "node seed-server.js"
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "seed": "node tools/seed/seed.js",
+    "seed:clear": "node tools/seed/seed.js --clear",
+    "seed:server": "node tools/seed/seed-server.js"
   },
   "dependencies": {
-    "firebase-admin": "^12.0.0"
+    "firebase": "^10.12.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/LucasRiboldi/bolao2026-claude.git"
-  },
-  "author": "Lucas Riboldi",
-  "license": "MIT"
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.4.6",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "@vitest/coverage-v8": "^2.0.5",
+    "firebase-admin": "^12.0.0",
+    "jsdom": "^24.1.0",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.4",
+    "vitest": "^2.0.5"
+  }
 }
