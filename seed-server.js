@@ -1096,11 +1096,11 @@ const server = http.createServer((req, res) => {
   res.writeHead(404); res.end('Not found');
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '127.0.0.1', () => {
   console.log(`\n╔══════════════════════════════════════════════╗`);
   console.log(`║   🧪  Seed Server — Bolão Copa 2026          ║`);
   console.log(`╚══════════════════════════════════════════════╝`);
-  console.log(`\n  ✅  Servidor rodando em http://localhost:${PORT}`);
+  console.log(`\n  ✅  Servidor rodando em http://127.0.0.1:${PORT}`);
   console.log(`  🔗  Endpoints:`);
   console.log(`       /api/ping    — verifica conexão`);
   console.log(`       /api/seed    — cria 10 usuários + simula resultados`);
