@@ -18,6 +18,20 @@ const WC_SEASON         = 2026;
 
 let _standingsLoaded = false;
 
+// ---- Helper para fetch com timeout 8s --------------------------
+async function _apiFetch(url) {
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    return await fetch(url, {
+      headers: { 'x-apisports-key': API_FOOTBALL_KEY },
+      signal: ctrl.signal,
+    });
+  } finally {
+    clearTimeout(tid);
+  }
+}
+
 // ---- Inicializa a aba de classificação --------------------------
 async function initStandings() {
   if (_standingsLoaded) return;
@@ -26,9 +40,8 @@ async function initStandings() {
   container.innerHTML = '<div class="standings-loading"><div class="spinner"></div><p>Carregando classificação oficial…</p></div>';
 
   try {
-    const res = await fetch(
-      `${API_FOOTBALL_BASE}/standings?league=${WC_LEAGUE_ID}&season=${WC_SEASON}`,
-      { headers: { 'x-apisports-key': API_FOOTBALL_KEY } }
+    const res = await _apiFetch(
+      `${API_FOOTBALL_BASE}/standings?league=${WC_LEAGUE_ID}&season=${WC_SEASON}`
     );
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

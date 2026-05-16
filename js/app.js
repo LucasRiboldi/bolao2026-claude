@@ -258,9 +258,8 @@ async function _loadPremierLeagueCard() {
   const season = parseInt(today.split('-')[0]) - 1; // 2026 → 2025 (PL 2025-26), 2025 → 2024 (PL 2024-25)
 
   try {
-    const resp = await fetch(
-      `https://v3.football.api-sports.io/fixtures?league=39&season=${season}&date=${today}`,
-      { headers: { 'x-apisports-key': API_FOOTBALL_KEY } }
+    const resp = await _apiFetch(
+      `https://v3.football.api-sports.io/fixtures?league=39&season=${season}&date=${today}`
     );
     const data = await resp.json();
     const fixtures = (data.response || []).sort((a, b) =>
@@ -315,9 +314,8 @@ async function _calFetchAll(forceRefresh = false) {
   }
 
   try {
-    const resp = await fetch(
-      'https://v3.football.api-sports.io/fixtures?league=1&season=2026',
-      { headers: { 'x-apisports-key': API_FOOTBALL_KEY } }
+    const resp = await _apiFetch(
+      'https://v3.football.api-sports.io/fixtures?league=1&season=2026'
     );
     const data = await resp.json();
     const fixtures = data.response || [];
