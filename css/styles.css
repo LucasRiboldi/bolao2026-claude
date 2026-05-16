@@ -4850,3 +4850,96 @@ body {
   .group-panel { display: flex; flex-direction: column; }
   .ko-r32-pairs { grid-template-columns: 1fr; }
 }
+
+/* =============================================
+   RANKING — CARD STYLE (mockup-identical)
+   ============================================= */
+.ranking-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px 12px;
+}
+
+/* Override — card borders em vez de border-bottom */
+.ranking-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px !important;
+  border: 1px solid var(--border) !important;
+  border-bottom: 1px solid var(--border) !important;
+  background: var(--surface) !important;
+  margin-bottom: 0;
+  transition: background var(--transition), border-color var(--transition);
+}
+.ranking-row:hover {
+  background: rgba(33,38,45,.9) !important;
+  border-color: rgba(255,255,255,.12) !important;
+}
+.ranking-row.first {
+  border-color: var(--gold-border) !important;
+  background: linear-gradient(135deg, var(--surface), #1c1400) !important;
+}
+.ranking-row.me {
+  background: rgba(26,127,55,.08) !important;
+  border-color: rgba(26,127,55,.3) !important;
+}
+.ranking-row.first.me {
+  background: linear-gradient(135deg, rgba(26,127,55,.12), #1c1400) !important;
+}
+
+/* Avatar com iniciais */
+.rank-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .62rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  letter-spacing: .3px;
+}
+
+/* Tag "você" */
+.rank-you-tag {
+  color: var(--green);
+  font-size: .72rem;
+  font-style: normal;
+}
+
+/* Separador quando usuário está fora da página */
+.ranking-you-sep {
+  margin-top: 8px;
+  border-style: dashed !important;
+}
+
+/* =============================================
+   BETS — TOPBAR ACTIONS
+   ============================================= */
+.mb-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px 8px;
+  flex-wrap: wrap;
+}
+.mb-topbar-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.btn-wa {
+  background: #25D366;
+  color: #fff;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+}
+.btn-wa:hover { filter: brightness(1.1); }

@@ -128,6 +128,19 @@ async function _computeRankingClient() {
   return entries;
 }
 
+function _nameInitials(name) {
+  const parts = (name || '?').trim().split(/\s+/);
+  return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase();
+}
+
+function _avatarStyle(pos, isMe) {
+  if (pos === 1) return 'background:rgba(212,170,44,.15);color:var(--gold)';
+  if (pos === 2) return 'background:rgba(180,190,210,.08);color:#c0c8d8';
+  if (pos === 3) return 'background:rgba(180,100,50,.1);color:#cd7f32';
+  if (isMe)      return 'background:rgba(26,127,55,.15);color:var(--green)';
+  return 'background:var(--surface2);color:var(--muted)';
+}
+
 function _renderRanking(entries, currentUid, container) {
   if (entries.length === 0) {
     container.innerHTML = `<p class="muted" style="padding:20px">Nenhum usuário ainda.</p>`;
@@ -139,8 +152,7 @@ function _renderRanking(entries, currentUid, container) {
   const start      = page * RANKING_PAGE_SIZE;
   const pageItems  = entries.slice(start, start + RANKING_PAGE_SIZE);
 
-  // Encontrar posição do usuário atual para sempre exibir mesmo fora da página
-  const myIdx  = entries.findIndex(e => e.uid === currentUid);
+  const myIdx   = entries.findIndex(e => e.uid === currentUid);
   const myEntry = myIdx >= 0 && (myIdx < start || myIdx >= start + RANKING_PAGE_SIZE) ? entries[myIdx] : null;
 
   let html = `<div class="ranking-table">`;
@@ -149,11 +161,14 @@ function _renderRanking(entries, currentUid, container) {
     const medal    = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}º`;
     const isMe     = e.uid === currentUid;
     const safeName = escapeHtml(e.name || '');
+    const initials = _nameInitials(e.name);
+    const ptsStyle = pos === 1 ? 'color:var(--gold)' : '';
 
-    html += `<div class="ranking-row ${isMe ? 'me' : ''}">
+    html += `<div class="ranking-row ${isMe ? 'me' : ''} ${pos === 1 ? 'first' : ''}">
       <div class="pos">${medal}</div>
+      <div class="rank-avatar" style="${_avatarStyle(pos, isMe)}">${initials}</div>
       <div class="ranking-info">
-        <div class="name">${safeName}${isMe ? ' <em style="color:var(--accent);font-size:.8rem">(você)</em>' : ''}</div>
+        <div class="name">${safeName}${isMe ? ' <em class="rank-you-tag">(você)</em>' : ''}</div>
         ${e.breakdown ? `<div class="ranking-breakdown">
           <span class="breakdown-item" title="Placares exatos">⚽ ${e.breakdown.exact}</span>
           <span class="breakdown-item" title="Resultados certos">✓ ${e.breakdown.result}</span>
@@ -162,20 +177,21 @@ function _renderRanking(entries, currentUid, container) {
         </div>` : ''}
       </div>
       <div class="ranking-right">
-        <span class="pts">${e.pts} pts</span>
+        <span class="pts" style="${ptsStyle}">${e.pts} pts</span>
         <button class="btn-bh" title="Ver apostas" onclick="openBetHistory('${e.uid}','${safeName.replace(/'/g,"&#39;")}')">📋</button>
       </div>
     </div>`;
   });
 
-  // Linha "você" fora da página atual
   if (myEntry) {
-    const myPos = myIdx + 1;
+    const myPos    = myIdx + 1;
     const safeName = escapeHtml(myEntry.name || '');
+    const initials = _nameInitials(myEntry.name);
     html += `<div class="ranking-row me ranking-you-sep">
       <div class="pos">${myPos}º</div>
+      <div class="rank-avatar" style="${_avatarStyle(myPos, true)}">${initials}</div>
       <div class="ranking-info">
-        <div class="name">${safeName} <em style="color:var(--accent);font-size:.8rem">(você)</em></div>
+        <div class="name">${safeName} <em class="rank-you-tag">(você)</em></div>
       </div>
       <div class="ranking-right"><span class="pts">${myEntry.pts} pts</span></div>
     </div>`;
@@ -215,22 +231,25 @@ async function loadPublicRanking() {
       el.innerHTML = '<p class="muted">Nenhum palpite registrado ainda.</p>';
       return;
     }
-    const top10  = entries.slice(0, 10);
-    const maxPts = top10[0]?.pts || 1;
-    el.innerHTML = top10.map((e, i) => {
-      const pos     = i + 1;
-      const medal   = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : null;
-      const tierCls = pos === 1 ? 'rank-gold' : pos === 2 ? 'rank-silver' : pos === 3 ? 'rank-bronze' : '';
-      const pct     = maxPts > 0 ? Math.round((e.pts / maxPts) * 100) : 0;
-      return `<div class="rank-entry ${tierCls}">
-        <div class="rank-pos">${medal || `<span class="rank-num">${pos}</span>`}</div>
-        <div class="rank-info">
-          <span class="rank-name">${escapeHtml(e.name)}</span>
-          <div class="rank-bar"><div class="rank-bar-fill" style="width:${pct}%"></div></div>
+    const top5   = entries.slice(0, 5);
+    const rows = top5.map((e, i) => {
+      const pos      = i + 1;
+      const medal    = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}`;
+      const isFirst  = pos === 1;
+      const initials = _nameInitials(e.name);
+      const ptsStyle = isFirst ? 'color:var(--gold)' : '';
+      return `<div class="ranking-row ${isFirst ? 'first' : ''}">
+        <div class="pos">${medal}</div>
+        <div class="rank-avatar" style="${_avatarStyle(pos, false)}">${initials}</div>
+        <div class="ranking-info">
+          <div class="name">${escapeHtml(e.name)}</div>
         </div>
-        <div class="rank-pts">${e.pts}<span class="rank-pts-unit"> pts</span></div>
+        <div class="ranking-right">
+          <span class="pts" style="${ptsStyle}">${e.pts} pts</span>
+        </div>
       </div>`;
     }).join('');
+    el.innerHTML = `<div class="ranking-table" style="padding:0">${rows}</div>`;
   } catch {
     el.innerHTML = `<div class="rank-error">
       <p class="muted" style="font-size:.82rem">Não foi possível carregar.</p>
