@@ -222,6 +222,13 @@ async function loadGroupBetsUI(uid) {
   // Inicializa jogos "tocados" com o que já estava salvo no Firestore
   _touchedGames = new Set(Object.keys(bets));
 
+  // Sincroniza com todos os IDs pré-populados (inclusive os com valor '0' padrão)
+  for (const gId of Object.keys(GROUPS)) {
+    for (const g of generateGroupGames(gId)) {
+      _touchedGames.add(g.id);
+    }
+  }
+
   _gsLocked = await loadGlobalLock();
   _renderAllGroups();
 }
