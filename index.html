@@ -56,95 +56,88 @@
 
   <!-- ======= AUTH SCREEN ======= -->
   <section id="auth-screen" class="screen">
+    <div class="auth-scroll">
 
-    <!-- ===== HERO — Full Viewport ===== -->
-    <div class="hero-section">
-      <!-- Ambient glow orbs -->
-      <div class="hero-glow hero-glow-gold"></div>
-      <div class="hero-glow hero-glow-green"></div>
-      <div class="hero-glow hero-glow-red"></div>
+      <!-- HERO -->
+      <div class="auth-hero">
+        <!-- Orbs de fundo -->
+        <div class="auth-orb auth-orb-green"></div>
+        <div class="auth-orb auth-orb-gold"></div>
+        <div class="auth-orb auth-orb-bottom"></div>
+        <!-- Grade campo -->
+        <div class="auth-field-grid"></div>
+        <div class="auth-field-center"></div>
+        <!-- Holofotes SVG -->
+        <svg class="auth-spotlights" preserveAspectRatio="none" viewBox="0 0 400 260" aria-hidden="true">
+          <defs>
+            <radialGradient id="asl" cx="15%" cy="0%" r="55%">
+              <stop offset="0%" stop-color="rgba(200,220,255,.1)"/>
+              <stop offset="100%" stop-color="transparent"/>
+            </radialGradient>
+            <radialGradient id="asr" cx="85%" cy="0%" r="55%">
+              <stop offset="0%" stop-color="rgba(200,220,255,.1)"/>
+              <stop offset="100%" stop-color="transparent"/>
+            </radialGradient>
+          </defs>
+          <rect width="400" height="260" fill="url(#asl)"/>
+          <rect width="400" height="260" fill="url(#asr)"/>
+        </svg>
 
-      <!-- Main content -->
-      <div class="hero-content">
-        <div class="hero-eyebrow">
-          <span class="hero-eyebrow-dot"></span>
-          <span>FIFA World Cup</span>
-          <span class="hero-eyebrow-sep">•</span>
-          <span class="hero-eyebrow-year">2026</span>
+        <!-- Badge "ao vivo" -->
+        <div class="auth-badge" aria-hidden="true">
+          <span class="auth-badge-dot"></span>
+          <span>⚡ Copa do Mundo · Ao vivo agora!</span>
         </div>
 
-        <span class="hero-trophy" aria-hidden="true">🏆</span>
+        <!-- Logo oficial -->
+        <img class="auth-logo"
+             src="img/copa-2026-logo.svg"
+             alt="FIFA World Cup 2026"
+             width="100" height="120"
+             onerror="this.style.display='none'">
 
-        <h1 class="hero-title">
-          <span class="hero-title-main">Bolão Copa</span>
-          <span class="hero-title-year">2026</span>
-        </h1>
+        <h1 class="auth-title">Bolão 2026</h1>
+        <p class="auth-sub">Aposte com amigos · 72 jogos · Seja campeão!</p>
 
-        <p class="hero-tagline">Aposte nos jogos · dispute com amigos · conquiste o topo</p>
-
-        <div class="hero-flags-row" aria-hidden="true">
-          <span class="fi fi-br hero-fl"></span>
-          <span class="fi fi-ar hero-fl"></span>
-          <span class="fi fi-fr hero-fl"></span>
-          <span class="fi fi-de hero-fl"></span>
-          <span class="fi fi-es hero-fl"></span>
-          <span class="fi fi-pt hero-fl"></span>
-          <span class="fi fi-gb-eng hero-fl"></span>
-          <span class="fi fi-us hero-fl"></span>
-          <span class="fi fi-mx hero-fl"></span>
-          <span class="fi fi-nl hero-fl"></span>
-          <span class="fi fi-it hero-fl"></span>
-          <span class="fi fi-hr hero-fl"></span>
-        </div>
-
-        <div class="hero-stats-row">
-          <div class="hero-stat-item">
-            <span class="hero-stat-num">48</span>
-            <span class="hero-stat-lbl">seleções</span>
-          </div>
-          <div class="hero-stat-divider"></div>
-          <div class="hero-stat-item">
-            <span class="hero-stat-num">104</span>
-            <span class="hero-stat-lbl">jogos</span>
-          </div>
-          <div class="hero-stat-divider"></div>
-          <div class="hero-stat-item">
-            <span class="hero-stat-num">3</span>
-            <span class="hero-stat-lbl">países-sede</span>
-          </div>
-          <div class="hero-stat-divider"></div>
-          <div class="hero-stat-item">
-            <span class="hero-stat-num">JUN</span>
-            <span class="hero-stat-lbl">2026</span>
-          </div>
+        <!-- Barra tricolor host countries -->
+        <div class="auth-colorbar" aria-hidden="true">
+          <span style="background:#b5261e;flex:2;"></span>
+          <span style="background:var(--gold);flex:1;"></span>
+          <span style="background:#1a5fb4;flex:2;"></span>
+          <span style="background:var(--gold);flex:1;"></span>
+          <span style="background:#d52b1e;flex:2;"></span>
         </div>
       </div>
 
-      <!-- Scroll hint -->
-      <div class="hero-scroll-hint" aria-hidden="true">
-        <span class="hero-scroll-label">apostar</span>
-        <span class="hero-scroll-arrow">↓</span>
-      </div>
-    </div>
-    <!-- /hero-section -->
+      <!-- CARDS DE JOGOS (renderizados por JS em #today-matches-anchor) -->
+      <div class="auth-section-label">🔴 Jogos de hoje · Assista ao vivo</div>
+      <div id="today-matches-anchor" class="today-matches-anchor"></div>
 
-    <!-- ===== CARDS AREA ===== -->
-    <div class="auth-page">
-
-      <!-- Cards: Jogos do Dia (um por partida, renderizados pelo JS) -->
-      <div id="today-matches-anchor" class="today-matches-anchor">
-        <div class="today-matches-card today-matches-card--auth">
-          <div class="tdm-body">
-            <p class="tdm-empty" style="padding:24px 16px">Carregando jogos…</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Formulário de autenticação -->
+      <!-- FORMULÁRIO DE LOGIN -->
+      <div class="auth-section-label">🔐 Entre ou crie sua conta</div>
       <div class="auth-card">
-        <div class="auth-tabs">
-          <button class="auth-tab active" data-tab="login">Entrar</button>
-          <button class="auth-tab" data-tab="register">Cadastrar</button>
+
+        <!-- Google Sign-In (prioritário) -->
+        <button id="btn-google-signin" class="btn-google-signin" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Entrar com Google
+        </button>
+
+        <div class="auth-divider">
+          <div class="auth-divider-line"></div>
+          <span class="auth-divider-txt">ou use seu e-mail</span>
+          <div class="auth-divider-line"></div>
+        </div>
+
+        <!-- Tabs Entrar / Cadastrar -->
+        <div class="auth-tabs" role="tablist">
+          <button class="auth-tab active" data-tab="login" role="tab" aria-selected="true">Entrar</button>
+          <button class="auth-tab" data-tab="register" role="tab" aria-selected="false">Criar conta</button>
         </div>
 
         <div id="reg-closed-banner" class="reg-closed-banner hidden">
@@ -153,30 +146,31 @@
 
         <form id="auth-form" novalidate>
           <div id="field-name" class="form-group hidden">
-            <label for="inp-name">Nome completo</label>
-            <input type="text" id="inp-name" placeholder="Seu nome" autocomplete="name">
+            <input type="text" id="inp-name" placeholder="Seu nome" autocomplete="name" class="auth-inp">
           </div>
           <div class="form-group">
-            <label for="inp-email">E-mail</label>
-            <input type="email" id="inp-email" placeholder="seu@email.com" required autocomplete="email">
+            <input type="email" id="inp-email" placeholder="seu@email.com" required autocomplete="email" class="auth-inp">
           </div>
           <div class="form-group">
-            <label for="inp-password">Senha</label>
-            <input type="password" id="inp-password" placeholder="Mínimo 6 caracteres" required autocomplete="current-password">
+            <input type="password" id="inp-password" placeholder="Mínimo 6 caracteres" required autocomplete="current-password" class="auth-inp">
           </div>
           <p id="auth-error" class="error-msg hidden"></p>
-          <button type="submit" id="auth-submit" class="btn btn-primary btn-full">Entrar</button>
+          <button type="submit" id="auth-submit" class="btn btn-primary btn-full">Entrar no Bolão ⚽</button>
         </form>
+
+        <button class="auth-forgot-link" type="button" onclick="auth.sendPasswordResetEmail(document.getElementById('inp-email').value).then(()=>showToast('Email enviado!','success')).catch(e=>showToast(e.message,'error'))">
+          Esqueci minha senha
+        </button>
       </div>
 
-      <!-- Ranking Público -->
+      <!-- RANKING PÚBLICO -->
+      <div class="auth-section-label">🏆 Ranking ao vivo</div>
       <div class="public-ranking-box public-ranking-box--auth">
-        <h2>🏅 Ranking ao Vivo</h2>
-        <div id="public-ranking-list"><p class="muted">Carregando…</p></div>
+        <div id="public-ranking-list"><p class="muted" style="padding:16px">Carregando…</p></div>
       </div>
 
-    </div><!-- /auth-page -->
-
+      <div style="height: 40px;"></div>
+    </div>
   </section>
 
   <!-- ======= DASHBOARD SCREEN ======= -->
