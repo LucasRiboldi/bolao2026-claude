@@ -286,13 +286,19 @@ async function adminDeleteUser(uid, name) {
 let _editBetsUid = null;
 let _editGroupBets = {};
 let _editKoBets   = {};
+let _ebTriggerEl  = null;
 
 async function adminEditBets(uid, name) {
+  _ebTriggerEl = document.activeElement;
   _editBetsUid = uid;
   const modal = document.getElementById('edit-bets-modal');
   document.getElementById('eb-title').textContent = `✏️ ${name}`;
   modal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
+
+  // Move focus to close button after modal is visible
+  const closeBtn = modal.querySelector('.bh-close');
+  if (closeBtn) setTimeout(() => closeBtn.focus(), 50);
 
   document.getElementById('eb-groups-panel').innerHTML =
     '<div style="padding:32px;text-align:center"><div class="spinner"></div></div>';
@@ -315,11 +321,18 @@ function closeEditBets() {
   if (modal) modal.classList.add('hidden');
   document.body.style.overflow = '';
   _editBetsUid = null;
+  if (_ebTriggerEl) {
+    _ebTriggerEl.focus();
+    _ebTriggerEl = null;
+  }
 }
 
 function switchEditBetsTab(tab) {
-  document.querySelectorAll('.eb-tab').forEach(t =>
-    t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.eb-tab').forEach(t => {
+    const isActive = t.dataset.tab === tab;
+    t.classList.toggle('active', isActive);
+    t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
   document.getElementById('eb-groups-panel').classList.toggle('hidden', tab !== 'groups');
   document.getElementById('eb-ko-panel').classList.toggle('hidden', tab !== 'knockout');
 }
@@ -464,7 +477,10 @@ async function adminSaveEditedBets() {
 }
 
 // ---- Histórico de apostas (modal) ---------------------------
+let _bhTriggerEl = null;
+
 async function openBetHistory(uid, name) {
+  _bhTriggerEl = document.activeElement;
   const modal = document.getElementById('bet-history-modal');
   const title = document.getElementById('bh-title');
   const body  = document.getElementById('bh-body');
@@ -473,6 +489,10 @@ async function openBetHistory(uid, name) {
   body.innerHTML = `<div class="bh-loading"><div class="spinner"></div>Carregando…</div>`;
   modal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
+
+  // Move focus to close button after modal is visible
+  const closeBtn = modal.querySelector('.bh-close');
+  if (closeBtn) setTimeout(() => closeBtn.focus(), 50);
 
   try {
     const [{ groupBets, knockoutBets }, results] = await Promise.all([
@@ -488,6 +508,10 @@ async function openBetHistory(uid, name) {
 function closeBetHistory() {
   document.getElementById('bet-history-modal').classList.add('hidden');
   document.body.style.overflow = '';
+  if (_bhTriggerEl) {
+    _bhTriggerEl.focus();
+    _bhTriggerEl = null;
+  }
 }
 
 // ---- Renderização do histórico de apostas -------------------

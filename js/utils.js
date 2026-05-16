@@ -23,7 +23,9 @@ function showSection(id) {
   document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
   document.getElementById(`section-${id}`).classList.remove('hidden');
   document.querySelectorAll('.nav-tab').forEach(t => {
-    t.classList.toggle('active', t.dataset.section === id);
+    const isActive = t.dataset.section === id;
+    t.classList.toggle('active', isActive);
+    t.setAttribute('aria-selected', isActive ? 'true' : 'false');
   });
 }
 
@@ -42,6 +44,22 @@ function debounce(fn, ms) {
   let t;
   return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
+
+// ---- Global Escape key handler for modals -------------------
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Escape') return;
+  // Fechar modal de histórico se aberto
+  const bhModal = document.getElementById('bet-history-modal');
+  if (bhModal && !bhModal.classList.contains('hidden')) {
+    if (typeof closeBetHistory === 'function') closeBetHistory();
+    return;
+  }
+  // Fechar modal de edição se aberto
+  const ebModal = document.getElementById('edit-bets-modal');
+  if (ebModal && !ebModal.classList.contains('hidden')) {
+    if (typeof closeEditBets === 'function') closeEditBets();
+  }
+});
 
 // ---- Validate goal input ------------------------------------
 function validateGoalInput(input) {

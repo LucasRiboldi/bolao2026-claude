@@ -16,11 +16,12 @@
 
   <!-- ======= MODAL: Histórico de Apostas ======= -->
   <div id="bet-history-modal" class="bh-modal-overlay hidden"
+       role="dialog" aria-modal="true" aria-labelledby="bh-title"
        onclick="if(event.target===this)closeBetHistory()">
     <div class="bh-modal">
       <div class="bh-modal-header">
         <h2 id="bh-title">📋 Apostas</h2>
-        <button class="bh-close" onclick="closeBetHistory()">✕</button>
+        <button class="bh-close" onclick="closeBetHistory()" aria-label="Fechar histórico">✕</button>
       </div>
       <div class="bh-modal-body" id="bh-body"></div>
     </div>
@@ -28,19 +29,20 @@
 
   <!-- ======= MODAL: Editar Apostas (admin) ======= -->
   <div id="edit-bets-modal" class="bh-modal-overlay hidden"
+       role="dialog" aria-modal="true" aria-labelledby="eb-title"
        onclick="if(event.target===this)closeEditBets()">
     <div class="bh-modal eb-modal">
       <div class="bh-modal-header">
         <h2 id="eb-title">✏️ Editar Apostas</h2>
-        <button class="bh-close" onclick="closeEditBets()">✕</button>
+        <button class="bh-close" onclick="closeEditBets()" aria-label="Fechar edição de apostas">✕</button>
       </div>
-      <div class="eb-tabs">
-        <button class="eb-tab active" data-tab="groups" onclick="switchEditBetsTab('groups')">⚽ Grupos</button>
-        <button class="eb-tab" data-tab="knockout" onclick="switchEditBetsTab('knockout')">⚡ Mata-Mata</button>
+      <div class="eb-tabs" role="tablist">
+        <button id="eb-tab-groups" class="eb-tab active" data-tab="groups" role="tab" aria-selected="true" aria-controls="eb-groups-panel" onclick="switchEditBetsTab('groups')">⚽ Grupos</button>
+        <button id="eb-tab-knockout" class="eb-tab" data-tab="knockout" role="tab" aria-selected="false" aria-controls="eb-ko-panel" onclick="switchEditBetsTab('knockout')">⚡ Mata-Mata</button>
       </div>
       <div class="bh-modal-body" style="padding:0">
-        <div id="eb-groups-panel" class="eb-panel"></div>
-        <div id="eb-ko-panel" class="eb-panel hidden"></div>
+        <div id="eb-groups-panel" class="eb-panel" role="tabpanel" aria-labelledby="eb-tab-groups"></div>
+        <div id="eb-ko-panel" class="eb-panel hidden" role="tabpanel" aria-labelledby="eb-tab-knockout"></div>
       </div>
       <div class="eb-footer">
         <button class="btn btn-ghost" onclick="closeEditBets()">Cancelar</button>
@@ -208,16 +210,16 @@
         </div>
       </div>
       <nav class="nav-tabs" role="tablist">
-        <button class="nav-tab active" data-section="groups"    role="tab">⚽ Grupos</button>
-        <button class="nav-tab"        data-section="mybets"    role="tab">📋 Apostas</button>
-        <button class="nav-tab"        data-section="standings" role="tab">📊 Classificação</button>
-        <button class="nav-tab"        data-section="ranking"   role="tab">🏅 Ranking</button>
-        <button class="nav-tab admin-only hidden" data-section="admin" role="tab">🔧 Admin</button>
+        <button id="tab-groups"    class="nav-tab active" data-section="groups"    role="tab" aria-selected="true"  aria-controls="section-groups">⚽ Grupos</button>
+        <button id="tab-mybets"    class="nav-tab"        data-section="mybets"    role="tab" aria-selected="false" aria-controls="section-mybets">📋 Apostas</button>
+        <button id="tab-standings" class="nav-tab"        data-section="standings" role="tab" aria-selected="false" aria-controls="section-standings">📊 Classificação</button>
+        <button id="tab-ranking"   class="nav-tab"        data-section="ranking"   role="tab" aria-selected="false" aria-controls="section-ranking">🏅 Ranking</button>
+        <button id="tab-admin"     class="nav-tab admin-only hidden" data-section="admin" role="tab" aria-selected="false" aria-controls="section-admin">🔧 Admin</button>
       </nav>
     </header>
 
     <!-- ===== GRUPOS + MATA-MATA ===== -->
-    <section id="section-groups" class="content-section">
+    <section id="section-groups" class="content-section" role="tabpanel" aria-labelledby="tab-groups">
       <div class="section-header">
         <h2>⚽ Fase de Grupos</h2>
         <p>Preencha o placar de cada partida · 72 jogos · 12 grupos</p>
@@ -270,7 +272,7 @@
     </section>
 
     <!-- ===== MINHAS APOSTAS ===== -->
-    <section id="section-mybets" class="content-section hidden">
+    <section id="section-mybets" class="content-section hidden" role="tabpanel" aria-labelledby="tab-mybets">
       <div class="section-header">
         <h2>📋 Minhas Apostas</h2>
         <p>Confira todos os seus palpites e pontuação</p>
@@ -281,7 +283,7 @@
     </section>
 
     <!-- ===== CLASSIFICAÇÃO OFICIAL ===== -->
-    <section id="section-standings" class="content-section hidden">
+    <section id="section-standings" class="content-section hidden" role="tabpanel" aria-labelledby="tab-standings">
       <div class="section-header">
         <h2>📊 Classificação Oficial</h2>
         <p>Atualizada em tempo real · Copa do Mundo FIFA 2026</p>
@@ -292,7 +294,7 @@
     </section>
 
     <!-- ===== RANKING ===== -->
-    <section id="section-ranking" class="content-section hidden">
+    <section id="section-ranking" class="content-section hidden" role="tabpanel" aria-labelledby="tab-ranking">
       <div class="section-header">
         <h2>🏅 Ranking</h2>
         <p>Clique em 📋 para ver as apostas de cada participante</p>
@@ -318,7 +320,7 @@
     </section>
 
     <!-- ===== ADMIN ===== -->
-    <section id="section-admin" class="content-section hidden admin-only">
+    <section id="section-admin" class="content-section hidden admin-only" role="tabpanel" aria-labelledby="tab-admin">
       <div class="section-header">
         <h2>🔧 Painel Admin</h2>
         <p>Gerencie apostas dos participantes</p>
