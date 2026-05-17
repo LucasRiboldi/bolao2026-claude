@@ -11,6 +11,7 @@ import { TEAMS } from '@/data/teams'
 import { Flag } from '@/components/Flag'
 import { KNOCKOUT_ROUNDS, buildR32, resolveKnockoutRound } from '@/data/bracket'
 import { calcGroupStandings, getQualified } from '@/utils/standings'
+import { AdminPageHeader } from './AdminPageHeader'
 
 type SubTab = 'grupos' | 'mata-mata'
 type RowStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -318,6 +319,12 @@ export function ResultsTab() {
 
   return (
     <div className="admin-results-wrap">
+      <AdminPageHeader
+        icon="⚽"
+        title="Lançar resultados oficiais"
+        description="Resultados da fase de grupos e do mata-mata. Cada salvar atualiza o ranking automaticamente em ~2s."
+      />
+
       <div className="admin-results-subtabs">
         <button className={`admin-results-subtab${subTab === 'grupos' ? ' admin-results-subtab--active' : ''}`} onClick={() => setSubTab('grupos')}>⚽ Grupos</button>
         <button className={`admin-results-subtab${subTab === 'mata-mata' ? ' admin-results-subtab--active' : ''}`} onClick={() => setSubTab('mata-mata')}>⚡ Mata-Mata</button>

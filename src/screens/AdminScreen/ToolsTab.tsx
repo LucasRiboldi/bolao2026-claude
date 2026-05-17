@@ -12,6 +12,7 @@ import { DEFAULT_SCORING } from '@/data/bracket'
 import { TEAMS } from '@/data/teams'
 import { GROUP_IDS, generateGroupGames } from '@/data/groups'
 import type { UserWithBets } from '@/types'
+import { AdminPageHeader } from './AdminPageHeader'
 
 const TOTAL_GROUP_GAMES = 72
 
@@ -403,6 +404,11 @@ export function ToolsTab() {
 
   return (
     <div className="tools-wrap">
+      <AdminPageHeader
+        icon="🛠"
+        title="Ferramentas"
+        description="Análise, exportação, moderação e operações de teste / manutenção do banco."
+      />
 
       {/* ═══ Análise & Relatórios ════════════════════════════════════════════ */}
       <Category label="📊 Análise & Relatórios" />

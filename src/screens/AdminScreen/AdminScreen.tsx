@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { AdminDashboard } from './AdminDashboard'
 import { UsersTab } from './UsersTab'
 import { ResultsTab } from './ResultsTab'
 import { ConfigTab } from './ConfigTab'
@@ -8,31 +9,54 @@ import './AdminScreen.css'
 
 type AdminTab = 'users' | 'results' | 'config' | 'tools'
 
+const TABS: Array<{ id: AdminTab; icon: string; label: string }> = [
+  { id: 'users',   icon: '👥', label: 'Usuários' },
+  { id: 'results', icon: '⚽', label: 'Resultados' },
+  { id: 'config',  icon: '⚙️', label: 'Configurações' },
+  { id: 'tools',   icon: '🛠', label: 'Ferramentas' },
+]
+
 export function AdminScreen() {
   const { isAdmin } = useAuth()
   const [tab, setTab] = useState<AdminTab>('users')
 
   if (!isAdmin) {
     return (
-      <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-        ⛔ Acesso restrito
+      <div className="admin-access-denied">
+        <div className="admin-access-denied__icon">⛔</div>
+        <div className="admin-access-denied__title">Acesso restrito</div>
+        <div className="admin-access-denied__sub">
+          Esta área é exclusiva para o administrador do bolão.
+        </div>
       </div>
     )
   }
 
   return (
-    <div id="section-admin" role="tabpanel">
-      <div className="admin-tabs">
-        <button className={`admin-tab${tab === 'users'   ? ' admin-tab--active' : ''}`} onClick={() => setTab('users')}>Usuários</button>
-        <button className={`admin-tab${tab === 'results' ? ' admin-tab--active' : ''}`} onClick={() => setTab('results')}>Resultados</button>
-        <button className={`admin-tab${tab === 'config'  ? ' admin-tab--active' : ''}`} onClick={() => setTab('config')}>Config</button>
-        <button className={`admin-tab${tab === 'tools'   ? ' admin-tab--active' : ''}`} onClick={() => setTab('tools')}>Ferramentas</button>
-      </div>
+    <div id="section-admin" role="tabpanel" className="admin-screen">
+      <AdminDashboard />
 
-      {tab === 'users'   && <UsersTab />}
-      {tab === 'results' && <ResultsTab />}
-      {tab === 'config'  && <ConfigTab />}
-      {tab === 'tools'   && <ToolsTab />}
+      <nav className="admin-tabs" role="tablist" aria-label="Seções do admin">
+        {TABS.map(t => (
+          <button
+            key={t.id}
+            className={`admin-tab${tab === t.id ? ' admin-tab--active' : ''}`}
+            role="tab"
+            aria-selected={tab === t.id}
+            onClick={() => setTab(t.id)}
+          >
+            <span className="admin-tab__icon" aria-hidden="true">{t.icon}</span>
+            <span className="admin-tab__label">{t.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <div className="admin-tab-content">
+        {tab === 'users'   && <UsersTab />}
+        {tab === 'results' && <ResultsTab />}
+        {tab === 'config'  && <ConfigTab />}
+        {tab === 'tools'   && <ToolsTab />}
+      </div>
     </div>
   )
 }

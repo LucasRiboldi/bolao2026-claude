@@ -11,6 +11,7 @@ import { TEAMS } from '@/data/teams'
 import { buildR32 } from '@/data/bracket'
 import { calcGroupStandings, getQualified } from '@/utils/standings'
 import { Flag } from '@/components/Flag'
+import { AdminPageHeader } from './AdminPageHeader'
 
 type AdminUser = UserProfile & { uid: string }
 
@@ -254,12 +255,16 @@ function EditBetsModal({ user, onClose }: { user: AdminUser; onClose: () => void
 
 // ── Main tab ──────────────────────────────────────────────────────────────────
 
+type UserFilter = 'all' | 'locked' | 'open'
+
 export function UsersTab() {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
   const [historyUser, setHistoryUser] = useState<AdminUser | null>(null)
   const [editUser, setEditUser] = useState<AdminUser | null>(null)
+  const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState<UserFilter>('all')
 
   useEffect(() => {
     loadAdminUserList().then(setUsers).finally(() => setLoading(false))
@@ -287,36 +292,100 @@ export function UsersTab() {
     setBusy(null)
   }
 
+  // Derived: filtered+searched list
+  const filtered = users.filter(u => {
+    if (filter === 'locked' && !u.betsLocked) return false
+    if (filter === 'open' && u.betsLocked) return false
+    const q = query.trim().toLowerCase()
+    if (!q) return true
+    return (u.name ?? '').toLowerCase().includes(q) || (u.email ?? '').toLowerCase().includes(q)
+  })
+
+  const lockedCount = users.filter(u => u.betsLocked).length
+  const openCount = users.length - lockedCount
+
   if (loading) {
     return <div className="spinner-wrap" style={{ paddingTop: 32 }}><div className="spinner" aria-label="Carregando usuários…" /></div>
   }
 
   return (
     <>
-      <div className="admin-section-label">{users.length} participantes</div>
-      <div className="admin-user-list">
-        {users.map(u => (
-          <div key={u.uid} className="admin-user-row">
-            <div className="admin-user-row__avatar">{avatarInitials(u.name ?? '?')}</div>
-            <div className="admin-user-row__info">
-              <div className="admin-user-row__name">{u.name || '—'}</div>
-              <div className="admin-user-row__email">{u.email}</div>
-            </div>
-            <span className={`admin-user-row__badge ${u.betsLocked ? 'admin-user-row__badge--locked' : 'admin-user-row__badge--open'}`}>
-              {u.betsLocked ? '🔒' : '🟢'}
-            </span>
-            <div className="admin-user-row__actions">
-              <button className="btn btn-ghost btn-sm" aria-label="Ver apostas" title="Ver apostas" onClick={() => setHistoryUser(u)}>📋</button>
-              <button className="btn btn-ghost btn-sm" aria-label="Editar apostas" title="Editar apostas" onClick={() => setEditUser(u)}>✏️</button>
-              {u.betsLocked
-                ? <button className="btn btn-ghost btn-sm" aria-label="Desbloquear" title="Desbloquear" disabled={busy === u.uid + ':unlock'} onClick={() => handleUnlock(u.uid)}>🔓</button>
-                : <button className="btn btn-ghost btn-sm" aria-label="Bloquear" title="Bloquear" disabled={busy === u.uid + ':lock'} onClick={() => handleLock(u.uid)}>🔒</button>
-              }
-              <button className="btn btn-ghost btn-sm" aria-label="Excluir usuário" title="Excluir" disabled={busy === u.uid + ':delete'} onClick={() => handleDelete(u.uid, u.name ?? u.uid)}>🗑</button>
-            </div>
-          </div>
-        ))}
+      <AdminPageHeader
+        icon="👥"
+        title="Gerenciar participantes"
+        description={`${users.length} cadastrados · ${openCount} liberados · ${lockedCount} bloqueados`}
+      />
+
+      <div className="admin-toolbar">
+        <input
+          type="search"
+          className="input"
+          placeholder="🔍 Buscar por nome ou e-mail…"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          aria-label="Buscar participante"
+        />
+        <div className="admin-filter-chips" role="radiogroup" aria-label="Filtrar por status">
+          <button
+            className={`filter-chip${filter === 'all' ? ' filter-chip--active' : ''}`}
+            onClick={() => setFilter('all')}
+            role="radio"
+            aria-checked={filter === 'all'}
+          >
+            Todos <span className="filter-chip__count">{users.length}</span>
+          </button>
+          <button
+            className={`filter-chip${filter === 'open' ? ' filter-chip--active' : ''}`}
+            onClick={() => setFilter('open')}
+            role="radio"
+            aria-checked={filter === 'open'}
+          >
+            🟢 Liberados <span className="filter-chip__count">{openCount}</span>
+          </button>
+          <button
+            className={`filter-chip${filter === 'locked' ? ' filter-chip--active' : ''}`}
+            onClick={() => setFilter('locked')}
+            role="radio"
+            aria-checked={filter === 'locked'}
+          >
+            🔒 Bloqueados <span className="filter-chip__count">{lockedCount}</span>
+          </button>
+        </div>
       </div>
+
+      {filtered.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-state__icon">🔍</div>
+          <div className="empty-state__title">Nenhum participante encontrado</div>
+          <div className="empty-state__sub">
+            {query ? `Nenhum resultado para "${query}"` : 'Ajuste o filtro acima'}
+          </div>
+        </div>
+      ) : (
+        <div className="admin-user-list">
+          {filtered.map(u => (
+            <div key={u.uid} className="admin-user-row">
+              <div className="admin-user-row__avatar">{avatarInitials(u.name ?? '?')}</div>
+              <div className="admin-user-row__info">
+                <div className="admin-user-row__name">{u.name || '—'}</div>
+                <div className="admin-user-row__email">{u.email}</div>
+              </div>
+              <span className={`admin-user-row__badge ${u.betsLocked ? 'admin-user-row__badge--locked' : 'admin-user-row__badge--open'}`}>
+                {u.betsLocked ? '🔒' : '🟢'}
+              </span>
+              <div className="admin-user-row__actions">
+                <button className="btn btn-ghost btn-sm" aria-label="Ver apostas" title="Ver apostas" onClick={() => setHistoryUser(u)}>📋</button>
+                <button className="btn btn-ghost btn-sm" aria-label="Editar apostas" title="Editar apostas" onClick={() => setEditUser(u)}>✏️</button>
+                {u.betsLocked
+                  ? <button className="btn btn-ghost btn-sm" aria-label="Desbloquear" title="Desbloquear" disabled={busy === u.uid + ':unlock'} onClick={() => handleUnlock(u.uid)}>🔓</button>
+                  : <button className="btn btn-ghost btn-sm" aria-label="Bloquear" title="Bloquear" disabled={busy === u.uid + ':lock'} onClick={() => handleLock(u.uid)}>🔒</button>
+                }
+                <button className="btn btn-ghost btn-sm" aria-label="Excluir usuário" title="Excluir" disabled={busy === u.uid + ':delete'} onClick={() => handleDelete(u.uid, u.name ?? u.uid)}>🗑</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {historyUser && <BetHistoryModal user={historyUser} onClose={() => setHistoryUser(null)} />}
       {editUser && <EditBetsModal user={editUser} onClose={() => setEditUser(null)} />}

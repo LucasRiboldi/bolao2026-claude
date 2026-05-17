@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import {
   loadAdminConfig, saveAdminConfig,
   loadScoringConfig, saveScoringConfig,
@@ -7,18 +7,17 @@ import {
 import { calculateScore, sortRanking } from '@/utils/scoring'
 import { DEFAULT_SCORING } from '@/data/bracket'
 import type { AdminConfig, ScoringConfig } from '@/types'
+import { AdminPageHeader } from './AdminPageHeader'
 
-const SEED_URL = 'http://localhost:3001'
-
-const SCORING_FIELDS: Array<{ key: keyof ScoringConfig; label: string }> = [
-  { key: 'exactScore',     label: 'Placar exato' },
-  { key: 'correctResult',  label: 'Resultado certo' },
-  { key: 'r32Winner',      label: 'R32 vencedor' },
-  { key: 'r16Winner',      label: 'R16 vencedor' },
-  { key: 'qfWinner',       label: 'Quartas vencedor' },
-  { key: 'sfWinner',       label: 'Semis vencedor' },
-  { key: 'championScore',  label: 'Campeão' },
-  { key: 'finalistBonus',  label: 'Finalista bônus' },
+const SCORING_FIELDS: Array<{ key: keyof ScoringConfig; label: string; hint: string }> = [
+  { key: 'exactScore',     label: 'Placar exato',     hint: 'Acertou exatamente o placar (ex: 2-1)' },
+  { key: 'correctResult',  label: 'Resultado certo',  hint: 'Acertou só quem venceu / empatou' },
+  { key: 'r32Winner',      label: 'R32 vencedor',     hint: 'Time avançou para as oitavas' },
+  { key: 'r16Winner',      label: 'R16 vencedor',     hint: 'Time avançou para as quartas' },
+  { key: 'qfWinner',       label: 'Quartas vencedor', hint: 'Time avançou para as semis' },
+  { key: 'sfWinner',       label: 'Semis vencedor',   hint: 'Time avançou para a final' },
+  { key: 'championScore',  label: 'Campeão',          hint: 'Acertou o campeão da Copa' },
+  { key: 'finalistBonus',  label: 'Finalista bônus',  hint: 'Bônus por acertar os 2 finalistas' },
 ]
 
 function Toggle({ checked, onChange, id }: { checked: boolean; onChange: (v: boolean) => void; id: string }) {
@@ -38,9 +37,6 @@ export function ConfigTab() {
   const [savingScoring, setSavingScoring] = useState(false)
   const [recalcBusy, setRecalcBusy] = useState(false)
   const [recalcMsg, setRecalcMsg] = useState<string | null>(null)
-  const [seedLog, setSeedLog] = useState<string[]>([])
-  const [seedBusy, setSeedBusy] = useState(false)
-  const logRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     Promise.all([loadAdminConfig(), loadScoringConfig()]).then(([cfg, sc]) => {
@@ -48,10 +44,6 @@ export function ConfigTab() {
       setScoring({ ...DEFAULT_SCORING, ...sc })
     }).finally(() => setConfigLoading(false))
   }, [])
-
-  useEffect(() => {
-    if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight
-  }, [seedLog])
 
   async function handleSaveConfig() {
     setSavingConfig(true)
@@ -83,105 +75,113 @@ export function ConfigTab() {
     }
   }
 
-  function addLog(msg: string) {
-    setSeedLog(prev => [...prev, msg])
+  if (configLoading) {
+    return <div className="spinner-wrap" style={{ paddingTop: 32 }}><div className="spinner" /></div>
   }
-
-  async function runSeed(action: 'seed' | 'clear') {
-    setSeedBusy(true)
-    setSeedLog([`→ ${action}…`])
-    try {
-      const es = new EventSource(`${SEED_URL}/api/${action}`)
-      es.onmessage = e => addLog(e.data as string)
-      es.onerror = () => { addLog('✗ Conexão encerrada'); es.close(); setSeedBusy(false) }
-      es.addEventListener('done', () => { addLog('✓ Concluído'); es.close(); setSeedBusy(false) })
-    } catch {
-      addLog('✗ Seed server indisponível (rode: node tools/seed/seed-server.js)')
-      setSeedBusy(false)
-    }
-  }
-
-  if (configLoading) return <div className="spinner-wrap" style={{ paddingTop: 32 }}><div className="spinner" /></div>
 
   return (
-    <div className="admin-config-wrap">
-      {/* ── Registration & lock ── */}
-      <div className="admin-section-label" style={{ padding: '14px 0 6px' }}>Controles</div>
+    <>
+      <AdminPageHeader
+        icon="⚙️"
+        title="Configurações do bolão"
+        description="Controle de cadastro, bloqueio global, pontuação e recálculo manual."
+      />
 
-      <div className="admin-config-row">
-        <div>
-          <div className="admin-config-row__label">Cadastro aberto</div>
-          <div className="admin-config-row__sub">Permite novos participantes</div>
-        </div>
-        <Toggle
-          id="toggle-reg"
-          checked={config.registrationOpen ?? true}
-          onChange={v => setConfig(c => ({ ...c, registrationOpen: v }))}
-        />
-      </div>
-
-      <div className="admin-config-row">
-        <div>
-          <div className="admin-config-row__label">Bloqueio global</div>
-          <div className="admin-config-row__sub">Impede edição de apostas</div>
-        </div>
-        <Toggle
-          id="toggle-lock"
-          checked={config.globalLocked ?? false}
-          onChange={v => setConfig(c => ({ ...c, globalLocked: v }))}
-        />
-      </div>
-
-      <button className="btn btn-primary btn-full" onClick={handleSaveConfig} disabled={savingConfig}>
-        {savingConfig ? 'Salvando…' : '💾 Salvar Controles'}
-      </button>
-
-      {/* ── Scoring ── */}
-      <div className="admin-section-label" style={{ padding: '14px 0 6px' }}>Pontuação</div>
-      <div className="admin-scoring-grid">
-        {SCORING_FIELDS.map(({ key, label }) => (
-          <div key={key} className="admin-scoring-field">
-            <label htmlFor={`scoring-${key}`}>{label}</label>
-            <input
-              id={`scoring-${key}`}
-              type="number"
-              min="0"
-              value={scoring[key]}
-              onChange={e => setScoring(s => ({ ...s, [key]: Number(e.target.value) }))}
-            />
+      {/* ── Section: Acesso & controle ─────────────────────────────────────── */}
+      <div className="admin-section-card">
+        <div className="admin-section-card__header">
+          <span className="admin-section-card__icon">🔐</span>
+          <div>
+            <h3 className="admin-section-card__title">Acesso &amp; controle</h3>
+            <p className="admin-section-card__desc">
+              Liga/desliga cadastro de novos participantes e bloqueia edições durante a Copa.
+            </p>
           </div>
-        ))}
+        </div>
+
+        <div className="admin-config-row">
+          <div>
+            <div className="admin-config-row__label">Cadastro aberto</div>
+            <div className="admin-config-row__sub">Permite novos participantes</div>
+          </div>
+          <Toggle
+            id="toggle-reg"
+            checked={config.registrationOpen ?? true}
+            onChange={v => setConfig(c => ({ ...c, registrationOpen: v }))}
+          />
+        </div>
+
+        <div className="admin-config-row">
+          <div>
+            <div className="admin-config-row__label">Bloqueio global de apostas</div>
+            <div className="admin-config-row__sub">Impede que qualquer participante edite palpites</div>
+          </div>
+          <Toggle
+            id="toggle-lock"
+            checked={config.globalLocked ?? false}
+            onChange={v => setConfig(c => ({ ...c, globalLocked: v }))}
+          />
+        </div>
+
+        <button className="btn btn-primary btn-full" onClick={handleSaveConfig} disabled={savingConfig}>
+          {savingConfig ? 'Salvando…' : '💾 Salvar controles'}
+        </button>
       </div>
 
-      <button className="btn btn-ghost btn-full" onClick={handleSaveScoring} disabled={savingScoring}>
-        {savingScoring ? 'Salvando…' : '💾 Salvar Pontuação'}
-      </button>
-
-      {/* ── Ranking ── */}
-      <div className="admin-section-label" style={{ padding: '14px 0 6px' }}>Ranking</div>
-      <button className="btn btn-gold btn-full" onClick={handleRecalc} disabled={recalcBusy} aria-label="Recalcular ranking">
-        {recalcBusy ? 'Calculando…' : '🔄 Recalcular Ranking'}
-      </button>
-      {recalcMsg && <div style={{ fontSize: '.7rem', color: 'var(--text-muted)', textAlign: 'center', paddingTop: 6 }}>{recalcMsg}</div>}
-
-      {/* ── Seed ── */}
-      <div className="admin-section-label" style={{ padding: '14px 0 6px' }}>Dados de Teste</div>
-      <div className="admin-seed-wrap">
-        <div className="admin-seed-wrap__title">Seed server em localhost:3001</div>
-        <div className="admin-seed-actions">
-          <button className="btn btn-ghost btn-sm" onClick={() => runSeed('seed')} disabled={seedBusy} aria-label="Seed usuários teste">
-            🌱 Seed
-          </button>
-          <button className="btn btn-ghost btn-sm" onClick={() => runSeed('clear')} disabled={seedBusy} aria-label="Limpar dados teste">
-            🗑 Clear
-          </button>
-        </div>
-        {seedLog.length > 0 && (
-          <div ref={logRef} className="admin-seed-log" aria-label="Log do seed">
-            {seedLog.map((line, i) => <div key={i}>{line}</div>)}
+      {/* ── Section: Pontuação ──────────────────────────────────────────────── */}
+      <div className="admin-section-card">
+        <div className="admin-section-card__header">
+          <span className="admin-section-card__icon">🎯</span>
+          <div>
+            <h3 className="admin-section-card__title">Pontuação por acerto</h3>
+            <p className="admin-section-card__desc">
+              Quantos pontos cada tipo de acerto vale. Mudanças só afetam o ranking após recalcular.
+            </p>
           </div>
+        </div>
+
+        <div className="admin-scoring-grid">
+          {SCORING_FIELDS.map(({ key, label, hint }) => (
+            <div key={key} className="admin-scoring-field" title={hint}>
+              <label htmlFor={`scoring-${key}`}>{label}</label>
+              <input
+                id={`scoring-${key}`}
+                type="number"
+                min="0"
+                value={scoring[key]}
+                onChange={e => setScoring(s => ({ ...s, [key]: Number(e.target.value) }))}
+              />
+            </div>
+          ))}
+        </div>
+
+        <button className="btn btn-ghost btn-full" onClick={handleSaveScoring} disabled={savingScoring}>
+          {savingScoring ? 'Salvando…' : '💾 Salvar pontuação'}
+        </button>
+      </div>
+
+      {/* ── Section: Ranking ──────────────────────────────────────────────── */}
+      <div className="admin-section-card">
+        <div className="admin-section-card__header">
+          <span className="admin-section-card__icon">🔄</span>
+          <div>
+            <h3 className="admin-section-card__title">Ranking</h3>
+            <p className="admin-section-card__desc">
+              Recálculo manual é raramente necessário — o ranking se atualiza automaticamente após cada
+              lançamento de resultado. Use isto somente se a pontuação parecer dessincronizada.
+            </p>
+          </div>
+        </div>
+
+        <button className="btn btn-gold btn-full" onClick={handleRecalc} disabled={recalcBusy}>
+          {recalcBusy ? 'Calculando…' : '🔄 Recalcular ranking agora'}
+        </button>
+        {recalcMsg && (
+          <p className={`admin-section-card__msg${recalcMsg.startsWith('✓') ? ' admin-section-card__msg--ok' : ' admin-section-card__msg--err'}`}>
+            {recalcMsg}
+          </p>
         )}
       </div>
-    </div>
+    </>
   )
 }
