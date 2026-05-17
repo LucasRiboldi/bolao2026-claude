@@ -1,0 +1,318 @@
+FIFA WORLD CUP 2026 — COMPETITION RULES
+Bolão Copa 2026 | Reference Manual
+
+Source: "Regulations for the FIFA World Cup 26™", May 2026
+Articles 11, 12, 13, 14 and Annexe C.
+
+================================================================================
+PART 1 — TOURNAMENT STRUCTURE  (Art. 11–12)
+================================================================================
+
+48 teams compete. Tournament is played in the USA, Canada, and Mexico, the three
+host nations. Hosts qualify automatically (Art. 11.1) and are seeded as group
+leaders in the draw: Mexico → Group A, Canada → Group B, USA → Group D.
+
+The competition has two phases:
+  1. Group Stage  — 12 groups × 4 teams, round-robin, 72 matches total
+  2. Knockout Stage — 32 teams, single-elimination, 32 matches total
+  Total: 104 matches (Match M1 to M104).
+
+--------------------------------------------------------------------------------
+GROUP STAGE
+--------------------------------------------------------------------------------
+
+Twelve groups (A through L), four teams each. Every team plays all three
+opponents once (round-robin). Match schedule per group (Art. 12.4):
+
+  Match Day 1:  Seed-1 vs Seed-2      |  Seed-3 vs Seed-4
+  Match Day 2:  Seed-1 vs Seed-3      |  Seed-4 vs Seed-2   ← Seed-4 is HOME
+  Match Day 3:  Seed-4 vs Seed-1      |  Seed-2 vs Seed-3   ← Seed-4 is HOME
+
+The last two matches of each group (Match Day 3) always kick off simultaneously
+to prevent match-fixing. This is mandatory per Art. 12.4.
+
+Points per match:
+  Win   → 3 points
+  Draw  → 1 point each
+  Loss  → 0 points
+
+Each group produces:
+  1st place  →  qualifies directly to Round of 32
+  2nd place  →  qualifies directly to Round of 32
+  3rd place  →  enters pool of 12 thirds; 8 best advance
+
+================================================================================
+PART 2 — TIEBREAKER CRITERIA  (Art. 13)
+================================================================================
+
+When two or more teams finish equal on points, they are separated in order:
+
+STEP 1 — Applied among the tied teams only (all matches within that tied group)
+
+  a) Greater number of points in HEAD-TO-HEAD matches
+  b) Superior goal difference in head-to-head matches
+  c) Greater number of goals scored in head-to-head matches
+
+  If criteria a–c produce a unique ranking → done.
+  If only some teams are separated, apply a–c again to the remaining tied teams.
+
+STEP 2 — If Step 1 fails to separate all tied teams
+
+  d) Superior goal difference in ALL group matches
+  e) Greatest number of goals scored in ALL group matches
+  f) Highest TEAM CONDUCT SCORE across all group matches
+
+     Conduct score formula (Art. 13):
+       Yellow card          = -1 point
+       Indirect red (2 Ys)  = -3 points
+       Direct red card      = -4 points
+       Yellow + direct red  = -5 points
+
+     Only the single heaviest deduction applies per player per incident.
+     Higher (less negative) conduct score = better standing.
+
+STEP 3 — If Steps 1–2 fail
+
+  g) Most recent published FIFA/Coca-Cola Men's World Ranking
+  h) Earlier editions of the FIFA Ranking, going back one by one
+
+IMPLEMENTATION IN THE BOLÃO:
+  ✅ Steps a, b, c, d, e — fully implemented in standings.ts
+  ❌ Step f (conduct score) — NOT implemented; no card data in bets
+  ❌ Steps g, h (FIFA ranking) — NOT implemented; no live ranking API
+  Falls back to insertion order (deterministic but arbitrary) for these cases.
+
+================================================================================
+PART 3 — RANKING OF THIRD-PLACED TEAMS  (Art. 13 para 2)
+================================================================================
+
+All 12 third-placed teams are ranked against each other. The 8 best advance to
+the Round of 32. Criteria applied in order:
+
+  a) Greatest number of points in group matches
+  b) Superior goal difference in group matches
+  c) Greatest number of goals scored in group matches
+  d) Highest team conduct score (same formula as Art. 13 Step 2 f)
+  e) Most recent FIFA/Coca-Cola Men's World Ranking
+  f) Earlier editions of the FIFA Ranking, going back in time
+
+IMPLEMENTATION IN THE BOLÃO:
+  ✅ a, b, c — fully implemented in standings.ts / getQualified()
+  ❌ d — not implemented
+  ❌ e, f — not implemented
+
+================================================================================
+PART 4 — ROUND OF 32 BRACKET  (Art. 12.6 + Annexe C)
+================================================================================
+
+32 teams enter the Round of 32:
+  - 12 group winners (1st place)
+  - 12 group runners-up (2nd place)
+  - 8 best third-placed teams
+
+Notation:
+  1X = winner (1st) of Group X
+  2X = runner-up (2nd) of Group X
+  T3_GROUPS = best third-placed team from the set of specified groups
+
+Official bracket (Art. 12.6, matches M73–M88):
+
+  M73  r32_01:  2A  vs  2B
+  M74  r32_02:  1E  vs  T3_ABCDF
+  M75  r32_03:  1F  vs  2C
+  M76  r32_04:  1C  vs  2F
+  M77  r32_05:  1I  vs  T3_CDFGH
+  M78  r32_06:  2E  vs  2I
+  M79  r32_07:  1A  vs  T3_CEFHI
+  M80  r32_08:  1L  vs  T3_EHIJK
+  M81  r32_09:  1D  vs  T3_BEFIJ
+  M82  r32_10:  1G  vs  T3_AEHIJ
+  M83  r32_11:  2K  vs  2L
+  M84  r32_12:  1H  vs  2J
+  M85  r32_13:  1B  vs  T3_EFGIJ
+  M86  r32_14:  1J  vs  2H
+  M87  r32_15:  1K  vs  T3_DEIJL
+  M88  r32_16:  2D  vs  2G
+
+"T3_GROUPS" assignment: which specific third-placed team occupies each slot
+depends on which 8 of the 12 groups produced qualifying thirds. This is defined
+by Annexe C of the FIFA regulations, which contains 495 combinations (one per
+possible set of 8 qualifying groups). The bolão does not implement full Annexe C
+because the admin enters actual results by match ID directly — bracket display
+uses rank order T3_1 through T3_8 as an approximation.
+
+================================================================================
+PART 5 — ROUND OF 16 THROUGH FINAL  (Art. 12.7–12.11)
+================================================================================
+
+W:rXX = winner of match rXX
+
+ROUND OF 16 (M89–M96):
+  M89  r16_01:  W:r32_02  vs  W:r32_05
+  M90  r16_02:  W:r32_01  vs  W:r32_03
+  M91  r16_03:  W:r32_04  vs  W:r32_06
+  M92  r16_04:  W:r32_07  vs  W:r32_08
+  M93  r16_05:  W:r32_11  vs  W:r32_12
+  M94  r16_06:  W:r32_09  vs  W:r32_10
+  M95  r16_07:  W:r32_14  vs  W:r32_16
+  M96  r16_08:  W:r32_13  vs  W:r32_15
+
+QUARTER-FINALS (M97–M100):
+  M97   qf_01:  W:r16_01  vs  W:r16_02
+  M98   qf_02:  W:r16_05  vs  W:r16_06
+  M99   qf_03:  W:r16_03  vs  W:r16_04
+  M100  qf_04:  W:r16_07  vs  W:r16_08
+
+SEMI-FINALS (M101–M102):
+  M101  sf_01:  W:qf_01  vs  W:qf_02
+  M102  sf_02:  W:qf_03  vs  W:qf_04
+
+THIRD-PLACE MATCH (M103):
+  Losers of sf_01 and sf_02.
+
+FINAL (M104):
+  Winners of sf_01 and sf_02.
+
+================================================================================
+PART 6 — EXTRA TIME AND PENALTIES  (Art. 14)
+================================================================================
+
+Applies only to knockout matches. In the group stage, matches end in a draw.
+
+14.1 — If level after 90 minutes: two periods of 15 minutes extra time.
+        Five-minute interval between full time and extra time.
+        NO interval between the two ET periods.
+        Players remain on the pitch during intervals.
+
+14.2 — If still level after ET: penalty shootout (Laws of the Game).
+
+14.3 — Referee tosses a coin for goal choice, then for which team kicks first.
+
+Key implication: knockout matches ALWAYS produce a winner. The bolão's knockout
+scoring accordingly uses no "draw" outcome — only team X or team Y advances.
+
+================================================================================
+PART 7 — DISCIPLINARY CARD CARRY-OVER  (Art. 10)
+================================================================================
+
+10.2 — Yellow cards from the preliminary competition are NOT carried into the
+       final competition. Red-card suspensions ARE carried over (with exceptions).
+
+10.3 — Yellow cards in the final competition are cancelled at two points:
+       (a) After the group stage (before the Round of 32)
+       (b) After the quarterfinals (before the semi-finals)
+
+10.4 — Two cautions across two matches = one-match ban.
+
+10.5 — Direct or indirect red card = minimum one-match ban.
+
+================================================================================
+PART 8 — SQUAD RULES  (Art. 23–24)
+================================================================================
+
+  Provisional list: 35–55 players (minimum 4 goalkeepers)
+  Final list: 23–26 players (minimum 3 goalkeepers)
+  Team officials: maximum 27 per team
+  Player replacement: allowed up to 24 hours before the team's first match,
+  only if the player is injured. Replaced player cannot re-enter the competition.
+
+================================================================================
+PART 9 — BOLÃO SCORING SYSTEM  (not FIFA — internal project rules)
+================================================================================
+
+The bolão awards points based on how accurately participants predicted match
+outcomes and which teams advance through each knockout round.
+
+GROUP STAGE SCORING
+-------------------
+For each of the 72 group matches, participants enter a predicted score (e.g. 2-1).
+After the official result is published, points are awarded:
+
+  Exact score  (predicted 2-1, result is 2-1)   → 17 points
+  Correct result (predicted 2-0, result is 1-0)  →  8 points
+  Wrong result   (predicted 1-2, result is 2-1)  →  0 points
+
+"Correct result" means predicting the same sign: home win, draw, or away win.
+Draws must be guessed as draws; the exact goals need not match.
+
+Maximum group stage score: 72 matches × 17 pts = 1,224 points
+
+KNOCKOUT STAGE SCORING
+----------------------
+Participants pick which teams advance through each knockout round. Points are
+awarded for each correctly predicted team that actually advanced:
+
+  Advances to Round of 16  (from R32):     5 pts per team   (max 16 × 5 =  80)
+  Advances to Quarter-finals (from R16):  11 pts per team   (max  8 × 11 =  88)
+  Advances to Semi-finals (from QF):      20 pts per team   (max  4 × 20 =  80)
+  Advances to Final (from SF):            40 pts per team   (max  2 × 40 =  80)
+  Third-place winner (exact match):        5 pts            (max           5)
+  Champion (exact):                       71 pts            (max          71)
+  Finalist bonus (both SF picks correct): 26 pts            (max          26)
+
+Maximum knockout score:
+  80 + 88 + 80 + 80 + 5 + 71 + 26 = 430 points
+
+The "finalist bonus" is awarded only when both semi-final picks are correct.
+It represents the additional value of correctly identifying both finalists
+(beyond the individual semi-final points).
+
+GRAND TOTAL MAXIMUM: 1,224 + 430 = 1,654 points
+
+TIEBREAKER IN RANKING
+---------------------
+If two participants have the same total points, they are separated by:
+  1. Most exact scores (group stage hits where both goals were correct)
+  2. Most correct results (group stage directional hits)
+  3. Most knockout correct picks (ko breakdown)
+  4. Alphabetical order of name (final deterministic tiebreaker)
+
+SCORING IMPLEMENTATION
+----------------------
+Function: calculateScore(groupBets, knockoutBets, results) in src/utils/scoring.ts
+
+Group stage: iterates over official results; for each game with a known result,
+compares the participant's predicted score. Skips games with empty/invalid bets.
+
+Knockout stage: builds a set of actual round winners from the results object
+(keyed by match IDs like r32_01, sf_01, final), then checks how many of the
+participant's picks appear in that set per round.
+
+The scoring config (DEFAULT_SCORING in src/data/bracket.ts) defines all point
+values and can be overridden per-group for custom bolão variants.
+
+================================================================================
+PART 10 — DATA MODEL SUMMARY
+================================================================================
+
+Group bets (GroupBets):
+  { [gameId: string]: { homeGoals: string; awayGoals: string } }
+  gameId format: "A_0" through "L_5" (group letter + underscore + match index 0–5)
+
+Knockout bets (KnockoutBets):
+  {
+    r32?:      TeamId[]   // teams picked to advance to R16 (up to 16)
+    r16?:      TeamId[]   // teams picked to reach QF (up to 8)
+    qf?:       TeamId[]   // teams picked to reach SF (up to 4)
+    sf?:       TeamId[]   // teams picked to reach Final (up to 2)
+    champion?: TeamId     // predicted champion
+    third?:    TeamId     // predicted third-place winner
+  }
+
+Results (Results):
+  {
+    groupStage: { [gameId]: { homeGoals: string; awayGoals: string } }
+    knockout:   { [matchId]: TeamId }
+      matchId examples: "r32_01", "r16_03", "qf_02", "sf_01", "third", "final"
+  }
+
+Firestore paths:
+  users/{uid}/bets/groupStage  — participant's group bets
+  users/{uid}/bets/knockout    — participant's knockout bets
+  results/groupStage           — official group stage results (admin writes)
+  results/knockout             — official knockout results (admin writes)
+  ranking/current              — cached ranking entries
+
+================================================================================
+END OF DOCUMENT
+================================================================================

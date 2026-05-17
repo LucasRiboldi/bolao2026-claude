@@ -1,0 +1,651 @@
+================================================================================
+BOLÃO COPA DO MUNDO FIFA 2026 — MANUAL COMPLETO DO SISTEMA
+================================================================================
+Versão 2.0 | Maio 2026
+Aplicação web: https://bolao2026-a76c7.web.app
+Repositório:   https://github.com/LucasRiboldi/bolao2026-claude
+================================================================================
+
+
+ÍNDICE
+------
+1. Visão geral do sistema
+2. Estrutura do torneio FIFA Copa 2026
+3. Fase de Grupos — regras e classificação
+4. Melhores terceiros — seleção e ordenação
+5. Chaveamento (Round de 32 — 16 jogos)
+6. Fase mata-mata — rodadas até a Final
+7. Sistema de apostas — o que o usuário preenche
+8. Tabela de pontuação do bolão
+9. Matemática da pontuação — cálculo detalhado
+10. Critérios de desempate no ranking
+11. Bônus do finalista — lógica especial
+12. Dados técnicos: IDs, modelos e persistência
+13. Funções de administração
+
+
+================================================================================
+1. VISÃO GERAL DO SISTEMA
+================================================================================
+
+O Bolão Copa 2026 é um sistema de palpites online onde participantes apostam
+nos resultados da Copa do Mundo FIFA 2026 antes de cada partida acontecer. Ao
+final do torneio, os palpites são comparados com os resultados reais e cada
+participante recebe uma pontuação total.
+
+O sistema tem duas camadas de apostas:
+
+  CAMADA 1 — Fase de Grupos (72 jogos)
+  O participante aposta o placar exato de cada jogo da fase de grupos.
+  Ex.: Brasil 2 x 1 Marrocos, Alemanha 0 x 0 Marfim, etc.
+  São 12 grupos × 6 jogos cada = 72 jogos no total.
+
+  CAMADA 2 — Mata-Mata (round de 32 até a Final)
+  O participante seleciona quais seleções avançam em cada rodada.
+  Não há apostas de placar no mata-mata — apenas "quem vai passar".
+  São 6 fases: Round de 32, Oitavas, Quartas, Semifinais, Final e 3° Lugar.
+
+A pontuação de cada camada é somada para gerar o placar total do participante.
+O ranking é calculado em tempo real e atualizado pelo administrador após cada
+rodada do torneio.
+
+
+================================================================================
+2. ESTRUTURA DO TORNEIO FIFA COPA 2026
+================================================================================
+
+A Copa do Mundo 2026 é a primeira edição com 48 seleções (antes eram 32).
+O torneio é dividido em:
+
+  FASE DE GRUPOS
+  48 seleções divididas em 12 grupos (A a L) de 4 times cada.
+  Cada grupo joga 6 partidas (todos contra todos — round-robin).
+  Classificam os 2 primeiros de cada grupo + os 8 melhores terceiros.
+  Total de classificados para o mata-mata: 16×2 + 8×1 = 24 + 8 = 32 seleções.
+
+  MATA-MATA
+  Round de 32: 16 jogos → 16 classificados
+  Oitavas de final (R16): 8 jogos → 8 classificados
+  Quartas de final (QF): 4 jogos → 4 classificados
+  Semifinais (SF): 2 jogos → 2 finalistas + 2 para disputa do 3° lugar
+  Disputa do 3° Lugar: 1 jogo
+  Final: 1 jogo
+
+  Total de partidas no mata-mata: 16 + 8 + 4 + 2 + 1 + 1 = 32 partidas.
+  Total geral do torneio: 72 (grupos) + 32 (mata-mata) = 104 partidas.
+
+Grupos do torneio com as seleções classificadas (sorteio de 5 dez 2025):
+
+  Grupo A: México, África do Sul, Coreia do Sul, República Tcheca
+  Grupo B: Canadá, Suíça, Qatar, Bósnia e Herzegovina
+  Grupo C: Brasil, Marrocos, Haiti, Escócia
+  Grupo D: Estados Unidos, Paraguai, Austrália, Turquia
+  Grupo E: Alemanha, Curaçao, Costa do Marfim, Equador
+  Grupo F: Países Baixos, Japão, Tunísia, Suécia
+  Grupo G: Bélgica, Egito, Irã, Nova Zelândia
+  Grupo H: Espanha, Cabo Verde, Arábia Saudita, Uruguai
+  Grupo I: França, Senegal, Noruega, Iraque
+  Grupo J: Argentina, Argélia, Áustria, Jordânia
+  Grupo K: Portugal, Uzbequistão, Colômbia, República Democrática do Congo
+  Grupo L: Inglaterra, Croácia, Gana, Panamá
+
+
+================================================================================
+3. FASE DE GRUPOS — REGRAS E CLASSIFICAÇÃO
+================================================================================
+
+COMO FUNCIONA O ROUND-ROBIN DE 4 TIMES
+
+Em cada grupo há 4 seleções (T0, T1, T2, T3). As partidas são geradas na
+seguinte ordem fixa (calendário oficial):
+
+  Rodada 1: T0 × T1  e  T2 × T3
+  Rodada 2: T0 × T2  e  T1 × T3
+  Rodada 3: T0 × T3  e  T1 × T2
+
+Isso gera C(4,2) = 6 partidas por grupo. Cada seleção joga exatamente 3 vezes.
+
+IDs das partidas no banco de dados:
+  Jogo 0 da Rodada 1: "A_0", "B_0", ... "L_0"
+  Jogo 1 da Rodada 1: "A_1", "B_1", ... "L_1"
+  ... até ...
+  Jogo 5 da Rodada 3: "A_5", "B_5", ... "L_5"
+
+SISTEMA DE PONTOS (regra FIFA padrão)
+  Vitória:  3 pontos
+  Empate:   1 ponto para cada seleção
+  Derrota:  0 pontos
+
+CRITÉRIOS DE CLASSIFICAÇÃO DENTRO DO GRUPO
+
+Quando duas ou mais seleções estão empatadas em pontos, a FIFA aplica os
+critérios nesta ordem exata:
+
+  1. Mais pontos no geral (já empatados — passa para o próximo)
+  2. Saldo de gols nos jogos diretos entre os empatados (confronto direto)
+  3. Gols pró nos jogos diretos entre os empatados
+  4. Saldo de gols geral no grupo (todos os 3 jogos)
+  5. Gols pró geral no grupo
+
+No código, a função "rankGroupTeams" implementa exatamente essa hierarquia.
+Primeiro ordena todos por pontos. Para cada bloco de times com pontos iguais,
+recalcula as estatísticas considerando apenas os confrontos entre esses times
+(head-to-head) e os reordena pelos critérios 2, 3, 4, 5 nessa ordem.
+
+Exemplo prático (Grupo C):
+  Suponha que ao fim dos jogos Brasil e Marrocos têm 6 pontos cada.
+  O sistema olha apenas para o jogo Brasil × Marrocos:
+  - Se Brasil venceu aquele jogo → Brasil fica em 1° no desempate
+  - Se empataram → compara saldo de gols naquele jogo (sempre 0 vs 0)
+    então passa para saldo geral, depois gols pró geral.
+
+
+================================================================================
+4. MELHORES TERCEIROS — SELEÇÃO E ORDENAÇÃO
+================================================================================
+
+Com 12 grupos, há 12 seleções que terminam em 3° lugar. Dessas, apenas as
+8 melhores avançam para o mata-mata (Round de 32).
+
+A ordenação dos terceiros é feita pelos seguintes critérios, nesta ordem:
+
+  1. Pontos (decrescente)
+  2. Saldo de gols (decrescente)
+  3. Gols pró (decrescente)
+  4. Gols contra (crescente — menos gols sofridos é melhor)
+
+No código, a função "getQualified" coleta o 3° colocado de cada grupo,
+anexa a ele o ID do grupo de origem (necessário para o chaveamento), ordena
+pela lista acima e retorna os 8 primeiros.
+
+Os 8 melhores terceiros são designados internamente como T3_1 a T3_8 (em ordem
+de classificação entre terceiros). Essa designação define qual confronto eles
+entram no Round de 32, conforme o chaveamento oficial da FIFA.
+
+
+================================================================================
+5. CHAVEAMENTO — ROUND DE 32 (16 JOGOS)
+================================================================================
+
+O chaveamento oficial foi definido no sorteio da FIFA em 5 de dezembro de 2025.
+Ele determina quais posições de grupo enfrentam quais no Round de 32.
+
+Os 32 participantes do mata-mata são identificados por suas posições:
+  "1A" = 1° do Grupo A
+  "2B" = 2° do Grupo B
+  "T3_1" = Melhor 3° colocado (1° da tabela de terceiros)
+  ... até T3_8
+
+Os 16 confrontos do Round de 32 (conforme sorteio oficial):
+
+  Jogo R32-01: 2° do Grupo A       × 2° do Grupo B
+  Jogo R32-02: 1° do Grupo E       × Melhor 3° (T3_1)
+  Jogo R32-03: 1° do Grupo F       × 2° do Grupo C
+  Jogo R32-04: 1° do Grupo C       × 2° do Grupo F
+  Jogo R32-05: 1° do Grupo I       × Melhor 3° (T3_2)
+  Jogo R32-06: 2° do Grupo E       × 2° do Grupo I
+  Jogo R32-07: 1° do Grupo A       × Melhor 3° (T3_3)
+  Jogo R32-08: 1° do Grupo L       × Melhor 3° (T3_4)
+  Jogo R32-09: 1° do Grupo D       × Melhor 3° (T3_5)
+  Jogo R32-10: 1° do Grupo G       × Melhor 3° (T3_6)
+  Jogo R32-11: 2° do Grupo K       × 2° do Grupo L
+  Jogo R32-12: 1° do Grupo H       × 2° do Grupo J
+  Jogo R32-13: 1° do Grupo B       × Melhor 3° (T3_7)
+  Jogo R32-14: 1° do Grupo J       × 2° do Grupo H
+  Jogo R32-15: 1° do Grupo K       × Melhor 3° (T3_8)
+  Jogo R32-16: 2° do Grupo D       × 2° do Grupo G
+
+COMO O SISTEMA RESOLVE O CHAVEAMENTO
+
+A função "buildR32" recebe os times qualificados (vindos de "getQualified") e
+mapeia cada posição de slot para o ID real da seleção:
+
+  "1X" → winners[X]  (1° colocado do Grupo X)
+  "2X" → runners[X]  (2° colocado do Grupo X)
+  "T3_N" → thirds[N-1]  (N-ésimo melhor terceiro)
+
+Se o participante ainda não preencheu todos os palpites de grupos, algumas
+posições retornam "undefined" (slot vazio) — o chaveamento fica parcialmente
+preenchido até que todos os 72 palpites de grupos sejam inseridos.
+
+CHAVEAMENTO DAS RODADAS SEGUINTES
+
+Cada jogo das Oitavas, Quartas e Semifinais é definido pelo vencedor de dois
+jogos anteriores. A notação usada no sistema é:
+
+  "W:r32_02" = vencedor do jogo R32-02
+  "W:r16_01" = vencedor do jogo das Oitavas 01
+  "L:sf_01"  = perdedor da Semifinal 01 (para disputa do 3° lugar)
+
+A montagem completa é:
+
+  OITAVAS (R16):
+    R16-01: W:R32-02 × W:R32-05
+    R16-02: W:R32-01 × W:R32-03
+    R16-03: W:R32-04 × W:R32-06
+    R16-04: W:R32-07 × W:R32-08
+    R16-05: W:R32-11 × W:R32-12
+    R16-06: W:R32-09 × W:R32-10
+    R16-07: W:R32-14 × W:R32-16
+    R16-08: W:R32-13 × W:R32-15
+
+  QUARTAS (QF):
+    QF-01: W:R16-01 × W:R16-02
+    QF-02: W:R16-05 × W:R16-06
+    QF-03: W:R16-03 × W:R16-04
+    QF-04: W:R16-07 × W:R16-08
+
+  SEMIFINAIS (SF):
+    SF-01: W:QF-01 × W:QF-02
+    SF-02: W:QF-03 × W:QF-04
+
+  TERCEIRO LUGAR: L:SF-01 × L:SF-02
+  FINAL: W:SF-01 × W:SF-02
+
+No sistema de apostas, isso funciona de forma fluída: as seleções que o
+participante escolheu para avançar no Round de 32 são exatamente as que
+aparecem disponíveis para escolha nas Oitavas, e assim por diante. Cada
+rodada alimenta a próxima.
+
+
+================================================================================
+6. FASE MATA-MATA — RODADAS ATÉ A FINAL
+================================================================================
+
+No mata-mata, em caso de empate no tempo regulamentar (90 minutos), vai para
+prorrogação (2 × 15 min) e, se necessário, pênaltis. Sempre há um vencedor.
+Não há possibilidade de empate definitivo no mata-mata.
+
+O sistema de apostas não pede palpite de placar para o mata-mata. O participante
+apenas indica quais seleções ele acredita que irão avançar em cada rodada.
+
+Disputa do 3° lugar: os dois perdedores das Semifinais se enfrentam. O
+participante escolhe qual dos dois perdedores de SF vai ganhar. Para saber
+quem são os candidatos, o sistema olha para as escolhas da fase de Quartas
+que NÃO foram escolhidas para as Semifinais:
+
+  Candidatos ao 3° lugar = (escolhas das Quartas) MENOS (escolhas das Semifinais)
+
+Isso garante que os candidatos ao bronze sejam exatamente os dois times que
+o participante imaginou que perderam as Semifinais, respeitando a lógica do
+chaveamento.
+
+
+================================================================================
+7. SISTEMA DE APOSTAS — O QUE O USUÁRIO PREENCHE
+================================================================================
+
+APOSTAS DA FASE DE GRUPOS
+
+Para cada um dos 72 jogos, o participante informa:
+  - Gols do time da casa (mínimo 0, sem limite máximo)
+  - Gols do visitante (mínimo 0, sem limite máximo)
+
+Exemplo: "Brasil 3 × 1 Marrocos"
+
+O sistema calcula automaticamente a tabela de classificação simulada do grupo
+com base nos palpites inseridos, e usa essa classificação simulada para montar
+o chaveamento do mata-mata.
+
+APOSTAS DO MATA-MATA (modelo de seleção por rounds)
+
+O participante NÃO aposta em confrontos diretos. Ele simplesmente seleciona
+quais seleções ele acha que avançam em cada fase:
+
+  Round de 32: seleciona 16 das 32 qualificadas → estas 16 avançam nas apostas
+  Oitavas:     seleciona 8 das 16 escolhidas no R32 → estas 8 avançam
+  Quartas:     seleciona 4 das 8 escolhidas nas Oitavas → estas 4 avançam
+  Semifinais:  seleciona 2 das 4 escolhidas nas Quartas → estes são os finalistas
+  Campeão:     seleciona 1 dos 2 finalistas → este é o campeão apostado
+  3° Lugar:    seleciona 1 dos 2 "perdedores" de Quartas que não foram para SF
+
+A seleção é livre — sem restrição de confrontos. O participante pode, por
+exemplo, escolher duas seleções que se enfrentaram no R32 para ambas avançarem
+(imaginando resultados distintos do que o real).
+
+Quando o participante desmarca uma seleção de uma fase, ela é removida
+automaticamente de todas as fases seguintes onde estava selecionada (cascata).
+
+FINALIZAÇÃO DAS APOSTAS
+
+Ao clicar em "Finalizar e Salvar Apostas", o perfil do participante recebe
+o flag "betsLocked = true". A partir desse momento:
+  - Os campos ficam somente leitura (não é mais possível alterar)
+  - O admin pode desbloquear manualmente se necessário
+  - As apostas ficam visíveis para cálculo de pontuação
+
+
+================================================================================
+8. TABELA DE PONTUAÇÃO DO BOLÃO
+================================================================================
+
+A pontuação tem dois blocos: Fase de Grupos e Mata-Mata.
+
+FASE DE GRUPOS
++-----------------------+--------+
+| Evento                | Pontos |
++-----------------------+--------+
+| Placar exato          |   17   |
+| Resultado correto*    |    8   |
++-----------------------+--------+
+* Resultado correto = acertou quem ganhou/empatou mas errou o placar
+  Ex.: apostou 3×1, saiu 2×0. Casa ganhou nos dois casos → 8 pontos.
+  Ex.: apostou 1×1, saiu 2×2. Empate nos dois casos → 8 pontos.
+
+MATA-MATA
++--------------------------+--------+
+| Evento                   | Pontos |
++--------------------------+--------+
+| Acertar classificado R32 |    5   |
+| Acertar classificado R16 |   11   |
+| Acertar classificado QF  |   20   |
+| Acertar classificado SF  |   40   |
+| Acertar 3° lugar         |    5   |
+| Acertar campeão          |   71   |
+| Bônus finalista*         |   26   |
++--------------------------+--------+
+* Bônus especial: se o participante acertou AMBOS os dois finalistas
+  (as duas seleções que chegaram à Final), recebe 26 pontos extras.
+  Os 40 pts de SF × 2 + o bônus de 26 = 106 pts adicionais para quem
+  acertou os dois finalistas além dos pontos do campeão.
+
+PONTUAÇÃO MÁXIMA TEÓRICA
+
+Fase de Grupos:
+  72 jogos × 17 pts cada = 1.224 pontos (placar exato em todos)
+
+Mata-Mata (cenário de acertar tudo):
+  16 classificados do R32: 16 × 5  =  80
+   8 classificados do R16:  8 × 11 =  88
+   4 classificados do QF:   4 × 20 =  80
+   2 classificados do SF:   2 × 40 =  80
+   Bônus finalista:             26 =  26
+   Acerto 3° lugar:              5 =   5
+   Acerto campeão:              71 =  71
+  Subtotal mata-mata:              = 430
+
+Total máximo teórico: 1.224 + 430 = 1.654 pontos
+
+
+================================================================================
+9. MATEMÁTICA DA PONTUAÇÃO — CÁLCULO DETALHADO
+================================================================================
+
+A função "calculateScore" recebe três entradas:
+  - groupBets: palpites de placares dos grupos
+  - knockoutBets: seleções do mata-mata
+  - results: resultados oficiais (lançados pelo admin)
+
+ALGORITMO — FASE DE GRUPOS
+
+Para cada jogo que já tem resultado oficial (results.groupStage[gameId]):
+
+  Passo 1: busca o palpite do participante (groupBets[gameId])
+  Passo 2: converte todos os valores para inteiro com parseInt()
+  Passo 3: se qualquer valor for inválido (NaN, campo vazio) → pula o jogo
+  Passo 4: compara:
+    → Se betHome === realHome E betAway === realAway → +17 pts, exact++
+    → Se Math.sign(betHome - betAway) === Math.sign(realHome - realAway)
+         → +8 pts, result++
+    → Caso contrário → 0 pts
+
+A função Math.sign retorna:
+   1 se o número é positivo (time da casa venceu)
+   0 se é zero (empate)
+  -1 se é negativo (visitante venceu)
+
+Portanto, o critério "resultado correto" é simplesmente: o sinal da diferença
+de gols apostada é igual ao sinal da diferença real.
+
+ALGORITMO — MATA-MATA
+
+Passo 1: monta 4 conjuntos (Sets) de times que realmente avançaram em cada fase,
+lendo os resultados reais por prefixo de ID:
+  - results.knockout["r32_XX"] → advanced.r32.add(winnerId)
+  - results.knockout["r16_XX"] → advanced.r16.add(winnerId)
+  - results.knockout["qf_XX"]  → advanced.qf.add(winnerId)
+  - results.knockout["sf_XX"]  → advanced.sf.add(winnerId)
+
+Passo 2: para cada time na aposta de cada fase, verifica se ele está no
+conjunto real daquela fase:
+
+  Para cada time em knockoutBets.r32:
+    SE advanced.r32.has(time) → +5 pts, ko++
+
+  Para cada time em knockoutBets.r16:
+    SE advanced.r16.has(time) → +11 pts, ko++
+
+  Para cada time em knockoutBets.qf:
+    SE advanced.qf.has(time) → +20 pts, ko++
+
+  Para cada time em knockoutBets.sf:
+    SE advanced.sf.has(time) → +40 pts, ko++
+
+Passo 3: acerto do 3° lugar
+  SE knockoutBets.third === results.knockout["third"] → +5 pts, ko++
+
+Passo 4: acerto do campeão
+  SE knockoutBets.champion === results.knockout["final"] → +71 pts, ko++
+
+Passo 5: bônus do finalista
+  SE os 2 times em knockoutBets.sf AMBOS estão em advanced.sf
+     (ou seja, ambos realmente chegaram à Final)
+  → +26 pts, bonus = 26
+
+EXEMPLO PRÁTICO COMPLETO
+
+Suponha que o participante apostou nos grupos e no mata-mata:
+  - Fase de grupos: fez 72 palpites. 40 resultados corretos, 10 exatos.
+  - Mata-mata: acertou 12 dos 16 do R32, 5 dos 8 do R16, 2 dos 4 do QF,
+    1 dos 2 do SF, errou o campeão, acertou o 3° lugar, e o único SF
+    correto não era um dos dois finalistas reais (sem bônus).
+
+Cálculo:
+  Grupos:   10 × 17 = 170  (exatos)
+            40 ×  8 = 320  (resultado certo)
+            Subtotal grupos = 490
+
+  Mata-mata:
+    12 × 5  =  60  (R32)
+     5 × 11 =  55  (R16)
+     2 × 20 =  40  (QF)
+     1 × 40 =  40  (SF)
+     1 × 5  =   5  (3° lugar)
+     0 × 71 =   0  (campeão — errou)
+     Bônus   =   0  (não acertou ambos finalistas)
+    Subtotal mata-mata = 200
+
+  TOTAL: 490 + 200 = 690 pontos
+
+
+================================================================================
+10. CRITÉRIOS DE DESEMPATE NO RANKING
+================================================================================
+
+Quando dois participantes têm o mesmo total de pontos, o sistema usa os
+seguintes critérios de desempate, nesta ordem de prioridade:
+
+  1. Maior número de placares exatos nos grupos (breakdown.exact)
+  2. Maior número de resultados corretos nos grupos (breakdown.result)
+  3. Maior número de acertos no mata-mata (breakdown.ko)
+  4. Ordem alfabética do nome do participante (último recurso)
+
+A função "sortRanking" implementa esse desempate em uma única expressão de
+comparação encadeada:
+
+  b.pts - a.pts                          (pontos, decrescente)
+  || b.breakdown.exact - a.breakdown.exact  (exatos, decrescente)
+  || b.breakdown.result - a.breakdown.result (resultados, decrescente)
+  || b.breakdown.ko - a.breakdown.ko        (ko, decrescente)
+  || a.name.localeCompare(b.name)           (nome, crescente)
+
+O ranking é armazenado no Firestore (ranking/current) como um array já
+ordenado. O admin recalcula manualmente após cada rodada de resultados usando
+a ferramenta "Simular" ou lançando os resultados reais.
+
+
+================================================================================
+11. BÔNUS DO FINALISTA — LÓGICA ESPECIAL
+================================================================================
+
+O bônus de 26 pontos é concedido apenas quando o participante acertou os DOIS
+finalistas da Copa. Isso significa que ambas as seleções em "knockoutBets.sf"
+devem estar em "advanced.sf" (conjunto dos dois vencedores das Semifinais).
+
+A verificação é:
+  sfPicks = knockoutBets.sf ?? []
+  SE sfPicks.length === 2 E sfPicks[0] ∈ advanced.sf E sfPicks[1] ∈ advanced.sf
+  ENTÃO bônus = 26 pts
+
+Isso é independente de ter acertado o campeão. Exemplo:
+  Participante apostou França e Brasil como finalistas. (knockoutBets.sf = ["france", "brazil"])
+  Real: França × Argentina na Final. (advanced.sf = {"france", "argentina"})
+  Resultado:
+    - França ∈ advanced.sf → +40 pts (sf)
+    - Brasil ∉ advanced.sf → 0 pts (sf)
+    - Bônus: NÃO (não acertou ambos os dois finalistas)
+
+Outro exemplo:
+  Participante apostou França e Argentina como finalistas.
+  Real: França × Argentina na Final.
+    - França ∈ advanced.sf → +40 pts
+    - Argentina ∈ advanced.sf → +40 pts
+    - Bônus: SIM → +26 pts
+    Total SF + bônus = 106 pts
+
+O bônus existe para valorizar quem "viu" a Final antes mesmo de ela acontecer.
+Acertar um finalista é difícil; acertar os dois merece recompensa extra.
+
+
+================================================================================
+12. DADOS TÉCNICOS: IDs, MODELOS E PERSISTÊNCIA
+================================================================================
+
+IDENTIFICADORES DE PARTIDAS
+
+Fase de grupos:
+  Formato: "{grupo}_{índice}"  ex.: "A_0", "C_3", "L_5"
+  Grupos: A a L (12 grupos)
+  Índices: 0 a 5 (6 jogos por grupo)
+  Total: 72 IDs únicos
+
+Mata-mata:
+  Round de 32:  "r32_01" até "r32_16" (16 partidas)
+  Oitavas:      "r16_01" até "r16_08" (8 partidas)
+  Quartas:      "qf_01"  até "qf_04"  (4 partidas)
+  Semifinais:   "sf_01", "sf_02"      (2 partidas)
+  3° Lugar:     "third"               (1 partida)
+  Final:        "final"               (1 partida)
+
+ESTRUTURA DE DADOS DAS APOSTAS
+
+GroupBets (apostas de grupos):
+  Record<gameId, { homeGoals: string, awayGoals: string }>
+  Exemplo: { "C_0": { homeGoals: "2", awayGoals: "1" }, ... }
+  Os gols são armazenados como string para suportar o estado vazio ("").
+
+KnockoutBets (apostas do mata-mata):
+  {
+    r32?:      string[]   — até 16 teamIds
+    r16?:      string[]   — até 8 teamIds
+    qf?:       string[]   — até 4 teamIds
+    sf?:       string[]   — até 2 teamIds
+    champion?: string     — 1 teamId (campeão apostado)
+    third?:    string     — 1 teamId (3° lugar apostado)
+  }
+
+Results (resultados oficiais lançados pelo admin):
+  {
+    groupStage: Record<gameId, { homeGoals: string, awayGoals: string }>
+    knockout:   Record<matchId, teamId>
+  }
+  O campo "knockout" usa matchId como chave e o ID da seleção vencedora
+  como valor (ex.: { "r32_01": "brazil", "final": "argentina" }).
+
+PERSISTÊNCIA — FIRESTORE
+
+Estrutura de coleções:
+
+  users/{uid}/
+    profile/info  → { name, email, betsLocked, betsSavedAt }
+    bets/groupStage  → GroupBets completo
+    bets/knockout    → KnockoutBets completo
+
+  results/
+    groupStage  → resultados oficiais da fase de grupos
+    knockout    → resultados oficiais do mata-mata
+
+  ranking/
+    current  → { entries: RankingEntry[] }
+               onde RankingEntry = { uid, name, pts, breakdown }
+
+  config/
+    admin   → { registrationOpen, globalLocked, globalLockedAt }
+    scoring → configuração de pontos (pode ser sobrescrita pelo admin)
+
+REGRAS DE SEGURANÇA DO FIRESTORE
+
+  - Leitura de apostas: qualquer usuário autenticado pode ler apostas de qualquer participante (bolão transparente)
+  - Escrita de apostas (create/update): apenas o próprio usuário ou admin; limitado a 50 campos por documento
+  - Deleção de apostas: apenas o próprio usuário ou admin
+  - Resultados e ranking: somente admin pode escrever
+  - Config: somente admin pode escrever
+  - Admin identificado pelo email: lucasriboldi.dev@gmail.com
+
+IDENTIFICAÇÃO DE SELEÇÕES
+
+Cada seleção tem um ID textual em snake_case (ex.: "brazil", "southkorea",
+"drcongo"). O objeto TEAMS mapeia esses IDs para:
+  - name: nome oficial em português
+  - short: abreviação de 3 letras
+  - flag: URL da bandeira via flagcdn.com
+  - iso: código ISO 3166-1 alpha-2 para renderização de bandeiras
+    (exceções: Escócia = "gb-sct", Inglaterra = "gb-eng")
+
+
+================================================================================
+13. FUNÇÕES DE ADMINISTRAÇÃO
+================================================================================
+
+O administrador (admin) tem acesso a quatro áreas no painel admin:
+
+ABA USUÁRIOS
+  - Listar todos os participantes cadastrados
+  - Ver apostas completas de qualquer participante
+  - Editar apostas de qualquer participante (grupos + mata-mata)
+  - Bloquear/desbloquear apostas individualmente
+  - Excluir todos os dados de um participante (batch delete: profile, bets, documento raiz)
+
+ABA RESULTADOS
+  - Lançar resultados reais jogo a jogo na fase de grupos (12 grupos × 6 jogos)
+  - Lançar resultados reais do mata-mata rodada a rodada
+  - Os resultados são gravados em merge (não apaga o que já foi lançado)
+  - É possível corrigir um resultado relançando o mesmo jogo
+
+ABA CONFIGURAÇÕES
+  - Abre/fecha inscrições para novos participantes
+  - Bloqueia/desbloqueia apostas de todos de uma vez (lock global)
+  - Ajusta a tabela de pontuação (pontos por placar exato, resultado, etc.)
+
+ABA FERRAMENTAS
+  - Ferramenta de seed: popula o sistema com 10 usuários de teste via servidor local
+  - Ferramenta de reset: apaga todos os dados de todos os participantes + resultados + ranking
+    (requer dupla confirmação, executa delete em batch por usuário)
+  - Ferramenta de simulação: gera palpites aleatórios e recalcula o ranking completo
+    (útil para testar o sistema antes do torneio)
+
+FLUXO DE ATUALIZAÇÃO DO RANKING
+
+  1. Admin lança resultado de um conjunto de jogos (ex.: 16 jogos do R32)
+  2. Admin clica em "Recalcular Ranking" na aba Ferramentas
+  3. O sistema busca todos os usuários (via collectionGroup "profile")
+  4. Para cada usuário, busca groupBets e knockoutBets
+  5. Executa calculateScore(groupBets, knockoutBets, results)
+  6. Monta array de RankingEntry ordenado por sortRanking()
+  7. Salva em ranking/current com setDoc (sobrescreve completamente)
+  8. Todos os participantes veem o ranking atualizado em tempo real
+
+
+================================================================================
+FIM DO MANUAL
+================================================================================
