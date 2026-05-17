@@ -418,8 +418,8 @@
   transition: border-color var(--duration-fast) var(--easing-out);
 }
 .admin-scoring-field input:focus {
-  border-color: var(--color-gold-500);
-  box-shadow: 0 0 0 3px var(--gold-dim);
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 3px var(--color-focus-soft);
 }
 
 /* ── Seed section ────────────────────────────────────────────────────────── */

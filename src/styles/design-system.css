@@ -73,6 +73,13 @@
   --text-on-gold:    var(--color-neutral-950);
   --text-on-green:   var(--color-neutral-0);
 
+  /* Interaction state — focus separated from gold so that gold can be
+     reserved exclusively for selection/achievement (podium, picked KO chip,
+     filled stepper, gold badge). Focus ring uses info-blue to be visually
+     distinct without competing with the brand. */
+  --color-focus:        var(--color-info);
+  --color-focus-soft:   var(--color-info-soft);
+
   /* Legacy aliases — kept for backward compatibility ────────── */
   --surface2:    var(--surface-raised);
   --gold:        var(--color-gold-500);

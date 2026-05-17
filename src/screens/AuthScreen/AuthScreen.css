@@ -40,25 +40,17 @@
   filter: blur(55px);
   pointer-events: none;
 }
-.auth-orb--green  { width: 200px; height: 200px; background: rgba(26,127,55,.4);   top: -70px; left: -60px;  animation: orbFloat 7s ease-in-out infinite; }
-.auth-orb--gold   { width: 130px; height: 130px; background: rgba(212,170,44,.3);  top: 10px;  right: -30px; animation: orbFloat 9s ease-in-out infinite reverse; }
-.auth-orb--bottom { width: 80px;  height: 80px;  background: rgba(26,127,55,.2);   bottom: 0;  left: 40%;    animation: orbFloat 6s ease-in-out infinite; }
-@keyframes orbFloat { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-10px) } }
+/* Single subtle green orb behind the logo. Gold/bottom orbs removed — they
+   competed with the title shimmer for attention. */
+.auth-orb--green {
+  width: 220px; height: 220px;
+  background: rgba(26,127,55,.35);
+  top: -80px; left: 50%;
+  transform: translateX(-50%);
+  animation: orbFloat 8s ease-in-out infinite;
+}
+@keyframes orbFloat { 0%,100% { transform: translateX(-50%) translateY(0) } 50% { transform: translateX(-50%) translateY(-8px) } }
 
-.auth-field-grid {
-  position: absolute; inset: 0;
-  background-image:
-    linear-gradient(rgba(26,127,55,.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(26,127,55,.07) 1px, transparent 1px);
-  background-size: 24px 24px;
-  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.6) 25%, rgba(0,0,0,.6) 75%, transparent 100%);
-  pointer-events: none;
-}
-.auth-field-center {
-  position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
-  width: 40px; height: 40px; border-radius: 50%;
-  border: 1.5px solid rgba(26,127,55,.22); pointer-events: none;
-}
 .auth-spotlights {
   position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;
 }
@@ -79,10 +71,7 @@
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
 }
-.auth-badge-dot {
-  width: 6px; height: 6px; border-radius: 50%; background: var(--color-danger);
-  animation: badgePulse 1.3s infinite;
-}
+/* badgePulse keyframe kept here because match-card live ribbon still uses it */
 @keyframes badgePulse { 0%,100%{opacity:.4} 50%{opacity:1} }
 
 .auth-logo {

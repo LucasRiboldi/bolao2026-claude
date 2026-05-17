@@ -118,12 +118,11 @@ export function AuthScreen() {
     <div className="auth-screen">
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
+      {/* Reduced decoration: 1 subtle green orb behind the logo + spotlights.
+          Removed gold/bottom orbs, field grid + center, and the "ao vivo agora"
+          badge dot (was UX-misleading — Copa hasn't started yet). */}
       <div className="auth-hero">
         <div className="auth-orb auth-orb--green" />
-        <div className="auth-orb auth-orb--gold" />
-        <div className="auth-orb auth-orb--bottom" />
-        <div className="auth-field-grid" />
-        <div className="auth-field-center" />
 
         <svg className="auth-spotlights" preserveAspectRatio="none" viewBox="0 0 400 260" aria-hidden="true">
           <defs>
@@ -141,8 +140,7 @@ export function AuthScreen() {
         </svg>
 
         <div className="auth-badge" aria-hidden="true">
-          <span className="auth-badge-dot" />
-          <span>⚡ Copa do Mundo · Ao vivo agora!</span>
+          <span>⚽ Copa do Mundo · 11 jun 2026</span>
         </div>
 
         <img
