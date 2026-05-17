@@ -337,6 +337,24 @@ h4 { font-size: var(--text-md);  }
   flex-shrink: 0;
 }
 
+/* ── Team name (responsive: short on mobile, full on tablet+) ──────────────── */
+.team-name {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.team-name--responsive {
+  display: inline-flex;
+  align-items: baseline;
+}
+.team-name--responsive .team-name__full  { display: none; }
+.team-name--responsive .team-name__short { display: inline; }
+@media (min-width: 640px) {
+  .team-name--responsive .team-name__full  { display: inline; }
+  .team-name--responsive .team-name__short { display: none; }
+}
+
 /* ── Reduced motion ────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

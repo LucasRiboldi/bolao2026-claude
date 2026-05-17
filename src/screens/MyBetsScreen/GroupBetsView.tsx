@@ -3,6 +3,7 @@ import type { GroupId, GroupBets } from '@/types'
 import { GROUP_IDS, generateGroupGames, GROUP_COLORS } from '@/data/groups'
 import { TEAMS } from '@/data/teams'
 import { Flag } from '@/components/Flag'
+import { TeamName } from '@/components/TeamName'
 import { DEFAULT_SCORING } from '@/data/bracket'
 
 interface RowProps {
@@ -38,7 +39,7 @@ function MatchSheetRow({ gameId, home, away, bets, results }: RowProps) {
       <div className="sheet-teams">
         <div className="sheet-team sheet-team--home">
           {homeTeam && <Flag iso={homeTeam.iso} name={homeTeam.name} size="sm" />}
-          <span className="sheet-team__name">{homeTeam?.name ?? home}</span>
+          <TeamName teamId={home} className="sheet-team__name" />
         </div>
 
         <div className="sheet-score">
@@ -50,7 +51,7 @@ function MatchSheetRow({ gameId, home, away, bets, results }: RowProps) {
         </div>
 
         <div className="sheet-team sheet-team--away">
-          <span className="sheet-team__name">{awayTeam?.name ?? away}</span>
+          <TeamName teamId={away} className="sheet-team__name" />
           {awayTeam && <Flag iso={awayTeam.iso} name={awayTeam.name} size="sm" />}
         </div>
       </div>

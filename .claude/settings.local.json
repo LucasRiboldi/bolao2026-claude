@@ -14,7 +14,20 @@
       "Bash(npm install *)",
       "Bash(npm test *)",
       "Bash(npx vitest *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(Find-Item -Path \"C:\\\\Users\\\\lucas\\\\Desktop\\\\bolao2026-claude\\\\.claude\\\\worktrees\\\\gallant-curie-783d94\" -Name \"types.ts\" -Type File)",
+      "Read(//c/Users/lucas/Desktop/bolao2026-claude/.claire/worktrees/gallant-curie-783d94/**)",
+      "Bash(npx tsc *)",
+      "Bash(node_modules\\\\.bin\\\\tsc --noEmit)",
+      "Bash(git rebase *)",
+      "Bash(git stash *)",
+      "mcp__plugin_pdf-viewer_pdf__display_pdf",
+      "Bash(cp \"C:\\\\Users\\\\lucas\\\\Desktop\\\\bolao2026-claude\\\\public\\\\FWC26_regulations_EN.pdf\" \"C:\\\\Users\\\\lucas\\\\Desktop\\\\bolao2026-claude\\\\.claude\\\\worktrees\\\\gallant-curie-783d94\\\\public\\\\FWC26_regulations_EN.pdf\")",
+      "mcp__plugin_pdf-viewer_pdf__interact",
+      "Bash(python3 -c \"import PyPDF2\")",
+      "Bash(pdftotext \"C:\\\\Users\\\\lucas\\\\Desktop\\\\bolao2026-claude\\\\public\\\\FWC26_regulations_EN.pdf\" -)",
+      "Bash(xargs wc -l)",
+      "Bash(grep -oE \"#[0-9a-fA-F]{3,8}\")"
     ]
   }
 }
