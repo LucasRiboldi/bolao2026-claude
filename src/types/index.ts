@@ -59,7 +59,18 @@ export interface GoalBet {
 }
 
 export type GroupBets = Record<string, GoalBet>    // gameId → bet
-export type KnockoutBets = Record<string, TeamId>  // matchId → teamId
+
+export type KoArrayKey  = 'r32' | 'r16' | 'qf' | 'sf'
+export type KoSingleKey = 'champion' | 'third'
+
+export interface KnockoutBets {
+  r32?:      TeamId[]
+  r16?:      TeamId[]
+  qf?:       TeamId[]
+  sf?:       TeamId[]
+  champion?: TeamId
+  third?:    TeamId
+}
 
 // ── Results ──────────────────────────────────────────────────────────────────
 

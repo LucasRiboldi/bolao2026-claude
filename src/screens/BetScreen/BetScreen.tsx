@@ -13,7 +13,7 @@ export function BetScreen() {
   const { user, profile } = useAuth()
   const locked = profile?.betsLocked ?? false
   const { bets, loading: gLoading, saving, setBet, savePartial, save } = useGroupBets(user?.uid, locked)
-  const { bets: koBets, loading: kLoading, pickWinner, persist } = useKnockoutBets(user?.uid, locked)
+  const { bets: koBets, loading: kLoading, togglePick, setSingle, persist } = useKnockoutBets(user?.uid, locked)
 
   const filled = Object.values(bets).filter(b => b.homeGoals !== '' && b.awayGoals !== '').length
 
@@ -51,7 +51,8 @@ export function BetScreen() {
         groupBets={bets}
         koBets={koBets}
         locked={locked}
-        onPick={pickWinner}
+        onToggle={togglePick}
+        onSingle={setSingle}
       />
 
       {!locked && (

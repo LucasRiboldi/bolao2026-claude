@@ -77,8 +77,8 @@ describe('calculateScore', () => {
     expect(pts).toBe(0)
   })
 
-  it('scores R32 knockout winner', () => {
-    const koBets: KnockoutBets = { r32_01: 'brazil' }
+  it('scores R32 knockout winner (new array model)', () => {
+    const koBets: KnockoutBets = { r32: ['brazil'] }
     const results: Results = {
       groupStage: {},
       knockout: { r32_01: 'brazil' },
@@ -89,7 +89,7 @@ describe('calculateScore', () => {
   })
 
   it('scores champion correctly', () => {
-    const koBets: KnockoutBets = { final: 'brazil' }
+    const koBets: KnockoutBets = { champion: 'brazil' }
     const results: Results = { groupStage: {}, knockout: { final: 'brazil' } }
     const { pts, breakdown } = calculateScore({}, koBets, results)
     expect(pts).toBe(DEFAULT_SCORING.championScore)
@@ -97,7 +97,7 @@ describe('calculateScore', () => {
   })
 
   it('scores finalist bonus when both SF winners are correct', () => {
-    const koBets: KnockoutBets = { sf_01: 'brazil', sf_02: 'argentina' }
+    const koBets: KnockoutBets = { sf: ['brazil', 'argentina'] }
     const results: Results = {
       groupStage: {},
       knockout: { sf_01: 'brazil', sf_02: 'argentina' },
@@ -109,7 +109,7 @@ describe('calculateScore', () => {
   })
 
   it('does NOT award finalist bonus for partial SF correct', () => {
-    const koBets: KnockoutBets = { sf_01: 'brazil', sf_02: 'germany' }
+    const koBets: KnockoutBets = { sf: ['brazil', 'germany'] }
     const results: Results = {
       groupStage: {},
       knockout: { sf_01: 'brazil', sf_02: 'argentina' },

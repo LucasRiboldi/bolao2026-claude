@@ -32,6 +32,8 @@ export function calculateScore(
 
   // ── Knockout ─────────────────────────────────────────────────────────────
   const koResults = results.knockout ?? {}
+
+  // Build sets of actual round winners from results (keyed by matchId prefix)
   const advanced = {
     r32: new Set<string>(),
     r16: new Set<string>(),
@@ -45,33 +47,35 @@ export function calculateScore(
     else if (matchId.startsWith('sf_'))  advanced.sf.add(winnerId)
   }
 
-  for (const [matchId, betTeam] of Object.entries(knockoutBets)) {
-    if (!betTeam || matchId === 'final' || matchId === 'third') continue
-    let pointsForHit = 0
-    if      (matchId.startsWith('r32_') && advanced.r32.has(betTeam)) pointsForHit = scoring.r32Winner
-    else if (matchId.startsWith('r16_') && advanced.r16.has(betTeam)) pointsForHit = scoring.r16Winner
-    else if (matchId.startsWith('qf_')  && advanced.qf.has(betTeam))  pointsForHit = scoring.qfWinner
-    else if (matchId.startsWith('sf_')  && advanced.sf.has(betTeam))  pointsForHit = scoring.sfWinner
-    if (pointsForHit > 0) { pts += pointsForHit; breakdown.ko++ }
+  // Score round picks (arrays)
+  for (const t of knockoutBets.r32 ?? []) {
+    if (advanced.r32.has(t)) { pts += scoring.r32Winner; breakdown.ko++ }
+  }
+  for (const t of knockoutBets.r16 ?? []) {
+    if (advanced.r16.has(t)) { pts += scoring.r16Winner; breakdown.ko++ }
+  }
+  for (const t of knockoutBets.qf ?? []) {
+    if (advanced.qf.has(t)) { pts += scoring.qfWinner; breakdown.ko++ }
+  }
+  for (const t of knockoutBets.sf ?? []) {
+    if (advanced.sf.has(t)) { pts += scoring.sfWinner; breakdown.ko++ }
   }
 
   // Third place exact
-  if (knockoutBets['third'] && koResults['third'] && knockoutBets['third'] === koResults['third']) {
+  if (knockoutBets.third && koResults['third'] === knockoutBets.third) {
     pts += scoring.r32Winner
     breakdown.ko++
   }
 
   // Champion exact
-  const champion = koResults['final']
-  if (champion && knockoutBets['final'] === champion) {
+  if (knockoutBets.champion && koResults['final'] === knockoutBets.champion) {
     pts += scoring.championScore
     breakdown.ko++
   }
 
-  // Finalist bonus (both SF winners correct)
-  const betSf01 = knockoutBets['sf_01']
-  const betSf02 = knockoutBets['sf_02']
-  if (betSf01 && betSf02 && advanced.sf.has(betSf01) && advanced.sf.has(betSf02)) {
+  // Finalist bonus (both SF picks are correct finalists)
+  const sfPicks = knockoutBets.sf ?? []
+  if (sfPicks.length === 2 && sfPicks.every(t => advanced.sf.has(t))) {
     pts += scoring.finalistBonus
     breakdown.bonus = scoring.finalistBonus
   }

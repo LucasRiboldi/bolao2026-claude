@@ -1,113 +1,103 @@
-import type { GroupBets, KnockoutBets, KnockoutMatch, TeamId } from '@/types'
+import type { GroupBets, KnockoutBets, TeamId } from '@/types'
 import { TEAMS } from '@/data/teams'
-import { KNOCKOUT_ROUNDS, buildR32, resolveKnockoutRound, DEFAULT_SCORING } from '@/data/bracket'
+import { buildR32, DEFAULT_SCORING } from '@/data/bracket'
 import { calcGroupStandings, getQualified } from '@/utils/standings'
 import { Flag } from '@/components/Flag'
 
 const ROUND_COLORS: Record<string, string> = {
-  'Round de 32':    '#e74c3c',
-  'Oitavas':        '#e67e22',
-  'Quartas':        '#f39c12',
-  'Semifinais':     '#2ecc71',
-  'Final':          '#d4aa2c',
-  'Terceiro Lugar': '#607d8b',
+  r32:      '#e74c3c',
+  r16:      '#e67e22',
+  qf:       '#f39c12',
+  sf:       '#2ecc71',
+  champion: '#d4aa2c',
+  third:    '#607d8b',
 }
 
-const ROUND_COLS: Record<string, number> = {
-  'Round de 32': 4,
-  'Oitavas':     4,
-  'Quartas':     4,
-  'Semifinais':  2,
+const ROUND_PTS: Record<string, number> = {
+  r32:      DEFAULT_SCORING.r32Winner,
+  r16:      DEFAULT_SCORING.r16Winner,
+  qf:       DEFAULT_SCORING.qfWinner,
+  sf:       DEFAULT_SCORING.sfWinner,
+  champion: DEFAULT_SCORING.championScore,
+  third:    DEFAULT_SCORING.r32Winner,
 }
 
-const ROUND_POINTS: Record<string, number> = {
-  'Round de 32':    DEFAULT_SCORING.r32Winner,
-  'Oitavas':        DEFAULT_SCORING.r16Winner,
-  'Quartas':        DEFAULT_SCORING.qfWinner,
-  'Semifinais':     DEFAULT_SCORING.sfWinner,
-  'Terceiro Lugar': DEFAULT_SCORING.sfWinner,
-  'Final':          DEFAULT_SCORING.championScore,
+function sortTeams(ids: TeamId[]): TeamId[] {
+  return [...ids].sort((a, b) => (TEAMS[a]?.name ?? '').localeCompare(TEAMS[b]?.name ?? '', 'pt-BR'))
 }
 
-type FlatTeam = { teamId: TeamId; matchId: string }
-
-function collectAndSort(matches: KnockoutMatch[]): FlatTeam[] {
-  const result: FlatTeam[] = []
-  for (const m of matches) {
-    if (m.home) result.push({ teamId: m.home as TeamId, matchId: m.id })
-    if (m.away) result.push({ teamId: m.away as TeamId, matchId: m.id })
+function buildActualSets(koResults: Record<string, TeamId>) {
+  const sets = { r32: new Set<string>(), r16: new Set<string>(), qf: new Set<string>(), sf: new Set<string>() }
+  for (const [id, winner] of Object.entries(koResults)) {
+    if (id.startsWith('r32_')) sets.r32.add(winner)
+    else if (id.startsWith('r16_')) sets.r16.add(winner)
+    else if (id.startsWith('qf_'))  sets.qf.add(winner)
+    else if (id.startsWith('sf_'))  sets.sf.add(winner)
   }
-  return result.sort((a, b) =>
-    (TEAMS[a.teamId]?.name ?? '').localeCompare(TEAMS[b.teamId]?.name ?? '', 'pt-BR'),
-  )
+  return sets
 }
 
-function BetsTeamChip({
-  entry, koBets, koResults, roundPts,
+function BetsChip({
+  teamId, picked, correct, wrong, pts,
 }: {
-  entry: FlatTeam
-  koBets: KnockoutBets
-  koResults: Record<string, TeamId>
-  roundPts: number
+  teamId: TeamId; picked: boolean; correct: boolean; wrong: boolean; pts: number
 }) {
-  const team = TEAMS[entry.teamId]
+  const team = TEAMS[teamId]
   if (!team) return null
-  const picked  = koBets[entry.matchId] === entry.teamId
-  const actual  = koResults[entry.matchId]
-  const correct = picked && !!actual && actual === entry.teamId
-  const wrong   = picked && !!actual && actual !== entry.teamId
-
   return (
     <div className={['ko-bets-chip', picked ? 'ko-bets-chip--picked' : ''].filter(Boolean).join(' ')}>
       <Flag iso={team.iso} name={team.name} size="sm" />
       <span className="ko-bets-chip__name">{team.name}</span>
       {picked && (
         <span className={['ko-bets-pts', correct ? 'ko-bets-pts--ok' : wrong ? 'ko-bets-pts--wrong' : 'ko-bets-pts--pending'].join(' ')}>
-          {correct ? `+${roundPts}` : wrong ? '0' : '—'}
+          {correct ? `+${pts}` : wrong ? '0' : '—'}
         </span>
       )}
     </div>
   )
 }
 
-function BetsRound({
-  name, matches, koBets, koResults, cols,
-}: {
-  name: string
-  matches: KnockoutMatch[]
-  koBets: KnockoutBets
-  koResults: Record<string, TeamId>
+interface ArrayRoundProps {
+  label: string
+  colorKey: string
+  pool: TeamId[]
+  picks: TeamId[]
+  actual: Set<string> | null
   cols?: number
-}) {
-  const color  = ROUND_COLORS[name] ?? 'var(--border)'
-  const numCols = cols ?? ROUND_COLS[name] ?? 2
-  const pts    = ROUND_POINTS[name] ?? 0
-  const teams  = collectAndSort(matches)
-  const pickedCount = matches.filter(m => !!koBets[m.id]).length
-  const earnedPts = matches.reduce((sum, m) => {
-    const picked = koBets[m.id]
-    if (picked && koResults[m.id] === picked) return sum + pts
-    return sum
-  }, 0)
+}
+
+function ArrayRound({ label, colorKey, pool, picks, actual, cols = 4 }: ArrayRoundProps) {
+  if (pool.length === 0 && picks.length === 0) return null
+  const color = ROUND_COLORS[colorKey] ?? 'var(--border)'
+  const pts = ROUND_PTS[colorKey] ?? 0
+  const earned = picks.filter(t => actual?.has(t)).length * pts
 
   return (
     <div className="ko-round-section">
       <div className="ko-round-header" style={{ borderLeftColor: color }}>
-        <span className="ko-round-title">{name}</span>
+        <span className="ko-round-title">{label}</span>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          {earnedPts > 0 && (
-            <span className="ko-round-earned">+{earnedPts} pts</span>
-          )}
-          <span className="ko-round-badge" style={{ background: color }}>
-            {pickedCount}/{matches.length}
-          </span>
+          {earned > 0 && <span className="ko-round-earned">+{earned} pts</span>}
+          <span className="ko-round-badge" style={{ background: color }}>{picks.length}</span>
         </div>
       </div>
-      <div className="ko-chip-grid" style={{ '--ko-cols': numCols } as React.CSSProperties}>
-        {teams.map(t => (
-          <BetsTeamChip key={`${t.matchId}-${t.teamId}`} entry={t} koBets={koBets} koResults={koResults} roundPts={pts} />
-        ))}
-      </div>
+      {picks.length === 0
+        ? <div className="ko-round-empty">Nenhuma aposta</div>
+        : (
+          <div className="ko-chip-grid" style={{ '--ko-cols': cols } as React.CSSProperties}>
+            {sortTeams(picks).map(teamId => (
+              <BetsChip
+                key={teamId}
+                teamId={teamId}
+                picked={true}
+                correct={!!actual && actual.has(teamId)}
+                wrong={!!actual && actual.size > 0 && !actual.has(teamId)}
+                pts={pts}
+              />
+            ))}
+          </div>
+        )
+      }
     </div>
   )
 }
@@ -121,49 +111,95 @@ export function KnockoutBetsView({
 }) {
   const standings = calcGroupStandings(groupBets)
   const qualified = getQualified(standings)
-  const r32 = buildR32(qualified)
+  const r32Matches = buildR32(qualified)
+  const r32Pool = [...new Set(r32Matches.flatMap(m => [m.home, m.away]).filter(Boolean) as TeamId[])]
 
-  const allResolved: Record<string, KnockoutMatch> = {}
-  for (const m of r32) allResolved[m.id] = m
+  const actual = buildActualSets(koResults)
+  const hasResults = Object.keys(koResults).length > 0
 
-  const rounds = [
-    { name: 'Round de 32', matches: r32 },
-    ...KNOCKOUT_ROUNDS.map(round => {
-      const resolved = resolveKnockoutRound(round.matches, koBets, allResolved)
-      for (const m of resolved) allResolved[m.id] = m
-      return { name: round.name, matches: resolved }
-    }),
-  ]
-
-  const mainRounds = rounds.filter(r => r.name !== 'Final' && r.name !== 'Terceiro Lugar')
-  const finalRound  = rounds.find(r => r.name === 'Final')
-  const thirdRound  = rounds.find(r => r.name === 'Terceiro Lugar')
+  const champion = koBets.champion
+  const third    = koBets.third
+  const actualChampion = koResults['final']
+  const actualThird    = koResults['third']
 
   return (
     <>
       <div className="mybets-section-label">Mata-Mata</div>
       <div className="mybets-ko-section">
-        {mainRounds.map(round => (
-          <BetsRound
-            key={round.name}
-            name={round.name}
-            matches={round.matches}
-            koBets={koBets}
-            koResults={koResults}
-          />
-        ))}
-        {(thirdRound || finalRound) && (
+        <ArrayRound
+          label="Round de 32"
+          colorKey="r32"
+          pool={r32Pool}
+          picks={koBets.r32 ?? []}
+          actual={hasResults ? actual.r32 : null}
+        />
+        <ArrayRound
+          label="Oitavas"
+          colorKey="r16"
+          pool={koBets.r32 ?? []}
+          picks={koBets.r16 ?? []}
+          actual={hasResults ? actual.r16 : null}
+        />
+        <ArrayRound
+          label="Quartas"
+          colorKey="qf"
+          pool={koBets.r16 ?? []}
+          picks={koBets.qf ?? []}
+          actual={hasResults ? actual.qf : null}
+        />
+        <ArrayRound
+          label="Semifinais"
+          colorKey="sf"
+          pool={koBets.qf ?? []}
+          picks={koBets.sf ?? []}
+          actual={hasResults ? actual.sf : null}
+          cols={2}
+        />
+
+        {(third || champion) && (
           <div className="ko-finals-row">
-            {thirdRound && (
-              <div className="ko-finals-col">
-                <BetsRound name="Terceiro Lugar" matches={thirdRound.matches} koBets={koBets} koResults={koResults} cols={1} />
+            <div className="ko-finals-col">
+              <div className="ko-round-section">
+                <div className="ko-round-header" style={{ borderLeftColor: ROUND_COLORS['third'] }}>
+                  <span className="ko-round-title">3° Lugar</span>
+                </div>
+                {third
+                  ? (
+                    <div className="ko-chip-grid" style={{ '--ko-cols': 1 } as React.CSSProperties}>
+                      <BetsChip
+                        teamId={third}
+                        picked
+                        correct={!!actualThird && actualThird === third}
+                        wrong={!!actualThird && actualThird !== third}
+                        pts={ROUND_PTS['third']}
+                      />
+                    </div>
+                  )
+                  : <div className="ko-round-empty">Sem aposta</div>
+                }
               </div>
-            )}
-            {finalRound && (
-              <div className="ko-finals-col">
-                <BetsRound name="Final" matches={finalRound.matches} koBets={koBets} koResults={koResults} cols={1} />
+            </div>
+            <div className="ko-finals-col">
+              <div className="ko-round-section">
+                <div className="ko-round-header" style={{ borderLeftColor: ROUND_COLORS['champion'] }}>
+                  <span className="ko-round-title">Campeão 👑</span>
+                </div>
+                {champion
+                  ? (
+                    <div className="ko-chip-grid" style={{ '--ko-cols': 1 } as React.CSSProperties}>
+                      <BetsChip
+                        teamId={champion}
+                        picked
+                        correct={!!actualChampion && actualChampion === champion}
+                        wrong={!!actualChampion && actualChampion !== champion}
+                        pts={ROUND_PTS['champion']}
+                      />
+                    </div>
+                  )
+                  : <div className="ko-round-empty">Sem aposta</div>
+                }
               </div>
-            )}
+            </div>
           </div>
         )}
       </div>

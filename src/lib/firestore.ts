@@ -42,7 +42,11 @@ export async function saveKnockoutBets(uid: string, bets: KnockoutBets): Promise
 
 export async function loadKnockoutBets(uid: string): Promise<KnockoutBets> {
   const snap = await getDoc(doc(db, 'users', uid, 'bets', 'knockout'))
-  return snap.exists() ? (snap.data() as KnockoutBets) : {}
+  if (!snap.exists()) return {}
+  const data = snap.data()
+  // Discard old matchId-based format (e.g. { r32_01: 'BRA' }) — incompatible with new model
+  const isOldFormat = Object.keys(data).some(k => /^(r32|r16|qf|sf)_\d+$/.test(k) || k === 'final')
+  return isOldFormat ? {} : (data as KnockoutBets)
 }
 
 export async function loadUserBetsForHistory(targetUid: string): Promise<{ groupBets: GroupBets; knockoutBets: KnockoutBets }> {
@@ -50,9 +54,15 @@ export async function loadUserBetsForHistory(targetUid: string): Promise<{ group
     getDoc(doc(db, 'users', targetUid, 'bets', 'groupStage')),
     getDoc(doc(db, 'users', targetUid, 'bets', 'knockout')),
   ])
+  let knockoutBets: KnockoutBets = {}
+  if (ko.exists()) {
+    const data = ko.data()
+    const isOldFormat = Object.keys(data).some(k => /^(r32|r16|qf|sf)_\d+$/.test(k) || k === 'final')
+    knockoutBets = isOldFormat ? {} : (data as KnockoutBets)
+  }
   return {
-    groupBets:    gs.exists() ? (gs.data() as GroupBets)    : {},
-    knockoutBets: ko.exists() ? (ko.data() as KnockoutBets) : {},
+    groupBets:    gs.exists() ? (gs.data() as GroupBets) : {},
+    knockoutBets,
   }
 }
 

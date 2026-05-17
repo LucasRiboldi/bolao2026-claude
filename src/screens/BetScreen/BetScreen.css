@@ -260,3 +260,18 @@
   min-width: 0;
 }
 .ko-finals-col .ko-round-section { margin-bottom: 0; }
+
+.ko-round-empty {
+  font-size: .65rem;
+  color: var(--text-muted);
+  padding: 6px 16px 8px;
+  font-style: italic;
+}
+.ko-round-earned {
+  font-size: .62rem;
+  font-weight: 700;
+  color: #4ade80;
+  background: rgba(74,222,128,.1);
+  border-radius: 20px;
+  padding: 2px 6px;
+}

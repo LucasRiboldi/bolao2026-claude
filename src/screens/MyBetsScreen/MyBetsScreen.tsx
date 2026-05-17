@@ -4,7 +4,6 @@ import { useKnockoutBets } from '@/hooks/useKnockoutBets'
 import { useStandings } from '@/hooks/useStandings'
 import { GROUP_IDS, generateGroupGames } from '@/data/groups'
 import { TEAMS } from '@/data/teams'
-import { KNOCKOUT_ROUNDS } from '@/data/bracket'
 import { StatusCard } from './StatusCard'
 import { GroupBetsView } from './GroupBetsView'
 import { KnockoutBetsView } from './KnockoutBetsView'
@@ -30,18 +29,20 @@ function buildWhatsAppText(
     }
   }
 
-  lines.push('', '*MATA-MATA*')
-  const allRounds = [
-    { name: 'Round de 32', ids: Array.from({ length: 16 }, (_, i) => `r32_${String(i + 1).padStart(2, '0')}`) },
-    ...KNOCKOUT_ROUNDS.map(r => ({ name: r.name, ids: r.matches.map(m => m.id) })),
+  const koRounds: { name: string; teams: string[] | undefined }[] = [
+    { name: 'Round de 32', teams: koBets.r32 },
+    { name: 'Oitavas',     teams: koBets.r16 },
+    { name: 'Quartas',     teams: koBets.qf  },
+    { name: 'Semifinais',  teams: koBets.sf  },
+    { name: 'Campeão',     teams: koBets.champion ? [koBets.champion] : undefined },
+    { name: '3° Lugar',    teams: koBets.third    ? [koBets.third]    : undefined },
   ]
-  for (const round of allRounds) {
-    const picks = round.ids.map(id => koBets[id]).filter(Boolean)
-    if (picks.length === 0) continue
+  lines.push('', '*MATA-MATA*')
+  for (const round of koRounds) {
+    if (!round.teams?.length) continue
     lines.push(`\n${round.name}:`)
-    for (const teamId of picks) {
-      const t = TEAMS[teamId!]
-      lines.push(`  ${t?.name ?? teamId}`)
+    for (const teamId of round.teams) {
+      lines.push(`  ${TEAMS[teamId]?.name ?? teamId}`)
     }
   }
 

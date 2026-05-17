@@ -3,15 +3,14 @@ import {
   loadAdminUserList, lockBets, unlockUserBets, deleteUserData,
   loadUserBetsForHistory, saveGroupBetsForUser, saveKnockoutBetsForUser,
 } from '@/lib/firestore'
-import type { UserProfile, GroupBets, KnockoutBets, TeamId } from '@/types'
+import type { UserProfile, GroupBets, KnockoutBets, KoArrayKey, KoSingleKey, TeamId } from '@/types'
 import { GroupBetsView } from '@/screens/MyBetsScreen/GroupBetsView'
 import { KnockoutBetsView } from '@/screens/MyBetsScreen/KnockoutBetsView'
 import { GROUP_IDS, generateGroupGames } from '@/data/groups'
 import { TEAMS } from '@/data/teams'
-import { KNOCKOUT_ROUNDS, buildR32, resolveKnockoutRound } from '@/data/bracket'
+import { buildR32 } from '@/data/bracket'
 import { calcGroupStandings, getQualified } from '@/utils/standings'
 import { Flag } from '@/components/Flag'
-import type { KnockoutMatch } from '@/types'
 
 type AdminUser = UserProfile & { uid: string }
 
@@ -66,23 +65,47 @@ function Stepper({ value, onDec, onInc }: { value: string; onDec: () => void; on
   )
 }
 
-function KoEditSlot({ match, side, koBets, onPick }: {
-  match: KnockoutMatch; side: 'home' | 'away';
-  koBets: KnockoutBets; onPick: (id: string, teamId: TeamId) => void
-}) {
-  const teamId = side === 'home' ? match.home : match.away
-  const team = teamId ? TEAMS[teamId] : null
-  const selected = !!teamId && koBets[match.id] === teamId
-  if (!teamId) return <div className="ko-slot ko-slot--empty"><span className="ko-slot__name">—</span></div>
+function KoChip({ teamId, selected, onClick }: { teamId: TeamId; selected: boolean; onClick: () => void }) {
+  const team = TEAMS[teamId]
+  if (!team) return null
   return (
     <div
-      className={`ko-slot${selected ? ' ko-slot--selected' : ''}`}
-      onClick={() => teamId && onPick(match.id, teamId)}
+      className={['ko-chip', selected ? 'ko-chip--selected' : ''].join(' ')}
+      onClick={onClick}
       role="button"
+      title={team.name}
     >
-      {team && <Flag iso={team.iso} name={team.name} size="sm" />}
-      <span className="ko-slot__name">{team?.name ?? teamId}</span>
-      {selected && <span className="ko-slot__check">✓</span>}
+      <Flag iso={team.iso} name={team.name} size="sm" />
+      <span className="ko-chip__name">{team.name}</span>
+      {selected && <span className="ko-chip__check">✓</span>}
+    </div>
+  )
+}
+
+function KoRoundEdit({ label, color, teams, picked, onToggle, cols = 4 }: {
+  label: string; color: string; teams: TeamId[]
+  picked: TeamId[]; onToggle: (t: TeamId) => void; cols?: number
+}) {
+  const sorted = [...teams].sort((a, b) => (TEAMS[a]?.name ?? '').localeCompare(TEAMS[b]?.name ?? '', 'pt-BR'))
+  if (sorted.length === 0) return (
+    <div className="ko-round-section">
+      <div className="ko-round-header" style={{ borderLeftColor: color }}>
+        <span className="ko-round-title">{label}</span>
+      </div>
+      <div className="ko-round-empty">Preencha a fase anterior</div>
+    </div>
+  )
+  return (
+    <div className="ko-round-section">
+      <div className="ko-round-header" style={{ borderLeftColor: color }}>
+        <span className="ko-round-title">{label}</span>
+        <span className="ko-round-badge" style={{ background: color }}>{picked.length}</span>
+      </div>
+      <div className="ko-chip-grid" style={{ '--ko-cols': cols } as React.CSSProperties}>
+        {sorted.map(t => (
+          <KoChip key={t} teamId={t} selected={picked.includes(t)} onClick={() => onToggle(t)} />
+        ))}
+      </div>
     </div>
   )
 }
@@ -118,8 +141,23 @@ function EditBetsModal({ user, onClose }: { user: AdminUser; onClose: () => void
     })
   }
 
-  function pickKo(matchId: string, teamId: TeamId) {
-    setKoBets(prev => ({ ...prev, [matchId]: teamId }))
+  function toggleKo(round: KoArrayKey, teamId: TeamId) {
+    setKoBets(prev => {
+      const arr = prev[round] ?? []
+      const has = arr.includes(teamId)
+      if (!has) return { ...prev, [round]: [...arr, teamId] }
+      const next: KnockoutBets = { ...prev, [round]: arr.filter(t => t !== teamId) }
+      const order: (KoArrayKey | KoSingleKey)[] = ['r32', 'r16', 'qf', 'sf', 'champion', 'third']
+      for (const later of order.slice(order.indexOf(round) + 1)) {
+        if (later === 'champion' || later === 'third') { if (next[later] === teamId) delete next[later] }
+        else { next[later] = (next[later] ?? []).filter(t => t !== teamId) }
+      }
+      return next
+    })
+  }
+
+  function setSingleKo(round: KoSingleKey, teamId: TeamId) {
+    setKoBets(prev => ({ ...prev, [round]: prev[round] === teamId ? undefined : teamId }))
   }
 
   async function handleSave() {
@@ -136,17 +174,13 @@ function EditBetsModal({ user, onClose }: { user: AdminUser; onClose: () => void
 
   const standings = calcGroupStandings(groupBets)
   const qualified = getQualified(standings)
-  const r32 = buildR32(qualified)
-  const allResolved: Record<string, KnockoutMatch> = {}
-  for (const m of r32) allResolved[m.id] = m
-  const koRounds = [
-    { name: 'Round de 32', matches: r32 },
-    ...KNOCKOUT_ROUNDS.map(round => {
-      const resolved = resolveKnockoutRound(round.matches, koBets, allResolved)
-      for (const m of resolved) allResolved[m.id] = m
-      return { name: round.name, matches: resolved }
-    }),
-  ]
+  const r32Matches = buildR32(qualified)
+  const r32Pool = [...new Set(r32Matches.flatMap(m => [m.home, m.away]).filter(Boolean) as TeamId[])]
+  const r16Pool = koBets.r32 ?? []
+  const qfPool  = koBets.r16 ?? []
+  const sfPool  = koBets.qf  ?? []
+  const thirdPool = (koBets.qf ?? []).filter(t => !(koBets.sf ?? []).includes(t))
+  const finalPool = koBets.sf ?? []
 
   return (
     <div className="admin-modal-overlay" role="dialog" aria-modal="true" aria-label={`Editar apostas de ${user.name}`}>
@@ -199,17 +233,18 @@ function EditBetsModal({ user, onClose }: { user: AdminUser; onClose: () => void
               })}
 
               <div className="admin-section-label" style={{ marginTop: 8 }}>Mata-Mata</div>
-              {koRounds.map(round => (
-                <div key={round.name}>
-                  <div className="admin-section-label" style={{ fontSize: '.58rem' }}>{round.name}</div>
-                  {round.matches.map(match => (
-                    <div key={match.id} className="ko-match">
-                      <KoEditSlot match={match} side="home" koBets={koBets} onPick={pickKo} />
-                      <KoEditSlot match={match} side="away" koBets={koBets} onPick={pickKo} />
-                    </div>
-                  ))}
+              <KoRoundEdit label="Round de 32" color="#e74c3c" teams={r32Pool} picked={koBets.r32 ?? []} onToggle={t => toggleKo('r32', t)} />
+              <KoRoundEdit label="Oitavas" color="#e67e22" teams={r16Pool} picked={koBets.r16 ?? []} onToggle={t => toggleKo('r16', t)} />
+              <KoRoundEdit label="Quartas" color="#f39c12" teams={qfPool} picked={koBets.qf ?? []} onToggle={t => toggleKo('qf', t)} />
+              <KoRoundEdit label="Semifinais" color="#2ecc71" teams={sfPool} picked={koBets.sf ?? []} onToggle={t => toggleKo('sf', t)} cols={2} />
+              <div className="ko-finals-row">
+                <div className="ko-finals-col">
+                  <KoRoundEdit label="3° Lugar" color="#607d8b" teams={thirdPool} picked={koBets.third ? [koBets.third] : []} onToggle={t => setSingleKo('third', t)} cols={1} />
                 </div>
-              ))}
+                <div className="ko-finals-col">
+                  <KoRoundEdit label="Campeão" color="#d4aa2c" teams={finalPool} picked={koBets.champion ? [koBets.champion] : []} onToggle={t => setSingleKo('champion', t)} cols={1} />
+                </div>
+              </div>
             </div>
         }
       </div>
