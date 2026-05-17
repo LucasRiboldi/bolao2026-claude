@@ -155,15 +155,18 @@ describe('buildR32', () => {
     const qualified: QualifiedTeams = {
       winners: { A: 'mexico', B: 'canada', C: 'brazil', D: 'usa', E: 'germany', F: 'netherlands', G: 'belgium', H: 'spain', I: 'france', J: 'argentina', K: 'portugal', L: 'england' },
       runners: { A: 'southafrica', B: 'switzerland', C: 'morocco', D: 'paraguay', E: 'curacao', F: 'japan', G: 'egypt', H: 'capeverde', I: 'senegal', J: 'algeria', K: 'uzbekistan', L: 'croatia' },
+      // 8 best thirds, each tagged with its source group (required for Annexe C
+      // slot eligibility check). Picked groups here = {A,B,C,D,E,F,G,L} so a
+      // valid assignment exists across the 8 T3 slots.
       thirds: [
-        { id: 'brazil',  pts: 5, gf: 4, ga: 2, gd: 2, played: 3 },
-        { id: 'germany', pts: 4, gf: 3, ga: 2, gd: 1, played: 3 },
-        { id: 'spain',   pts: 4, gf: 2, ga: 1, gd: 1, played: 3 },
-        { id: 'france',  pts: 4, gf: 2, ga: 2, gd: 0, played: 3 },
-        { id: 'england', pts: 3, gf: 2, ga: 2, gd: 0, played: 3 },
-        { id: 'mexico',  pts: 3, gf: 1, ga: 1, gd: 0, played: 3 },
-        { id: 'canada',  pts: 3, gf: 1, ga: 2, gd: -1, played: 3 },
-        { id: 'usa',     pts: 3, gf: 0, ga: 1, gd: -1, played: 3 },
+        { id: 'brazil',  pts: 5, gf: 4, ga: 2, gd: 2,  played: 3, group: 'C' },
+        { id: 'germany', pts: 4, gf: 3, ga: 2, gd: 1,  played: 3, group: 'E' },
+        { id: 'spain',   pts: 4, gf: 2, ga: 1, gd: 1,  played: 3, group: 'H' },
+        { id: 'france',  pts: 4, gf: 2, ga: 2, gd: 0,  played: 3, group: 'I' },
+        { id: 'england', pts: 3, gf: 2, ga: 2, gd: 0,  played: 3, group: 'L' },
+        { id: 'mexico',  pts: 3, gf: 1, ga: 1, gd: 0,  played: 3, group: 'A' },
+        { id: 'canada',  pts: 3, gf: 1, ga: 2, gd: -1, played: 3, group: 'B' },
+        { id: 'usa',     pts: 3, gf: 0, ga: 1, gd: -1, played: 3, group: 'D' },
       ],
     }
     const r32 = buildR32(qualified)

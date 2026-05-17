@@ -1,4 +1,5 @@
 import type { KnockoutSlot, KnockoutRound, KnockoutMatch, QualifiedTeams, GroupId, TeamId } from '@/types'
+import { assignThirdsToSlots } from '@/utils/standings'
 
 export const DEFAULT_SCORING = {
   exactScore: 17,
@@ -11,24 +12,35 @@ export const DEFAULT_SCORING = {
   finalistBonus: 26,
 }
 
-// R32 — Official FIFA 2026 bracket (December 5 2025 draw)
+/**
+ * Official FIFA 2026 R32 bracket (Art. 12.6).
+ *
+ * "T3_XXXXX" labels indicate the slot can only be filled by a 3rd-placed team
+ * whose source group is in the letter set (Art. 12.6 / Annexe C). Eligibility:
+ *   T3_ABCDF → groups A,B,C,D,F   T3_BEFIJ → groups B,E,F,I,J
+ *   T3_CDFGH → groups C,D,F,G,H   T3_AEHIJ → groups A,E,H,I,J
+ *   T3_CEFHI → groups C,E,F,H,I   T3_EFGIJ → groups E,F,G,I,J
+ *   T3_EHIJK → groups E,H,I,J,K   T3_DEIJL → groups D,E,I,J,L
+ *
+ * Actual third-team assignment to slots is computed by assignThirdsToSlots().
+ */
 export const KNOCKOUT_SLOTS: KnockoutSlot[] = [
-  { id: 'r32_01', homeSlot: '2A',  awaySlot: '2B'   },
-  { id: 'r32_02', homeSlot: '1E',  awaySlot: 'T3_1' },
-  { id: 'r32_03', homeSlot: '1F',  awaySlot: '2C'   },
-  { id: 'r32_04', homeSlot: '1C',  awaySlot: '2F'   },
-  { id: 'r32_05', homeSlot: '1I',  awaySlot: 'T3_2' },
-  { id: 'r32_06', homeSlot: '2E',  awaySlot: '2I'   },
-  { id: 'r32_07', homeSlot: '1A',  awaySlot: 'T3_3' },
-  { id: 'r32_08', homeSlot: '1L',  awaySlot: 'T3_4' },
-  { id: 'r32_09', homeSlot: '1D',  awaySlot: 'T3_5' },
-  { id: 'r32_10', homeSlot: '1G',  awaySlot: 'T3_6' },
-  { id: 'r32_11', homeSlot: '2K',  awaySlot: '2L'   },
-  { id: 'r32_12', homeSlot: '1H',  awaySlot: '2J'   },
-  { id: 'r32_13', homeSlot: '1B',  awaySlot: 'T3_7' },
-  { id: 'r32_14', homeSlot: '1J',  awaySlot: '2H'   },
-  { id: 'r32_15', homeSlot: '1K',  awaySlot: 'T3_8' },
-  { id: 'r32_16', homeSlot: '2D',  awaySlot: '2G'   },
+  { id: 'r32_01', homeSlot: '2A',  awaySlot: '2B'        },
+  { id: 'r32_02', homeSlot: '1E',  awaySlot: 'T3_ABCDF'  },
+  { id: 'r32_03', homeSlot: '1F',  awaySlot: '2C'        },
+  { id: 'r32_04', homeSlot: '1C',  awaySlot: '2F'        },
+  { id: 'r32_05', homeSlot: '1I',  awaySlot: 'T3_CDFGH'  },
+  { id: 'r32_06', homeSlot: '2E',  awaySlot: '2I'        },
+  { id: 'r32_07', homeSlot: '1A',  awaySlot: 'T3_CEFHI'  },
+  { id: 'r32_08', homeSlot: '1L',  awaySlot: 'T3_EHIJK'  },
+  { id: 'r32_09', homeSlot: '1D',  awaySlot: 'T3_BEFIJ'  },
+  { id: 'r32_10', homeSlot: '1G',  awaySlot: 'T3_AEHIJ'  },
+  { id: 'r32_11', homeSlot: '2K',  awaySlot: '2L'        },
+  { id: 'r32_12', homeSlot: '1H',  awaySlot: '2J'        },
+  { id: 'r32_13', homeSlot: '1B',  awaySlot: 'T3_EFGIJ'  },
+  { id: 'r32_14', homeSlot: '1J',  awaySlot: '2H'        },
+  { id: 'r32_15', homeSlot: '1K',  awaySlot: 'T3_DEIJL'  },
+  { id: 'r32_16', homeSlot: '2D',  awaySlot: '2G'        },
 ]
 
 export const KNOCKOUT_ROUNDS: KnockoutRound[] = [
@@ -71,22 +83,25 @@ export const KNOCKOUT_ROUNDS: KnockoutRound[] = [
   },
 ]
 
-function resolveSlot(slot: string, qualified: QualifiedTeams): TeamId | undefined {
+function resolveSlot(
+  slot: string,
+  qualified: QualifiedTeams,
+  thirdAssignment: Record<string, TeamId>,
+  matchId: string,
+): TeamId | undefined {
+  if (slot.startsWith('T3_')) return thirdAssignment[matchId]
   const pos = slot[0]
   if (pos === '1') return qualified.winners[slot[1] as GroupId]
   if (pos === '2') return qualified.runners[slot[1] as GroupId]
-  if (pos === 'T') {
-    const idx = parseInt(slot.split('_')[1]!, 10) - 1
-    return qualified.thirds[idx]?.id
-  }
   return undefined
 }
 
 export function buildR32(qualified: QualifiedTeams): KnockoutMatch[] {
+  const thirdAssignment = assignThirdsToSlots(qualified.thirds)
   return KNOCKOUT_SLOTS.map(s => ({
     id: s.id,
-    home: resolveSlot(s.homeSlot, qualified),
-    away: resolveSlot(s.awaySlot, qualified),
+    home: resolveSlot(s.homeSlot, qualified, thirdAssignment, s.id),
+    away: resolveSlot(s.awaySlot, qualified, thirdAssignment, s.id),
     homeLabel: s.homeSlot,
     awayLabel: s.awaySlot,
   }))

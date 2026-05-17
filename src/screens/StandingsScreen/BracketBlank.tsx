@@ -1,7 +1,11 @@
 import { KNOCKOUT_SLOTS, KNOCKOUT_ROUNDS } from '@/data/bracket'
 
 function slotLabel(slot: string): string {
-  if (slot.startsWith('T3_')) return `3° M${slot.split('_')[1]}`
+  // T3_ABCDF → "3° de {A,B,C,D,F}" (Art. 12.6 eligibility)
+  if (slot.startsWith('T3_')) {
+    const letters = slot.slice(3).split('').join(',')
+    return `3° {${letters}}`
+  }
   const pos   = slot[0] === '1' ? '1°' : '2°'
   const group = slot[1]
   return `${pos} Gr.${group}`

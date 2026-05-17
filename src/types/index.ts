@@ -34,7 +34,7 @@ export interface StandingRow {
 
 export interface KnockoutSlot {
   id: string          // e.g. "r32_01"
-  homeSlot: string    // e.g. "1A", "T3_1"
+  homeSlot: string    // e.g. "1A", "2B", "T3_ABCDF" (Art. 12.6 slot eligibility)
   awaySlot: string
 }
 
