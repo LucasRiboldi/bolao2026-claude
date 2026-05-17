@@ -1,0 +1,136 @@
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  .pal-demo { font-family:'Inter',sans-serif; border-radius:10px; overflow:hidden; border:1px solid; }
+  .pal-header { padding:12px 16px; display:flex; align-items:center; gap:10px; }
+  .pal-body { padding:12px 16px; }
+  .pal-row { display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-radius:7px; margin-bottom:6px; }
+  .pal-stat { text-align:center; flex:1; }
+  .pal-stat-val { font-size:1.1rem; font-weight:800; }
+  .pal-stat-lbl { font-size:.6rem; font-weight:600; letter-spacing:.8px; text-transform:uppercase; margin-top:2px; }
+  .pal-btn { padding:7px 16px; border-radius:6px; font-size:.8rem; font-weight:700; border:none; cursor:pointer; font-family:'Inter',sans-serif; }
+  .pal-badge { font-size:.65rem; font-weight:700; padding:3px 8px; border-radius:4px; letter-spacing:.5px; }
+</style>
+
+<h2>Como organizar a paleta de cores?</h2>
+<p class="subtitle">Mesmo verde + dourado, mas com hierarquia diferente de aplicação</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0d1117;padding:16px">
+      <!-- A: Verde primário, Dourado para destaques pontuais -->
+      <div class="pal-demo" style="background:#161b22;border-color:#30363d">
+        <div class="pal-header" style="background:#0d1117">
+          <span style="font-size:1rem">⚽</span>
+          <span style="color:#e6edf3;font-weight:800;font-size:.95rem">Bolão 2026</span>
+          <span class="pal-badge" style="margin-left:auto;background:#238636;color:#fff">● AO VIVO</span>
+        </div>
+        <div class="pal-body">
+          <div class="pal-row" style="background:#0d1117">
+            <span style="color:#8b949e;font-size:.8rem">🇧🇷 Brasil</span>
+            <span style="color:#e6edf3;font-size:1.2rem;font-weight:900">2 × 1</span>
+            <span style="color:#8b949e;font-size:.8rem">Argentina 🇦🇷</span>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <div class="pal-stat">
+              <div class="pal-stat-val" style="color:#f0c040">17</div>
+              <div class="pal-stat-lbl" style="color:#8b949e">pts</div>
+            </div>
+            <div class="pal-stat">
+              <div class="pal-stat-val" style="color:#e6edf3">3/6</div>
+              <div class="pal-stat-lbl" style="color:#8b949e">jogos</div>
+            </div>
+            <div class="pal-stat">
+              <div class="pal-stat-val" style="color:#238636">↑2</div>
+              <div class="pal-stat-lbl" style="color:#8b949e">posição</div>
+            </div>
+          </div>
+          <button class="pal-btn" style="background:#238636;color:#fff;width:100%">Salvar Palpites</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Verde primário, Dourado pontual</h3>
+      <p>Verde (#238636) como cor de ação e status. Dourado (#f0c040) apenas para pontuação e 1º lugar. Mais próximo do GitHub/esportes. Atual, mas refinado.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0d1117;padding:16px">
+      <!-- B: Dourado primário, Verde para ações -->
+      <div class="pal-demo" style="background:#161b22;border-color:#30363d">
+        <div class="pal-header" style="background:#0d1117">
+          <span style="font-size:1rem">⚽</span>
+          <span style="color:#e6edf3;font-weight:800;font-size:.95rem">Bolão 2026</span>
+          <span class="pal-badge" style="margin-left:auto;background:rgba(212,170,44,.15);color:#d4aa2c;border:1px solid rgba(212,170,44,.3)">● AO VIVO</span>
+        </div>
+        <div class="pal-body">
+          <div class="pal-row" style="background:#0d1117;border-left:3px solid #d4aa2c">
+            <span style="color:#8b949e;font-size:.8rem">🇧🇷 Brasil</span>
+            <span style="color:#e6edf3;font-size:1.2rem;font-weight:900">2 × 1</span>
+            <span style="color:#8b949e;font-size:.8rem">Argentina 🇦🇷</span>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <div class="pal-stat">
+              <div class="pal-stat-val" style="color:#d4aa2c">17</div>
+              <div class="pal-stat-lbl" style="color:#8b949e">pts</div>
+            </div>
+            <div class="pal-stat">
+              <div class="pal-stat-val" style="color:#e6edf3">3/6</div>
+              <div class="pal-stat-lbl" style="color:#8b949e">jogos</div>
+            </div>
+            <div class="pal-stat">
+              <div class="pal-stat-val" style="color:#d4aa2c">🏆 1º</div>
+              <div class="pal-stat-lbl" style="color:#8b949e">ranking</div>
+            </div>
+          </div>
+          <button class="pal-btn" style="background:#1a7f37;color:#fff;width:100%">Salvar Palpites</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Dourado primário, Verde para ações</h3>
+      <p>Dourado (#d4aa2c, mais âmbar) como cor de identidade do bolão — troféu, ranking, destaques. Verde apenas nos botões de ação. Sente mais Copa do Mundo, mais premium.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0d1117;padding:16px">
+      <!-- C: Verde azulado + Dourado mais quente -->
+      <div class="pal-demo" style="background:#161b22;border-color:#30363d">
+        <div class="pal-header" style="background:#0d1117">
+          <span style="font-size:1rem">⚽</span>
+          <span style="color:#e6edf3;font-weight:800;font-size:.95rem">Bolão 2026</span>
+          <span class="pal-badge" style="margin-left:auto;background:#1a6b4a;color:#2dd4a0;letter-spacing:.5px">● AO VIVO</span>
+        </div>
+        <div class="pal-body">
+          <div class="pal-row" style="background:#0d1117">
+            <span style="color:#8b949e;font-size:.8rem">🇧🇷 Brasil</span>
+            <span style="color:#e6edf3;font-size:1.2rem;font-weight:900">2 × 1</span>
+            <span style="color:#8b949e;font-size:.8rem">Argentina 🇦🇷</span>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <div class="pal-stat">
+              <div class="pal-stat-val" style="color:#f5a623">17</div>
+              <div class="pal-stat-lbl" style="color:#8b949e">pts</div>
+            </div>
+            <div class="pal-stat">
+              <div class="pal-stat-val" style="color:#e6edf3">3/6</div>
+              <div class="pal-stat-lbl" style="color:#8b949e">jogos</div>
+            </div>
+            <div class="pal-stat">
+              <div class="pal-stat-val" style="color:#2dd4a0">↑2</div>
+              <div class="pal-stat-lbl" style="color:#8b949e">posição</div>
+            </div>
+          </div>
+          <button class="pal-btn" style="background:#2dd4a0;color:#0d1117;width:100%">Salvar Palpites</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Verde esmeralda + Laranja âmbar</h3>
+      <p>Paleta mais inusitada: verde esmeralda (#2dd4a0) para status positivos + laranja âmbar (#f5a623) para pontuação. Mais vibrante e distinto, menos "GitHub clone".</p>
+    </div>
+  </div>
+
+</div>

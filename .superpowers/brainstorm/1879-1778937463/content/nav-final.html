@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Nav Final</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d1117;--surface:#161b22;--surface2:#21262d;--border:#30363d;
+    --text:#e6edf3;--muted:#8b949e;--gold:#d4aa2c;--gold-dim:rgba(212,170,44,.12);
+    --gold-border:rgba(212,170,44,.28);--green:#1a7f37;--red:#da3633;
+    --radius:10px;--radius-sm:6px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',system-ui,sans-serif;}
+  body{background:#06090e;padding:32px;display:flex;gap:32px;align-items:flex-start;justify-content:center;flex-wrap:wrap;}
+  .col{display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .col-label{color:#6b7280;font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;max-width:300px;}
+  .phone{width:300px;height:620px;background:var(--bg);border-radius:28px;border:2px solid #252b35;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.7);}
+  .hdr{background:var(--bg);padding:11px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;}
+  .hdr-icon{width:24px;height:24px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.72rem;}
+  .hdr-name{color:var(--text);font-weight:800;font-size:.82rem;margin-left:7px;}
+  .live-pill{background:var(--gold-dim);border:1px solid var(--gold-border);border-radius:20px;padding:3px 9px;color:var(--gold);font-size:.58rem;font-weight:700;}
+  .content{flex:1;overflow-y:auto;scrollbar-width:none;padding:12px 12px 0;}
+  .content::-webkit-scrollbar{display:none;}
+
+  /* Progress */
+  .progress-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;}
+  .progress-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .progress-lbl{color:var(--muted);font-size:.6rem;font-weight:600;letter-spacing:.8px;text-transform:uppercase;}
+  .progress-pct{color:var(--gold);font-size:.7rem;font-weight:800;}
+  .progress-bar-bg{background:var(--surface2);border-radius:4px;height:5px;overflow:hidden;}
+  .progress-bar-fill{background:linear-gradient(90deg,var(--green),var(--gold));height:100%;border-radius:4px;}
+  .progress-sub{display:flex;gap:10px;margin-top:6px;}
+  .progress-sub-item{color:var(--muted);font-size:.58rem;font-weight:500;}
+  .progress-sub-item span{color:var(--text);font-weight:700;}
+
+  /* Group */
+  .group-section{margin-bottom:8px;}
+  .group-hdr{display:flex;align-items:center;gap:7px;padding:0 0 5px;}
+  .group-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .group-name{color:var(--text);font-size:.7rem;font-weight:800;}
+
+  /* Match row */
+  .match-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 8px;margin-bottom:4px;gap:4px;}
+  .match-row.has-result{border-color:var(--gold-border);}
+  .mc-home{display:flex;align-items:center;gap:3px;justify-content:flex-end;}
+  .mc-away{display:flex;align-items:center;gap:3px;}
+  .t-name{font-size:.65rem;font-weight:600;color:var(--text);}
+  .t-name.muted{color:var(--muted);}
+  .score-center{display:flex;align-items:center;gap:2px;}
+  .step-btn{width:20px;height:20px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--muted);font-size:.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;}
+  .step-val{width:18px;text-align:center;color:var(--text);font-size:.78rem;font-weight:800;}
+  .sep{color:var(--border);font-size:.75rem;font-weight:700;margin:0 1px;}
+  .result-score{color:var(--gold);font-size:.88rem;font-weight:900;letter-spacing:2px;}
+  .save-group-btn{width:100%;background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);padding:7px;font-size:.72rem;font-weight:700;cursor:pointer;margin-bottom:10px;font-family:'Inter',sans-serif;}
+
+  /* Mata-mata divider */
+  .section-divider{display:flex;align-items:center;gap:8px;margin:8px 0;}
+  .section-divider-line{flex:1;height:1px;background:var(--border);}
+  .section-divider-label{color:var(--gold);font-size:.62rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
+
+  .ko-round-lbl{color:var(--muted);font-size:.58rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px;margin-top:8px;}
+  .ko-slot{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px;display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;cursor:pointer;}
+  .ko-slot.selected{border-color:var(--gold-border);background:linear-gradient(90deg,var(--surface),#1c1608);}
+  .ko-slot-team{display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:600;color:var(--text);}
+  .ko-slot-team.empty{color:var(--muted);}
+  .ko-slot-arrow{color:var(--gold);font-size:.6rem;font-weight:700;}
+  .ko-slot-arrow.empty{color:var(--border);}
+
+  /* ===== BOTTOM NAV — SEM risco, só cor do texto ===== */
+  .bottom-nav{
+    flex-shrink:0;background:var(--bg);border-top:1px solid var(--border);
+    display:grid;grid-template-columns:1fr 1fr 60px 1fr 1fr;
+    align-items:end;padding:0 2px 6px;
+  }
+  .nav-item{padding:8px 2px 0;text-align:center;cursor:pointer;}
+  .nav-icon-wrap{height:22px;display:flex;align-items:center;justify-content:center;font-size:.88rem;}
+  .nav-lbl{font-size:.52rem;font-weight:700;margin-top:3px;letter-spacing:.2px;}
+  /* Ativo: só a cor dourada no label, sem risco */
+  .nav-item.active .nav-lbl{color:var(--gold);}
+  .nav-item.active .nav-icon-wrap{opacity:1;}
+  /* Inativo: ícone e label em muted */
+  .nav-item:not(.active) .nav-lbl{color:var(--muted);}
+  .nav-item:not(.active) .nav-icon-wrap{opacity:.55;}
+
+  /* COPA central — globo GRANDE encostando na borda neon fina */
+  .nav-copa{display:flex;flex-direction:column;align-items:center;padding-bottom:0;}
+  .nav-copa-btn{
+    width:48px;height:48px;border-radius:50%;
+    background:transparent;
+    border:1.5px solid rgba(212,170,44,.6);
+    box-shadow:0 0 7px rgba(212,170,44,.65),0 0 18px rgba(212,170,44,.15);
+    display:flex;align-items:center;justify-content:center;
+    /* globo bem grande, quase encostando na borda */
+    font-size:1.85rem;
+    line-height:1;
+    margin-top:-20px;
+    cursor:pointer;
+    /* sem padding interno para o globo ocupar quase tudo */
+    padding:0;
+  }
+  .nav-copa-lbl{color:var(--gold);font-size:.52rem;font-weight:800;margin-top:3px;letter-spacing:.2px;}
+  /* Ativo: glow mais forte */
+  .nav-copa.active .nav-copa-btn{
+    box-shadow:0 0 10px rgba(212,170,44,.9),0 0 22px rgba(212,170,44,.3);
+    border-color:rgba(212,170,44,.85);
+  }
+</style>
+</head>
+<body>
+
+<!-- APOSTAR — versão anterior restaurada + nav corrigida -->
+<div class="col">
+  <div class="col-label">⚽ APOSTAR — versão anterior + nav atualizada</div>
+  <div class="phone">
+    <div class="hdr">
+      <div style="display:flex;align-items:center;"><div class="hdr-icon">⚽</div><span class="hdr-name">Bolão 2026</span></div>
+      <div class="live-pill">● AO VIVO</div>
+    </div>
+    <div class="content">
+      <div class="progress-wrap">
+        <div class="progress-top"><span class="progress-lbl">Progresso das apostas</span><span class="progress-pct">65%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:65%"></div></div>
+        <div class="progress-sub">
+          <span class="progress-sub-item">Grupos: <span>47/72</span></span>
+          <span class="progress-sub-item">Mata-mata: <span>12/32</span></span>
+        </div>
+      </div>
+
+      <!-- Grupo A -->
+      <div class="group-section">
+        <div class="group-hdr"><div class="group-dot" style="background:#e74c3c"></div><span class="group-name">Grupo A</span><span style="color:var(--muted);font-size:.58rem;margin-left:2px">BRA · ARG · EUA · MEX</span></div>
+        <div class="match-row has-result" style="border-left:3px solid #e74c3c">
+          <div class="mc-home"><span class="t-name">Brasil</span><span style="font-size:.82rem">🇧🇷</span></div>
+          <div class="score-center"><span class="result-score">2 × 1</span></div>
+          <div class="mc-away"><span style="font-size:.82rem">🇦🇷</span><span class="t-name">Argentina</span></div>
+        </div>
+        <div class="match-row" style="border-left:3px solid #e74c3c33">
+          <div class="mc-home"><span class="t-name muted">EUA</span><span style="font-size:.82rem">🇺🇸</span></div>
+          <div class="score-center"><button class="step-btn">−</button><span class="step-val">0</span><button class="step-btn">+</button><span class="sep">×</span><button class="step-btn">−</button><span class="step-val">0</span><button class="step-btn">+</button></div>
+          <div class="mc-away"><span style="font-size:.82rem">🇲🇽</span><span class="t-name muted">México</span></div>
+        </div>
+        <div class="match-row" style="border-left:3px solid #e74c3c33">
+          <div class="mc-home"><span class="t-name muted">Brasil</span><span style="font-size:.82rem">🇧🇷</span></div>
+          <div class="score-center"><button class="step-btn">−</button><span class="step-val">1</span><button class="step-btn">+</button><span class="sep">×</span><button class="step-btn">−</button><span class="step-val">0</span><button class="step-btn">+</button></div>
+          <div class="mc-away"><span style="font-size:.82rem">🇺🇸</span><span class="t-name muted">EUA</span></div>
+        </div>
+        <button class="save-group-btn">💾 Salvar Grupo A</button>
+      </div>
+
+      <!-- Grupo B -->
+      <div class="group-section">
+        <div class="group-hdr"><div class="group-dot" style="background:#e67e22"></div><span class="group-name">Grupo B</span><span style="color:var(--muted);font-size:.58rem;margin-left:2px">FRA · ESP · ALE · JAP</span></div>
+        <div class="match-row" style="border-left:3px solid #e67e2233">
+          <div class="mc-home"><span class="t-name muted">França</span><span style="font-size:.82rem">🇫🇷</span></div>
+          <div class="score-center"><button class="step-btn">−</button><span class="step-val">2</span><button class="step-btn">+</button><span class="sep">×</span><button class="step-btn">−</button><span class="step-val">1</span><button class="step-btn">+</button></div>
+          <div class="mc-away"><span style="font-size:.82rem">🇪🇸</span><span class="t-name muted">Espanha</span></div>
+        </div>
+        <button class="save-group-btn" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border);">💾 Salvar Grupo B</button>
+      </div>
+
+      <div class="section-divider"><div class="section-divider-line"></div><span class="section-divider-label">⚡ Mata-Mata</span><div class="section-divider-line"></div></div>
+
+      <div class="ko-round-lbl">Rodada de 32</div>
+      <div class="ko-slot selected"><div class="ko-slot-team"><span>🇧🇷</span> Brasil</div><span class="ko-slot-arrow">→ Oitavas</span></div>
+      <div class="ko-slot"><div class="ko-slot-team empty">— Selecionar</div><span class="ko-slot-arrow empty">→</span></div>
+      <div class="ko-slot selected"><div class="ko-slot-team"><span>🇫🇷</span> França</div><span class="ko-slot-arrow">→ Oitavas</span></div>
+
+      <div class="ko-round-lbl" style="margin-top:10px">Final 🏆</div>
+      <div class="ko-slot selected" style="border-color:var(--gold-border);background:linear-gradient(90deg,var(--surface),#1e1a08)">
+        <div class="ko-slot-team" style="color:var(--gold)"><span>🇧🇷</span> Brasil — Campeão</div>
+        <span class="ko-slot-arrow">🏆</span>
+      </div>
+      <div style="height:16px"></div>
+    </div>
+
+    <!-- BOTTOM NAV: sem risco, só cor no label -->
+    <div class="bottom-nav">
+      <div class="nav-item active">
+        <div class="nav-icon-wrap">⚽</div>
+        <div class="nav-lbl">APOSTAR</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon-wrap">📋</div>
+        <div class="nav-lbl">BETS</div>
+      </div>
+      <div class="nav-copa">
+        <div class="nav-copa-btn">🌍</div>
+        <div class="nav-copa-lbl">COPA</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon-wrap">🏆</div>
+        <div class="nav-lbl">RANKING</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon-wrap">
+          <svg width="22" height="22" viewBox="0 0 36 36" fill="none">
+            <circle cx="18" cy="18" r="18" fill="#25D366"/>
+            <path d="M18 8C12.477 8 8 12.477 8 18c0 1.818.484 3.52 1.328 4.99L8 28l5.16-1.313A9.943 9.943 0 0018 28c5.523 0 10-4.477 10-10S23.523 8 18 8zm5.007 13.8c-.21.588-1.235 1.124-1.69 1.165-.456.04-.47.34-2.956-.713-2.487-1.052-3.98-3.614-4.1-3.782-.12-.168-.978-1.358-.928-2.56.05-1.2.66-1.78.897-2.023.237-.242.516-.3.688-.302.173-.001.346.002.498.01.16.008.375-.06.586.493.21.553.715 1.86.778 1.996.063.136.104.295.014.472-.09.177-.135.287-.268.44-.132.154-.28.343-.398.462-.132.13-.27.27-.116.53.153.26.68 1.123 1.46 1.818.998.888 1.84 1.16 2.1 1.292.262.13.415.108.568-.065.153-.173.654-.763.828-1.025.175-.262.35-.218.587-.13.236.088 1.5.738 1.757.872.257.135.428.2.49.313.063.114.063.66-.147 1.247z" fill="white"/>
+          </svg>
+        </div>
+        <div class="nav-lbl">CONVIDAR</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COPA ativo -->
+<div class="col">
+  <div class="col-label">🌍 COPA ativo + nav sem risco</div>
+  <div class="phone">
+    <div class="hdr">
+      <div style="display:flex;align-items:center;"><div class="hdr-icon">🌍</div><span class="hdr-name">Copa 2026 Oficial</span></div>
+      <div class="live-pill">FIFA</div>
+    </div>
+    <div class="content">
+      <div style="padding:20px;text-align:center;color:var(--muted);font-size:.75rem;">conteúdo da copa...</div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-item">
+        <div class="nav-icon-wrap">⚽</div>
+        <div class="nav-lbl">APOSTAR</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon-wrap">📋</div>
+        <div class="nav-lbl">BETS</div>
+      </div>
+      <div class="nav-copa active">
+        <div class="nav-copa-btn" style="box-shadow:0 0 10px rgba(212,170,44,.9),0 0 22px rgba(212,170,44,.3);border-color:rgba(212,170,44,.85);">🌍</div>
+        <div class="nav-copa-lbl" style="color:var(--gold);font-weight:900;">COPA</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon-wrap">🏆</div>
+        <div class="nav-lbl">RANKING</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon-wrap">
+          <svg width="22" height="22" viewBox="0 0 36 36" fill="none">
+            <circle cx="18" cy="18" r="18" fill="#25D366"/>
+            <path d="M18 8C12.477 8 8 12.477 8 18c0 1.818.484 3.52 1.328 4.99L8 28l5.16-1.313A9.943 9.943 0 0018 28c5.523 0 10-4.477 10-10S23.523 8 18 8zm5.007 13.8c-.21.588-1.235 1.124-1.69 1.165-.456.04-.47.34-2.956-.713-2.487-1.052-3.98-3.614-4.1-3.782-.12-.168-.978-1.358-.928-2.56.05-1.2.66-1.78.897-2.023.237-.242.516-.3.688-.302.173-.001.346.002.498.01.16.008.375-.06.586.493.21.553.715 1.86.778 1.996.063.136.104.295.014.472-.09.177-.135.287-.268.44-.132.154-.28.343-.398.462-.132.13-.27.27-.116.53.153.26.68 1.123 1.46 1.818.998.888 1.84 1.16 2.1 1.292.262.13.415.108.568-.065.153-.173.654-.763.828-1.025.175-.262.35-.218.587-.13.236.088 1.5.738 1.757.872.257.135.428.2.49.313.063.114.063.66-.147 1.247z" fill="white"/>
+          </svg>
+        </div>
+        <div class="nav-lbl">CONVIDAR</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RANKING ativo -->
+<div class="col">
+  <div class="col-label">🏆 RANKING ativo + nav sem risco</div>
+  <div class="phone">
+    <div class="hdr">
+      <div style="display:flex;align-items:center;"><div class="hdr-icon">🏆</div><span class="hdr-name">Ranking</span></div>
+      <div class="live-pill">8 participantes</div>
+    </div>
+    <div class="content" style="padding:12px;">
+      <div style="background:linear-gradient(135deg,#1a1508,#0d1117);border:1px solid var(--gold-border);border-radius:var(--radius);padding:12px;text-align:center;margin-bottom:10px">
+        <div style="color:var(--muted);font-size:.58rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px">Você está em</div>
+        <div style="color:var(--gold);font-size:2rem;font-weight:900">3º</div>
+        <div style="color:var(--muted);font-size:.65rem">248 pts · a 23 pts do 1º</div>
+      </div>
+      <div style="background:linear-gradient(135deg,var(--surface),#1a1508);border:1px solid var(--gold-border);border-radius:var(--radius);padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:5px">
+        <span style="font-size:.8rem;font-weight:800;width:22px;text-align:center;color:var(--gold)">🥇</span>
+        <span style="flex:1;font-size:.78rem;font-weight:600;color:var(--text)">Lucas R.</span>
+        <span style="font-size:.6rem;font-weight:700;color:#2ea043;margin-right:4px">▲2</span>
+        <span style="font-size:.82rem;font-weight:800;color:var(--gold)">284</span>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:5px">
+        <span style="font-size:.8rem;font-weight:800;width:22px;text-align:center;color:var(--muted)">2</span>
+        <span style="flex:1;font-size:.78rem;font-weight:600;color:var(--text)">Ana P.</span>
+        <span style="font-size:.82rem;font-weight:800;color:var(--text)">261</span>
+      </div>
+      <div style="background:linear-gradient(135deg,var(--surface),#0d1a0f);border:1px solid rgba(26,127,55,.3);border-radius:var(--radius);padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:5px">
+        <span style="font-size:.8rem;font-weight:800;width:22px;text-align:center;color:#2ea043">3</span>
+        <span style="flex:1;font-size:.78rem;font-weight:800;color:var(--text)">Você</span>
+        <span style="font-size:.6rem;font-weight:700;color:#2ea043;margin-right:4px">▲1</span>
+        <span style="font-size:.82rem;font-weight:800;color:#2ea043">248</span>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-item">
+        <div class="nav-icon-wrap">⚽</div>
+        <div class="nav-lbl">APOSTAR</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon-wrap">📋</div>
+        <div class="nav-lbl">BETS</div>
+      </div>
+      <div class="nav-copa">
+        <div class="nav-copa-btn">🌍</div>
+        <div class="nav-copa-lbl">COPA</div>
+      </div>
+      <div class="nav-item active">
+        <div class="nav-icon-wrap">🏆</div>
+        <div class="nav-lbl">RANKING</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon-wrap">
+          <svg width="22" height="22" viewBox="0 0 36 36" fill="none">
+            <circle cx="18" cy="18" r="18" fill="#25D366"/>
+            <path d="M18 8C12.477 8 8 12.477 8 18c0 1.818.484 3.52 1.328 4.99L8 28l5.16-1.313A9.943 9.943 0 0018 28c5.523 0 10-4.477 10-10S23.523 8 18 8zm5.007 13.8c-.21.588-1.235 1.124-1.69 1.165-.456.04-.47.34-2.956-.713-2.487-1.052-3.98-3.614-4.1-3.782-.12-.168-.978-1.358-.928-2.56.05-1.2.66-1.78.897-2.023.237-.242.516-.3.688-.302.173-.001.346.002.498.01.16.008.375-.06.586.493.21.553.715 1.86.778 1.996.063.136.104.295.014.472-.09.177-.135.287-.268.44-.132.154-.28.343-.398.462-.132.13-.27.27-.116.53.153.26.68 1.123 1.46 1.818.998.888 1.84 1.16 2.1 1.292.262.13.415.108.568-.065.153-.173.654-.763.828-1.025.175-.262.35-.218.587-.13.236.088 1.5.738 1.757.872.257.135.428.2.49.313.063.114.063.66-.147 1.247z" fill="white"/>
+          </svg>
+        </div>
+        <div class="nav-lbl">CONVIDAR</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

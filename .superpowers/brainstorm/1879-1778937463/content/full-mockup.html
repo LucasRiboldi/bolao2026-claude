@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bolão 2026 — Mockup Completo</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --gold: #d4aa2c;
+    --gold-dim: rgba(212,170,44,.15);
+    --gold-border: rgba(212,170,44,.3);
+    --green: #1a7f37;
+    --green-bright: #2ea043;
+    --red: #da3633;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --radius-lg: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #060a0f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 32px;
+    padding: 32px;
+    flex-wrap: wrap;
+  }
+
+  /* Phone frame */
+  .phone {
+    width: 320px;
+    height: 620px;
+    background: var(--bg);
+    border-radius: 28px;
+    border: 2px solid #2a2f38;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 80px rgba(0,0,0,.6);
+    position: relative;
+  }
+  .phone-label {
+    color: #6b7280;
+    font-size: .75rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 10px;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: .5px;
+  }
+
+  /* Header */
+  .app-header {
+    background: var(--bg);
+    padding: 14px 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .app-logo { display: flex; align-items: center; gap: 8px; }
+  .app-logo-icon {
+    width: 28px; height: 28px;
+    background: var(--gold);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem;
+  }
+  .app-logo-text { color: var(--text); font-weight: 800; font-size: .9rem; letter-spacing: -.3px; }
+  .live-badge {
+    background: var(--gold-dim);
+    border: 1px solid var(--gold-border);
+    border-radius: 20px;
+    padding: 3px 10px;
+    color: var(--gold);
+    font-size: .6rem;
+    font-weight: 700;
+    letter-spacing: .5px;
+  }
+
+  /* Content area */
+  .app-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 14px 0;
+    scrollbar-width: none;
+  }
+  .app-content::-webkit-scrollbar { display: none; }
+
+  /* Section label */
+  .section-label {
+    color: var(--muted);
+    font-size: .6rem;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .stat-val { font-size: 1.1rem; font-weight: 800; }
+  .stat-lbl { color: var(--muted); font-size: .58rem; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; margin-top: 2px; }
+
+  /* Group section */
+  .group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    margin-top: 12px;
+  }
+  .group-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .group-name { color: var(--text); font-size: .75rem; font-weight: 700; }
+  .group-teams { color: var(--muted); font-size: .65rem; font-weight: 500; }
+
+  /* Match row */
+  .match-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    transition: border-color .15s;
+  }
+  .match-row.has-result { border-color: rgba(212,170,44,.25); }
+  .match-team { display: flex; align-items: center; gap: 5px; }
+  .match-team-name { font-size: .75rem; font-weight: 600; color: var(--text); }
+  .match-score {
+    font-size: .95rem;
+    font-weight: 900;
+    color: var(--gold);
+    letter-spacing: 2px;
+  }
+  .match-score.pending { color: var(--muted); font-weight: 600; letter-spacing: 1px; }
+
+  /* Stepper */
+  .stepper { display: flex; align-items: center; gap: 0; }
+  .step-btn {
+    width: 26px; height: 26px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: .9rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+  }
+  .step-val {
+    width: 28px;
+    text-align: center;
+    color: var(--text);
+    font-size: .85rem;
+    font-weight: 800;
+  }
+
+  /* Save bar */
+  .save-bar {
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(to top, var(--bg) 60%, transparent);
+    padding: 10px 0 6px;
+  }
+  .btn-save {
+    width: 100%;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 11px;
+    font-size: .85rem;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    flex-shrink: 0;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .nav-item {
+    padding: 10px 4px 8px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+  }
+  .nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 20px; height: 2px;
+    background: var(--gold);
+    border-radius: 1px 1px 0 0;
+  }
+  .nav-icon { font-size: 1rem; }
+  .nav-label {
+    font-size: .58rem;
+    font-weight: 600;
+    margin-top: 2px;
+    letter-spacing: .3px;
+  }
+  .nav-item.active .nav-label { color: var(--gold); }
+  .nav-item:not(.active) .nav-label { color: var(--muted); }
+
+  /* Ranking screen */
+  .ranking-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+  }
+  .ranking-item.first { border-color: var(--gold-border); background: linear-gradient(135deg, var(--surface), #1e1a0e); }
+  .rank-pos { font-size: .85rem; font-weight: 800; width: 20px; text-align: center; }
+  .rank-pos.gold { color: var(--gold); }
+  .rank-name { flex: 1; font-size: .8rem; font-weight: 600; color: var(--text); }
+  .rank-pts { font-size: .85rem; font-weight: 800; color: var(--gold); }
+  .rank-badge {
+    font-size: .6rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: rgba(26,127,55,.2);
+    color: #2ea043;
+  }
+
+  /* Skeleton */
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 6px;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  /* Bracket mini */
+  .bracket-round { margin-bottom: 8px; }
+  .bracket-round-label { color: var(--muted); font-size: .58rem; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; margin-bottom: 5px; }
+  .bracket-match {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .bracket-team { display: flex; align-items: center; gap: 5px; font-size: .72rem; font-weight: 600; color: var(--text); }
+  .bracket-vs { color: var(--muted); font-size: .65rem; font-weight: 600; }
+
+  .section-wrap { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<!-- Screen 1: Grupos -->
+<div>
+  <div class="phone-label">⚽ GRUPOS</div>
+  <div class="phone">
+    <div class="app-header">
+      <div class="app-logo">
+        <div class="app-logo-icon">⚽</div>
+        <span class="app-logo-text">Bolão 2026</span>
+      </div>
+      <div class="live-badge">● AO VIVO</div>
+    </div>
+
+    <div class="app-content">
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--gold)">47</div>
+          <div class="stat-lbl">apostas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--text)">72</div>
+          <div class="stat-lbl">jogos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:#2ea043">↑3</div>
+          <div class="stat-lbl">ranking</div>
+        </div>
+      </div>
+
+      <!-- Group A -->
+      <div class="group-header">
+        <div class="group-dot" style="background:#e74c3c"></div>
+        <span class="group-name">Grupo A</span>
+        <span class="group-teams">Brasil · Argentina · EUA · México</span>
+      </div>
+
+      <div class="match-row has-result">
+        <div class="match-team">
+          <span>🇧🇷</span>
+          <span class="match-team-name">Brasil</span>
+        </div>
+        <div>
+          <div class="match-score">2 × 1</div>
+        </div>
+        <div class="match-team">
+          <span class="match-team-name">Argentina</span>
+          <span>🇦🇷</span>
+        </div>
+      </div>
+
+      <div class="match-row">
+        <div class="match-team">
+          <span>🇺🇸</span>
+          <span class="match-team-name" style="color:var(--muted)">EUA</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="stepper">
+            <button class="step-btn">−</button>
+            <span class="step-val">0</span>
+            <button class="step-btn">+</button>
+          </div>
+          <span style="color:var(--muted);font-size:.8rem">×</span>
+          <div class="stepper">
+            <button class="step-btn">−</button>
+            <span class="step-val">0</span>
+            <button class="step-btn">+</button>
+          </div>
+        </div>
+        <div class="match-team">
+          <span class="match-team-name" style="color:var(--muted)">México</span>
+          <span>🇲🇽</span>
+        </div>
+      </div>
+
+      <div class="match-row">
+        <div class="match-team">
+          <span>🇧🇷</span>
+          <span class="match-team-name" style="color:var(--muted)">Brasil</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="stepper">
+            <button class="step-btn">−</button>
+            <span class="step-val">1</span>
+            <button class="step-btn">+</button>
+          </div>
+          <span style="color:var(--muted);font-size:.8rem">×</span>
+          <div class="stepper">
+            <button class="step-btn">−</button>
+            <span class="step-val">0</span>
+            <button class="step-btn">+</button>
+          </div>
+        </div>
+        <div class="match-team">
+          <span class="match-team-name" style="color:var(--muted)">EUA</span>
+          <span>🇺🇸</span>
+        </div>
+      </div>
+
+      <!-- Group B -->
+      <div class="group-header">
+        <div class="group-dot" style="background:#e67e22"></div>
+        <span class="group-name">Grupo B</span>
+        <span class="group-teams">França · Espanha · Alemanha · Japão</span>
+      </div>
+      <div class="match-row">
+        <div class="match-team"><span>🇫🇷</span><span class="match-team-name" style="color:var(--muted)">França</span></div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="stepper"><button class="step-btn">−</button><span class="step-val">2</span><button class="step-btn">+</button></div>
+          <span style="color:var(--muted);font-size:.8rem">×</span>
+          <div class="stepper"><button class="step-btn">−</button><span class="step-val">1</span><button class="step-btn">+</button></div>
+        </div>
+        <div class="match-team"><span class="match-team-name" style="color:var(--muted)">Espanha</span><span>🇪🇸</span></div>
+      </div>
+
+      <div class="save-bar">
+        <button class="btn-save">💾 Salvar Palpites do Grupo A</button>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <div class="nav-item active">
+        <div class="nav-icon">⚽</div>
+        <div class="nav-label">Grupos</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">📊</div>
+        <div class="nav-label">Classif.</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">🏆</div>
+        <div class="nav-label">Ranking</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">⚡</div>
+        <div class="nav-label">Bracket</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Screen 2: Ranking -->
+<div>
+  <div class="phone-label">🏆 RANKING</div>
+  <div class="phone">
+    <div class="app-header">
+      <div class="app-logo">
+        <div class="app-logo-icon">⚽</div>
+        <span class="app-logo-text">Bolão 2026</span>
+      </div>
+      <div class="live-badge">● AO VIVO</div>
+    </div>
+
+    <div class="app-content">
+      <div class="section-label" style="margin-bottom:10px">Ranking ao vivo · 8 participantes</div>
+
+      <div class="ranking-item first">
+        <span class="rank-pos gold">🥇</span>
+        <span class="rank-name">Lucas R.</span>
+        <span class="rank-badge">+12 pts</span>
+        <span class="rank-pts">284</span>
+      </div>
+      <div class="ranking-item">
+        <span class="rank-pos" style="color:var(--muted)">2</span>
+        <span class="rank-name">Ana P.</span>
+        <span style="flex:1"></span>
+        <span class="rank-pts" style="color:var(--text)">261</span>
+      </div>
+      <div class="ranking-item">
+        <span class="rank-pos" style="color:var(--muted)">3</span>
+        <span class="rank-name">Pedro M.</span>
+        <span style="flex:1"></span>
+        <span class="rank-pts" style="color:var(--text)">248</span>
+      </div>
+      <div class="ranking-item">
+        <span class="rank-pos" style="color:var(--muted)">4</span>
+        <span class="rank-name">Carla S.</span>
+        <span style="flex:1"></span>
+        <span class="rank-pts" style="color:var(--text)">231</span>
+      </div>
+      <div class="ranking-item">
+        <span class="rank-pos" style="color:var(--muted)">5</span>
+        <span class="rank-name">Rafael T.</span>
+        <span style="flex:1"></span>
+        <span class="rank-pts" style="color:var(--text)">219</span>
+      </div>
+
+      <!-- Skeleton loading -->
+      <div style="margin-top:16px;margin-bottom:6px">
+        <div class="section-label">Apostas desta rodada</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:5px">
+        <div class="skeleton" style="height:12px;width:60%;margin-bottom:8px"></div>
+        <div class="skeleton" style="height:10px;width:40%"></div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px">
+        <div class="skeleton" style="height:12px;width:70%;margin-bottom:8px"></div>
+        <div class="skeleton" style="height:10px;width:45%"></div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <div class="nav-item">
+        <div class="nav-icon">⚽</div>
+        <div class="nav-label">Grupos</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">📊</div>
+        <div class="nav-label">Classif.</div>
+      </div>
+      <div class="nav-item active">
+        <div class="nav-icon">🏆</div>
+        <div class="nav-label">Ranking</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">⚡</div>
+        <div class="nav-label">Bracket</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Screen 3: Bracket -->
+<div>
+  <div class="phone-label">⚡ BRACKET</div>
+  <div class="phone">
+    <div class="app-header">
+      <div class="app-logo">
+        <div class="app-logo-icon">⚽</div>
+        <span class="app-logo-text">Bolão 2026</span>
+      </div>
+      <div class="live-badge">● AO VIVO</div>
+    </div>
+
+    <div class="app-content">
+      <div class="section-label" style="margin-bottom:10px">Mata-mata · Seu palpite</div>
+
+      <div class="bracket-round">
+        <div class="bracket-round-label">🔵 Oitavas de Final</div>
+        <div class="bracket-match">
+          <div class="bracket-team"><span>🇧🇷</span> Brasil</div>
+          <span class="bracket-vs">×</span>
+          <div class="bracket-team">Coreia <span>🇰🇷</span></div>
+        </div>
+        <div class="bracket-match">
+          <div class="bracket-team"><span>🇫🇷</span> França</div>
+          <span class="bracket-vs">×</span>
+          <div class="bracket-team">Portugal <span>🇵🇹</span></div>
+        </div>
+      </div>
+
+      <div class="bracket-round">
+        <div class="bracket-round-label">🟣 Quartas de Final</div>
+        <div class="bracket-match" style="border-color:rgba(212,170,44,.2)">
+          <div class="bracket-team" style="color:var(--gold)"><span>🇧🇷</span> Brasil</div>
+          <span class="bracket-vs">×</span>
+          <div class="bracket-team" style="color:var(--muted)">? <span>—</span></div>
+        </div>
+        <div class="bracket-match">
+          <div class="bracket-team" style="color:var(--muted)">? <span>—</span></div>
+          <span class="bracket-vs">×</span>
+          <div class="bracket-team" style="color:var(--muted)">? <span>—</span></div>
+        </div>
+      </div>
+
+      <div class="bracket-round">
+        <div class="bracket-round-label">🟠 Semifinal</div>
+        <div class="bracket-match">
+          <div class="bracket-team" style="color:var(--muted)">? —</div>
+          <span class="bracket-vs">×</span>
+          <div class="bracket-team" style="color:var(--muted)">? —</div>
+        </div>
+      </div>
+
+      <div class="bracket-round">
+        <div class="bracket-round-label">🏆 Final</div>
+        <div class="bracket-match" style="border-color:var(--gold-border);background:linear-gradient(135deg,var(--surface),#1e1a0e)">
+          <div class="bracket-team" style="color:var(--gold)"><span>🇧🇷</span> Brasil</div>
+          <span class="bracket-vs" style="color:var(--gold)">×</span>
+          <div class="bracket-team" style="color:var(--muted)">? —</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <div class="nav-item">
+        <div class="nav-icon">⚽</div>
+        <div class="nav-label">Grupos</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">📊</div>
+        <div class="nav-label">Classif.</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">🏆</div>
+        <div class="nav-label">Ranking</div>
+      </div>
+      <div class="nav-item active">
+        <div class="nav-icon">⚡</div>
+        <div class="nav-label">Bracket</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

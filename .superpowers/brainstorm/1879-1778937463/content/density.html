@@ -1,0 +1,139 @@
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+  .demo-wrap { background: #0d1117; border-radius: 10px; padding: 14px; }
+  .demo-label { color: #8b949e; font-size: .65rem; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 8px; }
+</style>
+
+<h2>Qual densidade você prefere?</h2>
+<p class="subtitle">Mesmo conteúdo — lista de jogos do grupo A — com espaçamentos diferentes</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0d1117;padding:16px">
+      <!-- A: Compacto — mais jogos visíveis -->
+      <div class="demo-wrap">
+        <div class="demo-label">Grupo A · 6 Jogos</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:7px 10px;display:flex;align-items:center;justify-content:space-between">
+            <span style="color:#8b949e;font-size:.72rem">🇧🇷 Brasil</span>
+            <span style="color:#e6edf3;font-size:.85rem;font-weight:800;letter-spacing:1px">2 × 1</span>
+            <span style="color:#8b949e;font-size:.72rem">Argentina 🇦🇷</span>
+          </div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:7px 10px;display:flex;align-items:center;justify-content:space-between">
+            <span style="color:#8b949e;font-size:.72rem">🇺🇸 EUA</span>
+            <span style="color:#8b949e;font-size:.85rem;font-weight:800;letter-spacing:1px">— × —</span>
+            <span style="color:#8b949e;font-size:.72rem">México 🇲🇽</span>
+          </div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:7px 10px;display:flex;align-items:center;justify-content:space-between">
+            <span style="color:#8b949e;font-size:.72rem">🇧🇷 Brasil</span>
+            <span style="color:#8b949e;font-size:.85rem;font-weight:800;letter-spacing:1px">— × —</span>
+            <span style="color:#8b949e;font-size:.72rem">EUA 🇺🇸</span>
+          </div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:7px 10px;display:flex;align-items:center;justify-content:space-between">
+            <span style="color:#8b949e;font-size:.72rem">🇦🇷 Argentina</span>
+            <span style="color:#8b949e;font-size:.85rem;font-weight:800;letter-spacing:1px">— × —</span>
+            <span style="color:#8b949e;font-size:.72rem">México 🇲🇽</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Compacto</h3>
+      <p>Mais jogos visíveis por tela, menos scroll. Bom para quem quer ver tudo de uma vez. Sente como planilha esportiva profissional.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0d1117;padding:16px">
+      <!-- B: Balanceado -->
+      <div class="demo-wrap">
+        <div class="demo-label">Grupo A · 6 Jogos</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:.9rem">🇧🇷</span>
+              <span style="color:#e6edf3;font-size:.8rem;font-weight:600">Brasil</span>
+            </div>
+            <span style="color:#e6edf3;font-size:1rem;font-weight:900;letter-spacing:2px">2 × 1</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="color:#e6edf3;font-size:.8rem;font-weight:600">Argentina</span>
+              <span style="font-size:.9rem">🇦🇷</span>
+            </div>
+          </div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:.9rem">🇺🇸</span>
+              <span style="color:#8b949e;font-size:.8rem;font-weight:600">EUA</span>
+            </div>
+            <span style="color:#8b949e;font-size:1rem;font-weight:900;letter-spacing:2px">— × —</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="color:#8b949e;font-size:.8rem;font-weight:600">México</span>
+              <span style="font-size:.9rem">🇲🇽</span>
+            </div>
+          </div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:.9rem">🇧🇷</span>
+              <span style="color:#8b949e;font-size:.8rem;font-weight:600">Brasil</span>
+            </div>
+            <span style="color:#8b949e;font-size:1rem;font-weight:900;letter-spacing:2px">— × —</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="color:#8b949e;font-size:.8rem;font-weight:600">EUA</span>
+              <span style="font-size:.9rem">🇺🇸</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Balanceado (recomendado)</h3>
+      <p>Equilíbrio entre informação e respiração. Elementos têm espaço suficiente pra não parecer apertado, mas sem desperdiçar tela. Bom para mobile e desktop.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0d1117;padding:16px">
+      <!-- C: Espaçoso -->
+      <div class="demo-wrap">
+        <div class="demo-label">Grupo A · 6 Jogos</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="background:#161b22;border:1px solid #d4aa2c33;border-radius:10px;padding:14px 16px">
+            <div style="color:#8b949e;font-size:.6rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Rodada 1 · 11 Jun</div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:1.1rem">🇧🇷</span>
+                <span style="color:#e6edf3;font-size:.9rem;font-weight:700">Brasil</span>
+              </div>
+              <span style="color:#d4aa2c;font-size:1.2rem;font-weight:900;letter-spacing:3px">2 × 1</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="color:#e6edf3;font-size:.9rem;font-weight:700">Argentina</span>
+                <span style="font-size:1.1rem">🇦🇷</span>
+              </div>
+            </div>
+          </div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:14px 16px">
+            <div style="color:#8b949e;font-size:.6rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Rodada 1 · 11 Jun</div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:1.1rem">🇺🇸</span>
+                <span style="color:#8b949e;font-size:.9rem;font-weight:700">EUA</span>
+              </div>
+              <span style="color:#8b949e;font-size:1.2rem;font-weight:900;letter-spacing:3px">— × —</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="color:#8b949e;font-size:.9rem;font-weight:700">México</span>
+                <span style="font-size:1.1rem">🇲🇽</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Espaçoso</h3>
+      <p>Mais respiração, mais premium. Cada jogo tem seu espaço, com data e contexto visível. Parece app de alto padrão, mas exige mais scroll. Melhor em desktop.</p>
+    </div>
+  </div>
+
+</div>
