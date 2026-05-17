@@ -72,7 +72,7 @@ export function MyBetsScreen() {
     <div id="section-mybets" role="tabpanel">
       <StatusCard profile={profile} groupBets={groupBets} koBets={koBets} />
       <GroupBetsView bets={groupBets} results={results.groupStage} />
-      <KnockoutBetsView groupBets={groupBets} koBets={koBets} />
+      <KnockoutBetsView groupBets={groupBets} koBets={koBets} koResults={results.knockout as Record<string, import('@/types').TeamId>} />
       <div className="mybets-export-wrap">
         <button className="btn btn-ghost btn-full" onClick={handleWhatsApp}>
           📤 Exportar via WhatsApp

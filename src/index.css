@@ -120,8 +120,11 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(135deg, var(--gold), #e8c040);
   color: #0d1117;
 }
-.btn-full { width: 100%; }
+.btn-full { width: 100%; max-width: 100%; }
 .btn-sm   { padding: 6px 14px; font-size: 0.75rem; }
+@media (min-width: 481px) {
+  .btn:not(.btn-full) { max-width: 360px; }
+}
 
 /* ── Forms ─────────────────────────────────────────────────────────────────── */
 .input {

@@ -1,3 +1,6 @@
+/* ── Max-width shell ────────────────────────────────────────────────────────── */
+:root { --shell-max: 680px; }
+
 /* ── Header ────────────────────────────────────────────────────────────────── */
 .app-header {
   position: sticky;
@@ -12,6 +15,8 @@
   justify-content: space-between;
   padding: 10px 16px;
   gap: 8px;
+  max-width: var(--shell-max);
+  margin: 0 auto;
 }
 .app-header__brand {
   font-size: .9rem;
@@ -59,7 +64,9 @@
 /* ── Content area ──────────────────────────────────────────────────────────── */
 .app-content {
   padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
-  min-height: calc(100vh - 53px); /* 53px = header height */
+  min-height: calc(100vh - 53px);
+  max-width: var(--shell-max);
+  margin: 0 auto;
 }
 
 /* ── Bottom nav ────────────────────────────────────────────────────────────── */
@@ -77,13 +84,23 @@
   align-items: end;
   z-index: 100;
 }
+@media (min-width: 681px) {
+  .bottom-nav {
+    max-width: var(--shell-max);
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+  }
+}
 
 .bnav-item {
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse; /* mobile: icon below label */
   align-items: center;
-  justify-content: flex-end;
-  padding-bottom: 8px;
+  justify-content: flex-start;
+  padding-top: 8px;
   gap: 3px;
   background: none;
   border: none;
@@ -92,6 +109,14 @@
   opacity: .55;
   transition: opacity var(--transition);
   min-height: var(--nav-h);
+}
+@media (min-width: 641px) {
+  .bnav-item {
+    flex-direction: column; /* tablet+: icon above label */
+    justify-content: flex-end;
+    padding-top: 0;
+    padding-bottom: 8px;
+  }
 }
 .bnav-item--active {
   opacity: 1;
@@ -119,8 +144,10 @@
 /* ── Copa (centre elevated button) ────────────────────────────────────────── */
 .bnav-item--copa {
   opacity: 1;
-  padding-bottom: 6px;
+  flex-direction: column; /* copa always: btn on top, label below */
   justify-content: flex-end;
+  padding-bottom: 6px;
+  padding-top: 0;
 }
 .bnav-copa-btn {
   width: 48px;
@@ -140,6 +167,4 @@
 .bnav-item--copa.bnav-item--active .bnav-copa-btn {
   box-shadow: 0 0 12px rgba(212, 170, 44, .9), 0 0 28px rgba(212, 170, 44, .3);
 }
-.bnav-item--copa .bnav-lbl {
-  margin-top: 2px;
-}
+.bnav-item--copa .bnav-lbl { margin-top: 2px; }
