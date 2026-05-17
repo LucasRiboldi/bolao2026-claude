@@ -27,8 +27,11 @@ Thumbs.db
 .vscode/settings.json
 *.swp
 
-# Claude Code worktrees
+# Claude Code worktrees + plugin artifacts (locais, não vão pro repo)
 .claude/
+.claire/
+.superpowers/
+docs/superpowers/
 
 # Vitest
 coverage/

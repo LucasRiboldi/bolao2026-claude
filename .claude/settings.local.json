@@ -27,7 +27,8 @@
       "Bash(python3 -c \"import PyPDF2\")",
       "Bash(pdftotext \"C:\\\\Users\\\\lucas\\\\Desktop\\\\bolao2026-claude\\\\public\\\\FWC26_regulations_EN.pdf\" -)",
       "Bash(xargs wc -l)",
-      "Bash(grep -oE \"#[0-9a-fA-F]{3,8}\")"
+      "Bash(grep -oE \"#[0-9a-fA-F]{3,8}\")",
+      "Bash(git mv *)"
     ]
   }
 }

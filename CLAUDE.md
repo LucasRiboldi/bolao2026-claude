@@ -1,42 +1,86 @@
-# CLAUDE.md — Contexto do Projeto Bolão Copa 2026
+# CLAUDE.md — Bolão Copa 2026
 
-Este arquivo é lido automaticamente pelo Claude Code para carregar contexto do projeto
-e economizar tokens em novas sessões. Atualize sempre que houver mudanças arquiteturais.
+Lido automaticamente pelo Claude Code no início de cada sessão. Mantenha
+sincronizado quando houver mudanças estruturais.
 
 ---
 
-## 🎯 O que é este projeto
+## 🎯 Visão geral
 
 Bolão de palpites da Copa do Mundo FIFA 2026.
-- **Stack:** HTML + CSS + JS puro (sem framework/bundler) + Firebase (Auth + Firestore + Hosting)
-- **Admin:** lucasriboldi.dev@gmail.com
-- **Firebase project:** bolao2026-a76c7
-- **Hosting:** https://bolao2026-a76c7.web.app
+
+- **Stack:** React 18 + TypeScript 5 (strict) + Vite 5 + Firebase (Auth + Firestore + Hosting)
+- **Admin:** `lucasriboldi.dev@gmail.com`
+- **Firebase project:** `bolao2026-a76c7`
+- **Live:** https://bolao2026-a76c7.web.app · [Style guide](https://bolao2026-a76c7.web.app/styleguide.html)
 - **GitHub:** https://github.com/LucasRiboldi/bolao2026-claude
 
 ---
 
-## 📁 Mapa de Arquivos e Responsabilidades
+## 📁 Mapa do código
 
-| Arquivo | Responsabilidade |
-|---------|-----------------|
-| `index.html` | SPA única — toda a UI está aqui. Seções: auth-screen, dashboard-screen (grupos, standings, ranking, admin) |
-| `css/styles.css` | Tema dark. Variáveis em `:root`. Mobile-first. Sem preprocessador. |
-| `js/config.js` | `firebase.initializeApp()`, exporta `auth` e `db` globais |
-| `js/data.js` | Dados estáticos: `TEAMS`, `GROUPS`, `KNOCKOUT_SLOTS`, `KNOCKOUT_ROUNDS`, `SCORING`, helpers: `generateGroupGames()`, `calcGroupStandings()`, `getQualified()`, `buildR32()`, `resolveKnockoutRound()` |
-| `js/utils.js` | `showToast(msg, type)`, `showLoading()`, `hideLoading()`, `showScreen(id)`, `showSection(id)` |
-| `js/db.js` | CRUD Firestore: `saveGroupBets`, `loadGroupBets`, `saveKnockoutBets`, `loadKnockoutBets`, `saveProfile`, `loadProfile`, `loadResults`, `loadAllUsersForRanking`, `updateRankingDoc`, `loadRanking`, `lockBets`, `unlockUserBets`, `loadUserBetsForHistory`, `loadAdminUserList` |
-| `js/auth.js` | Formulário login/cadastro, `initAuth()`. Chama `_onLogin`/`_onLogout` de app.js |
-| `js/groupStage.js` | Estado: `_groupBets` (obj), `_gsLocked` (bool). Funções públicas: `initGroupStage()`, `loadGroupBetsUI(uid)`, `setGroupStageLocked(bool)`, `getCurrentGroupBets()`, `isGroupStageLocked()`. Auto-simula bracket ao preencher 72 jogos. |
-| `js/knockout.js` | Estado: `_koBets` (obj), `_r32Matches` (arr), `_koLocked` (bool). Funções: `initKnockout()`, `loadKnockoutBetsUI(uid)`, `setKnockoutLocked(bool)`, `getCurrentKnockoutBets()`. `_simulate()` é global. |
-| `js/standings.js` | Busca classificação oficial em API externa. `initStandings()`. |
-| `js/ranking.js` | `calculateScore(groupBets, knockoutBets, results)` → `{pts, breakdown}`. `initRanking(uid)`, `loadPublicRanking()`, `_computeRankingClient()`. |
-| `js/admin.js` | `isAdmin()`, `initAdminUI()`, `initAdminPanel()`, `adminToggleLock(uid, lock, btn)`, `openBetHistory(uid, name)`, `closeBetHistory()`, `_renderBetHistory(...)`. ADMIN_EMAIL = 'lucasriboldi.dev@gmail.com' |
-| `js/results.js` | **Admin only.** `initResultsPanel()` — painel com tabs ⚽ Grupos / ⚡ Mata-Mata para lançar resultados oficiais. Escreve em `results/groupStage` e `results/knockout` via merge. 100% independente de standings.js (API). Usa `FieldValue.delete()` para limpar entradas individualmente. |
-| `js/app.js` | Entry point. `_onLogin(user)`, `_onLogout()`, `_refreshUserScore(uid)`. Orquestra navegação entre seções. |
-| `firestore.rules` | `isAdmin()` verifica `request.auth.token.email`. Bets são public-read para bolão transparente. |
-| `seed-server.js` | Servidor HTTP porta 3001 com SSE. Usa firebase-admin (Admin SDK). Rotas: `/api/ping`, `/api/seed`, `/api/clear` |
-| `test-seed.html` | UI de seed — chama seed-server.js via EventSource. Simula 10 users (teste1@teste.com.br…teste10). |
+```
+src/
+├── main.tsx                  Entry: design-system.css → index.css → App
+├── App.tsx                   Roteamento por seção (BetScreen eager, demais lazy)
+├── index.css                 Reset + componentes atômicos (.btn, .input, .card, .badge, .skeleton, .toast, [data-tooltip], .section-label, .empty-state)
+├── styles/
+│   └── design-system.css     Single source of truth — 80+ tokens (color, space, type, radius, shadow, motion, z-index)
+├── contexts/
+│   └── AuthContext.tsx       Firebase Auth + admin flag + globalLocked do config
+├── components/
+│   ├── Flag.tsx              Bandeira CDN flagcdn.com
+│   ├── TeamName.tsx          Responsivo: short (BRA) <640px, full (Brasil) ≥640px
+│   └── layout/AppShell.tsx   Header sticky + bottom nav 5 ícones (Copa elevada)
+├── data/                     Estáticos
+│   ├── teams.ts              48 seleções (name, short, iso, flag)
+│   ├── groups.ts             GROUPS (seeding oficial FIFA) + generateGroupGames + ALL_GROUP_GAMES
+│   ├── bracket.ts            KNOCKOUT_SLOTS + KNOCKOUT_ROUNDS + DEFAULT_SCORING + buildR32 + resolveKnockoutRound
+│   ├── fixtures.ts           Calendário oficial — 72 jogos grupos + 32 KO em horário Brasília
+│   └── fifaRules2026.ts      Regras FIFA encodadas em TS (Art. 12-14 + Annexe C)
+├── lib/
+│   ├── firebase.ts           initializeApp + auth + db + ADMIN_EMAIL
+│   ├── firestore.ts          Todas as operações DB (load*, save*, subscribe*, recomputeRanking debounced)
+│   ├── compactBets.ts        Encode/decode "2x1" — reduz docs em ~70%
+│   └── seedTest.ts           Seed 20 users teste + undo (client-side, sem servidor externo)
+├── utils/
+│   ├── scoring.ts            calculateScore + sortRanking
+│   └── standings.ts          calcGroupStandings + getQualified + Annexe C bipartite matching
+├── hooks/
+│   ├── useGroupBets.ts       Estado + save (só globalLocked bloqueia)
+│   ├── useKnockoutBets.ts    + KO_ROUND_MAX (limites de seleção por fase)
+│   ├── useStandings.ts       Resultados oficiais + classificação
+│   └── useRanking.ts         Real-time via subscribeRanking (onSnapshot)
+├── screens/
+│   ├── AuthScreen/           Login + register + Google + jogos do dia + ranking público
+│   ├── BetScreen/            72 jogos com stepper + chips KO com cascade
+│   ├── MyBetsScreen/         Read-only sheet com pontuação
+│   ├── StandingsScreen/      12 tabelas + bracket
+│   ├── RankingScreen/        Pódio + lista + my-position card
+│   ├── InviteScreen/         Copiar link + WhatsApp + tutorial
+│   └── AdminScreen/          Dashboard KPI + 4 tabs (Users, Results, Config, Tools)
+└── types/index.ts            Todos os tipos TS exportados
+
+public/
+├── img/                      Logos
+└── styleguide.html           Style guide standalone (47KB, sem React) — serve em /styleguide.html
+
+tests/unit/                   Vitest — 61 testes de regra de negócio
+├── standings.test.ts         Art. 13 tiebreaker recursivo + Annexe C
+├── scoring.test.ts           calculateScore
+├── data.test.ts              GROUPS + buildR32
+└── compactBets.test.ts       encode/decode + backward compat
+
+docs/                         Referências (não vão pro hosting, gitignored em parte)
+├── MANUAL.txt                Manual do projeto em texto puro
+├── FIFA_RULES_2026.txt       Regras FIFA aplicadas ao bolão
+├── SCORING.md                Sistema matemático completo
+├── DESIGN_QA.md              Auditoria WCAG + matriz A/B
+├── FWC26_regulations_EN.pdf  PDF oficial FIFA (referência)
+└── calendario.txt            Source para fixtures.ts
+
+tools/seed/                   CLI seed legado (use o seed in-browser do AdminScreen)
+```
 
 ---
 
@@ -44,111 +88,117 @@ Bolão de palpites da Copa do Mundo FIFA 2026.
 
 ```
 users/{uid}/
-  profile/info      { name, email, betsLocked, betsSavedAt, betsUnlockedAt }
-  bets/groupStage   { [gameId]: { homeGoals: "2", awayGoals: "1" } }
-  bets/knockout     { [matchId]: "teamId" }
+  profile/info         { name, email, betsLocked?, betsSavedAt?, betsUnlockedAt? }
+  bets/groupStage      Compact: { "A_0": "2x1", "B_3": "0x0", ... }  ←  encodeGroupBets
+  bets/knockout        { r32?: [], r16?: [], qf?: [], sf?: [], champion?, third? }
 
 results/
-  groupStage        { [gameId]: { homeGoals, awayGoals } }   ← admin escreve
-  knockout          { [matchId]: "teamId" }                  ← admin escreve
+  groupStage           Mesmo shape de bets/groupStage (admin escreve)
+  knockout             { [matchId]: teamId }
 
 ranking/
-  current           { entries: [{ uid, name, pts, breakdown }] }
+  current              { entries: [{ uid, name, pts, breakdown }] }
+
+config/
+  admin                { registrationOpen?, globalLocked?, ... }
+  scoring              ScoringConfig (sobrescreve DEFAULT_SCORING)
+
+blocked/
+  emails               { [email]: true }  ←  banlist pública pra signup check
 ```
 
 ### Game IDs
-- Grupos: `A_0`…`A_5`, `B_0`…`L_5` (12 grupos × 6 jogos = 72 total)
-- R32: `r32_01`…`r32_16`
-- Oitavas: `r16_01`…`r16_08`
-- Quartas: `qf_01`…`qf_04`
-- Semis: `sf_01`, `sf_02`
-- Final: `final`
+- Grupos: `A_0`..`A_5`, `B_0`..`L_5` (12 × 6 = 72)
+- R32: `r32_01`..`r32_16` · R16: `r16_01`..`r16_08` · QF: `qf_01`..`qf_04`
+- SF: `sf_01`, `sf_02` · Final: `final` · 3º lugar: `third`
 
 ---
 
-## 🔑 Padrões de Código
+## 🔑 Padrões de código
 
-- **Sem módulos ES** — tudo em escopo global. Scripts carregam em ordem no `index.html`.
-- **Estado local** — cada módulo tem suas próprias variáveis privadas com `_` prefix.
-- **Funções públicas** — sem underscore, declaradas no final ou marcadas como exports (comentário).
-- **Firebase compat SDK v10** — usa `firebase.auth()` e `firebase.firestore()`, não o modular.
-- **Flags** — biblioteca `flag-icon-css` (CDN). Usar `fi fi-{iso}` onde `iso` vem de `TEAMS[id].iso`.
-- **Escocia** → `iso: 'gb-sct'`, **Inglaterra** → `iso: 'gb-eng'` (não `gb`).
-- **Bloqueio** — `betsLocked: true` em `profile/info`. `_gsLocked` e `_koLocked` controlam a UI localmente.
-
----
-
-## 🎨 CSS — Variáveis Principais
-
-```css
---bg          /* fundo principal */
---surface     /* cards e painéis */
---surface2    /* hover e headers */
---border      /* bordas */
---text        /* texto principal */
---text-muted  /* texto secundário */
---accent      /* verde (#238636) */
---gold        /* dourado (#d29922) */
---radius      /* 10px */
---radius-sm   /* 6px */
---transition  /* .15s ease */
-```
+- **TypeScript strict** — sempre. Sem `any` salvo necessidade real.
+- **CSS puro tokenizado** — todo valor visual via `var(--token)`. Nada de hex hardcoded. Tokens em `src/styles/design-system.css`.
+- **Aliases legacy preservados** — `--gold`, `--surface2`, `--green` etc. ainda funcionam (apontam pra tokens novos).
+- **Estado** — hooks (`useGroupBets`, `useKnockoutBets`, etc.). Sem Redux/Zustand.
+- **Firestore SDK modular v10** — `import { doc, getDoc, onSnapshot } from 'firebase/firestore'`.
+- **Bandeiras** — `<Flag iso="br" />` via flagcdn.com. Escócia → `gb-sct`, Inglaterra → `gb-eng`.
+- **Bloqueio de apostas** — só via `globalLocked` (admin liga em Config). `profile.betsLocked` por-user existe no DB mas NÃO afeta o BetScreen do próprio user.
+- **Auto-recompute do ranking** — debounced 2s em `scheduleRankingRecompute`, disparado por todo save de resultado.
+- **Real-time ranking** — `subscribeRanking(onSnapshot)` no `useRanking`. Sem polling.
+- **Compactação de bets** — sempre `encodeGroupBets`/`decodeGroupBets` em writes/reads (formato "2x1"). Backward compat para docs no formato antigo.
+- **Limites KO** — em `KO_ROUND_MAX` (r32: 16, r16: 8, qf: 4, sf: 2). UI bloqueia adicionar quando atinge.
 
 ---
 
-## ⚙️ Comandos Frequentes
+## 🎨 Design System
+
+Single source: `src/styles/design-system.css`.
+
+Identidade: **dark + gold + green**. Brand colors:
+- `--color-gold-500` (#d4aa2c) — conquista, seleção, marca
+- `--color-green-700` (#1a7f37) — sucesso, primary CTA
+- `--color-focus` (info-blue) — focus rings (separado do gold para hierarquia)
+
+Componentes atômicos em `src/index.css`: `.btn` (5 variantes), `.input`, `.card`, `.badge`, `.skeleton`, `.toast`, `[data-tooltip]`, `.spinner`, `.section-label`, `.empty-state`, `.team-name--responsive`.
+
+Style guide visualizável: https://bolao2026-a76c7.web.app/styleguide.html
+
+---
+
+## ⚙️ Comandos
 
 ```bash
-# Rodar localmente (extensão Live Server no VS Code, porta 5500)
-# ou:
-npx serve .
+# Dev local
+npm run dev              # Vite em http://localhost:5173
 
-# Deploy completo
-firebase deploy
+# Build
+npm run build            # TypeScript check + Vite production build
 
-# Apenas regras Firestore
-firebase deploy --only firestore:rules
+# Testes
+npm test                 # Vitest watch
+npm run test:run         # Vitest single pass
+npx vitest run tests/unit/standings.test.ts  # arquivo específico
 
-# Apenas hosting
-firebase deploy --only hosting
+# Deploy
+firebase deploy --only hosting             # Front
+firebase deploy --only firestore:rules     # Rules
+firebase deploy                            # Tudo
 
-# Seed de teste (deixar rodando em terminal separado)
-node seed-server.js
-# Depois abrir test-seed.html no browser
-
-# Push para GitHub
-git add -A && git commit -m "feat: descrição" && git push
+# Git
+git add -A && git commit -m "feat: x" && git push
 ```
 
 ---
 
 ## 🚫 O que NÃO fazer
 
-- Não usar `localStorage` — app usa Firestore para tudo
-- Não importar módulos ES (`import/export`) — scripts são globais
-- Não usar `firestore.rules` em modo test (`allow read, write: if true`) em produção
-- Não commitar `service-account.json` (está no `.gitignore`)
-- Não usar `firebase.initializeApp` mais de uma vez sem nome — seed usa `firebase.initializeApp(config, 'seed')`
-- `seed-server.js` e `seed.js` são ferramentas de desenvolvimento — não fazem parte do hosting
+- **Não criar `*.md` documentando** sem pedido explícito. README/CLAUDE.md/docs/ já cobrem.
+- **Não usar `firestore.rules` em modo permissivo** (`allow read, write: if true`) em prod.
+- **Não commitar** `service-account.json` (gitignored).
+- **Não introduzir** novas dependências sem aprovação.
+- **Não hardcodar cores/spacing/sizes** — sempre `var(--token-*)` do design system.
+- **Não trocar nomes de class/id/handler** sem motivo — quebra integração JS↔CSS↔testes.
+- **Não usar `<span class="title">`** quando o correto é `<h2>` (afeta a11y).
+- **Não reabrir o seed-server externo** (`tools/seed/seed-server.js`) — use o seed in-browser do AdminScreen → Ferramentas.
 
 ---
 
-## 📋 Tarefas Concluídas (histórico)
+## 🧪 Quality gates
 
-1. Remover tabela de classificação por grupo → lista compacta de partidas
-2. Steppers +/− para gols (mobile-first)
-3. Fase de mata-mata abaixo dos grupos (mesma tela)
-4. Aba Classificação Oficial (API externa)
-5. Firestore rules + Admin SDK
-6. test-seed.html com 10 usuários simulados + seed-server.js
-7. Histórico de apostas (modal 📋), bloqueio de campos, painel admin, botão seed
-8. Bracket mais compacto (138px/col), auto-simular ao completar grupos, ranking ao vivo na tela inicial, gols pré-preenchidos com 0, cores por grupo (A-L), botão exportar apostas
+Antes de qualquer deploy:
+1. `npm run build` deve passar (TypeScript strict)
+2. `npx vitest run tests/unit/{standings,scoring,data,compactBets}.test.ts` — 61/61 testes de regra de negócio devem passar
+3. Para mudanças em rules: `firebase deploy --only firestore:rules` antes do hosting
+
+Testes UI (`*.test.tsx`) têm falhas pré-existentes não-bloqueantes — focar nos testes de business logic.
 
 ---
 
-## 🔮 Possíveis próximas features
+## 📚 Referências
 
-- Resultados reais: admin preenche `results/groupStage` e `results/knockout` via painel
-- Notificações push quando ranking atualizar
-- Compartilhar link do próprio boletim de apostas
-- Modo multi-bolão (várias competições)
+- `docs/MANUAL.txt` — manual completo em texto puro
+- `docs/SCORING.md` — sistema matemático com fórmulas e exemplos
+- `docs/FIFA_RULES_2026.txt` — regras FIFA aplicadas (Art. 12-14 + Annexe C)
+- `docs/DESIGN_QA.md` — auditoria WCAG + matriz A/B de breakpoints
+- `docs/calendario.txt` — calendário oficial FIFA (source para `src/data/fixtures.ts`)
+- `docs/FWC26_regulations_EN.pdf` — PDF oficial FIFA (~940KB, só referência)

@@ -1,1 +1,0 @@
-export { MyBetsScreen } from './MyBetsScreen'
