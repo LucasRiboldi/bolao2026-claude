@@ -1,18 +1,24 @@
 import type { GroupId, GroupGame, TeamId } from '@/types'
 
+/**
+ * Seed positions [t0=X1, t1=X2, t2=X3, t3=X4] per the official FIFA 2026 draw,
+ * verified against the public match calendar (public/calendario.txt):
+ *   - MD1 game 1 (t0 v t1) and MD1 game 2 (t2 v t3) must match the schedule.
+ *   - 4 groups (B, F, I, K) were re-seeded against the draft to match FIFA.
+ */
 export const GROUPS: Record<GroupId, [TeamId, TeamId, TeamId, TeamId]> = {
-  A: ['mexico', 'southafrica', 'southkorea', 'czechia'],
-  B: ['canada', 'switzerland', 'qatar', 'bosnia'],
-  C: ['brazil', 'morocco', 'haiti', 'scotland'],
-  D: ['usa', 'paraguay', 'australia', 'turkey'],
-  E: ['germany', 'curacao', 'ivorycoast', 'ecuador'],
-  F: ['netherlands', 'japan', 'tunisia', 'sweden'],
-  G: ['belgium', 'egypt', 'iran', 'newzealand'],
-  H: ['spain', 'capeverde', 'saudiarabia', 'uruguay'],
-  I: ['france', 'senegal', 'norway', 'iraq'],
-  J: ['argentina', 'algeria', 'austria', 'jordan'],
-  K: ['portugal', 'uzbekistan', 'colombia', 'drcongo'],
-  L: ['england', 'croatia', 'ghana', 'panama'],
+  A: ['mexico',      'southafrica', 'southkorea', 'czechia'],
+  B: ['canada',      'bosnia',      'qatar',      'switzerland'],
+  C: ['brazil',      'morocco',     'haiti',      'scotland'],
+  D: ['usa',         'paraguay',    'australia',  'turkey'],
+  E: ['germany',     'curacao',     'ivorycoast', 'ecuador'],
+  F: ['netherlands', 'japan',       'sweden',     'tunisia'],
+  G: ['belgium',     'egypt',       'iran',       'newzealand'],
+  H: ['spain',       'capeverde',   'saudiarabia','uruguay'],
+  I: ['france',      'senegal',     'iraq',       'norway'],
+  J: ['argentina',   'algeria',     'austria',    'jordan'],
+  K: ['portugal',    'drcongo',     'uzbekistan', 'colombia'],
+  L: ['england',     'croatia',     'ghana',      'panama'],
 }
 
 export const GROUP_IDS = Object.keys(GROUPS) as GroupId[]
