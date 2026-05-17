@@ -54,6 +54,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Email banlist — public read so AuthScreen can check during signup
+    // (no auth context available pre-signup); admin-only write.
+    match /blocked/{doc} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

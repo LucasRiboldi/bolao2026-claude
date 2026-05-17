@@ -395,6 +395,31 @@ export async function deleteUserData(uid: string): Promise<void> {
   await batch.commit()
 }
 
+// ── Email banlist ─────────────────────────────────────────────────────────────
+// Single doc `blocked/emails` holds a map: { "email@x.com": true, ... }.
+// Public-read so AuthScreen can check during signup; admin-only-write.
+
+export async function loadBlockedEmails(): Promise<string[]> {
+  const snap = await getDoc(doc(db, 'blocked', 'emails'))
+  if (!snap.exists()) return []
+  return Object.keys(snap.data() ?? {})
+}
+
+export async function isEmailBlocked(email: string): Promise<boolean> {
+  const blocked = await loadBlockedEmails()
+  return blocked.includes(email.toLowerCase().trim())
+}
+
+export async function addBlockedEmail(email: string): Promise<void> {
+  const normalized = email.toLowerCase().trim()
+  await setDoc(doc(db, 'blocked', 'emails'), { [normalized]: true }, { merge: true })
+}
+
+export async function removeBlockedEmail(email: string): Promise<void> {
+  const normalized = email.toLowerCase().trim()
+  await updateDoc(doc(db, 'blocked', 'emails'), { [normalized]: deleteField() })
+}
+
 // ── Config ────────────────────────────────────────────────────────────────────
 
 export async function loadAdminConfig(): Promise<AdminConfig> {

@@ -521,3 +521,197 @@
 .ko-slot--empty .ko-slot__name {
   color: var(--text-muted);
 }
+
+/* ── Tools tab — card-based layout ───────────────────────────────────────── */
+.tools-wrap {
+  padding: 0 var(--space-4) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.tools-category-label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-black);
+  letter-spacing: var(--tracking-ultra);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: var(--space-5) 0 var(--space-1);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-1);
+}
+
+.tool-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  transition: border-color var(--duration-fast) var(--easing-out);
+}
+.tool-card:hover { border-color: var(--border-strong); }
+.tool-card--danger {
+  border-color: rgba(218,54,51,.35);
+  background: linear-gradient(180deg, rgba(218,54,51,.04), var(--surface));
+}
+.tool-card--danger:hover { border-color: var(--color-danger); }
+
+.tool-card__head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+.tool-card__icon {
+  font-size: var(--text-xl);
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.tool-card__title-wrap { flex: 1; min-width: 0; }
+.tool-card__title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+  margin: 0 0 2px;
+  letter-spacing: var(--tracking-tight);
+}
+.tool-card__desc {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin: 0;
+  line-height: var(--leading-snug);
+}
+.tool-card__tip {
+  font-size: var(--text-xs);
+  color: var(--color-info-text);
+  background: var(--color-info-soft);
+  border-left: 2px solid var(--color-info);
+  padding: var(--space-2) var(--space-3);
+  margin: 0;
+  border-radius: var(--radius-xs);
+  line-height: var(--leading-snug);
+}
+.tool-card--danger .tool-card__tip {
+  color: var(--color-danger-text);
+  background: var(--color-danger-soft);
+  border-left-color: var(--color-danger);
+}
+.tool-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ── Result block inside a tool card ─────────────────────────────────────── */
+.tool-result {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.tool-result__subtitle {
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-black);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.tool-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: var(--space-2);
+}
+.tool-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+}
+.tool-stat strong {
+  font-size: var(--text-md);
+  font-weight: var(--weight-black);
+  color: var(--text);
+}
+.tool-stat span {
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.tool-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.tool-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+}
+.tool-list li .muted { color: var(--text-muted); font-weight: var(--weight-medium); font-size: var(--text-xs); }
+.tool-list--bare li {
+  background: none;
+  border: none;
+  padding: var(--space-1) 0;
+  justify-content: flex-start;
+}
+
+.tool-empty-hint {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+/* ── Banlist input row ───────────────────────────────────────────────────── */
+.ban-input-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+.ban-input-row .input { flex: 1; }
+
+/* ── Log wrap ────────────────────────────────────────────────────────────── */
+.tools-log-wrap {
+  margin-top: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+.tools-log-wrap__title {
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-black);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+
+/* ── Generic row for inline button groups ─────────────────────────────────── */
+.sg-row {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}

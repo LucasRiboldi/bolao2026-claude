@@ -7,7 +7,7 @@ import {
   GoogleAuthProvider,
 } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
-import { loadRanking, loadAdminConfig } from '@/lib/firestore'
+import { loadRanking, loadAdminConfig, isEmailBlocked } from '@/lib/firestore'
 import { nameInitials } from '@/data/teams'
 import { TEAMS } from '@/data/teams'
 import { ALL_GROUP_GAMES } from '@/data/groups'
@@ -87,6 +87,13 @@ export function AuthScreen() {
       if (!regOpen) { setError('Cadastro temporariamente fechado.'); return }
       if (!name.trim()) { setError('Informe seu nome.'); return }
       if (password !== confirm) { setError('As senhas não coincidem.'); return }
+      // Banlist check: prevent re-registration of previously-banned emails
+      try {
+        if (await isEmailBlocked(email)) {
+          setError('Este e-mail não pode ser cadastrado. Contate o administrador.')
+          return
+        }
+      } catch { /* if banlist unreachable, fail open — don't block legit users */ }
     }
     setLoading(true)
     try {

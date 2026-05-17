@@ -1,87 +1,332 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   loadAllUsersForRanking, loadResults, updateRankingDoc,
   deleteUserData, loadAdminUserList,
   saveGroupResults, saveKnockoutResults,
+  loadScoringConfig, loadAdminConfig, loadRanking,
+  loadBlockedEmails, addBlockedEmail, removeBlockedEmail,
 } from '@/lib/firestore'
 import { calculateScore, sortRanking } from '@/utils/scoring'
-import { loadScoringConfig } from '@/lib/firestore'
+import { DEFAULT_SCORING } from '@/data/bracket'
+import { TEAMS } from '@/data/teams'
+import { GROUP_IDS, generateGroupGames } from '@/data/groups'
+import type { UserWithBets } from '@/types'
 
 const SEED_URL = 'http://localhost:3001'
+const TOTAL_GROUP_GAMES = 72
 
-const ADMIN_TOOLS = [
-  {
-    category: 'Usuários',
-    tools: [
-      { name: 'Ver apostas de participante', status: '✅', desc: 'Modal de histórico na aba Usuários → 📋' },
-      { name: 'Editar apostas de participante', status: '✅', desc: 'Modal de edição na aba Usuários → ✏️' },
-      { name: 'Bloquear/desbloquear apostas', status: '✅', desc: 'Aba Usuários → 🔒 / 🔓' },
-      { name: 'Excluir participante', status: '✅', desc: 'Aba Usuários → 🗑 (remove perfil + apostas)' },
-      { name: 'Banir e-mail (impedir recadastro)', status: '🔲', desc: 'Não implementado — requer Firebase Admin SDK' },
-    ],
-  },
-  {
-    category: 'Resultados',
-    tools: [
-      { name: 'Lançar resultados da fase de grupos', status: '✅', desc: 'Aba Resultados → sub-aba ⚽ Grupos' },
-      { name: 'Lançar resultados do mata-mata', status: '✅', desc: 'Aba Resultados → sub-aba ⚡ Mata-Mata' },
-      { name: 'Recalcular ranking manualmente', status: '✅', desc: 'Aba Configurações → Recalcular Ranking' },
-      { name: 'Importar resultados de API externa', status: '🔲', desc: 'Não implementado — futuro: API-Football' },
-      { name: 'Recalcular ranking automático ao salvar resultado', status: '🔲', desc: 'Não implementado — futuro: Cloud Function' },
-    ],
-  },
-  {
-    category: 'Configuração',
-    tools: [
-      { name: 'Abrir/fechar cadastro de novos participantes', status: '✅', desc: 'Aba Configurações → Cadastro aberto' },
-      { name: 'Bloqueio global de apostas', status: '✅', desc: 'Aba Configurações → Bloqueio global' },
-      { name: 'Configurar pontuação por tipo de acerto', status: '✅', desc: 'Aba Configurações → Pontuação (8 campos)' },
-      { name: 'Exportar CSV do ranking', status: '🔲', desc: 'Não implementado — futuro' },
-      { name: 'Enviar push notification ao ranking atualizar', status: '🔲', desc: 'Não implementado — futuro: Firebase Messaging' },
-    ],
-  },
-  {
-    category: 'Testes & Dados',
-    tools: [
-      { name: 'Seed de usuários de teste (10 usuários)', status: '✅', desc: 'Aba Configurações → Dados de Teste → 🌱 Seed' },
-      { name: 'Limpar dados de teste', status: '✅', desc: 'Aba Configurações → Dados de Teste → 🗑 Clear' },
-      { name: 'Simular resultados completos (esta aba)', status: '✅', desc: 'Ferramentas → Simulação → Preencher resultados aleatórios' },
-      { name: 'Reset completo (todos os dados)', status: '✅', desc: 'Ferramentas → Reset → apagar tudo do banco' },
-      { name: 'Relatório de participação', status: '🔲', desc: 'Não implementado — % de apostas preenchidas por usuário' },
-    ],
-  },
-]
+// ── File download helper ─────────────────────────────────────────────────────
+function downloadFile(filename: string, content: string, mime = 'text/plain') {
+  const blob = new Blob([content], { type: mime })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
 
+function ts(): string {
+  return new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')
+}
+
+// ── Tool card primitive ──────────────────────────────────────────────────────
+interface ToolCardProps {
+  icon: string
+  title: string
+  description: string
+  tip?: string
+  danger?: boolean
+  children: React.ReactNode
+}
+function ToolCard({ icon, title, description, tip, danger, children }: ToolCardProps) {
+  return (
+    <div className={`tool-card${danger ? ' tool-card--danger' : ''}`}>
+      <div className="tool-card__head">
+        <span className="tool-card__icon">{icon}</span>
+        <div className="tool-card__title-wrap">
+          <h3 className="tool-card__title">{title}</h3>
+          <p className="tool-card__desc">{description}</p>
+        </div>
+      </div>
+      {tip && <p className="tool-card__tip">💡 {tip}</p>}
+      <div className="tool-card__body">{children}</div>
+    </div>
+  )
+}
+
+// ── Category divider ─────────────────────────────────────────────────────────
+function Category({ label }: { label: string }) {
+  return <div className="tools-category-label">{label}</div>
+}
+
+// ── Main component ───────────────────────────────────────────────────────────
 export function ToolsTab() {
-  const [simLog, setSimLog] = useState<string[]>([])
-  const [simBusy, setSimBusy] = useState(false)
-  const [resetBusy, setResetBusy] = useState(false)
-  const [seedLog, setSeedLog] = useState<string[]>([])
-  const [seedBusy, setSeedBusy] = useState(false)
+  const [busyKey, setBusyKey] = useState<string | null>(null)
+  const [log, setLog] = useState<{ key: string; lines: string[] } | null>(null)
   const logRef = useRef<HTMLDivElement>(null)
 
-  function addSimLog(msg: string) {
-    setSimLog(prev => [...prev, msg])
+  // Banlist state
+  const [blockedEmails, setBlockedEmails] = useState<string[]>([])
+  const [newBlockEmail, setNewBlockEmail] = useState('')
+
+  // Seed log (separate — runs through SSE)
+  const [seedLog, setSeedLog] = useState<string[]>([])
+
+  // Participation report state
+  const [participation, setParticipation] = useState<null | {
+    total: number
+    filledFull: number
+    filledPartial: number
+    empty: number
+    avgFilled: number
+    bottom: Array<{ name: string; filled: number }>
+  }>(null)
+
+  // Diagnostics state
+  const [diagnostics, setDiagnostics] = useState<null | string[]>(null)
+
+  // Popular picks state
+  const [popular, setPopular] = useState<null | {
+    champion: Array<{ team: string; count: number; pct: number }>
+    finalists: Array<{ team: string; count: number; pct: number }>
+  }>(null)
+
+  useEffect(() => {
+    loadBlockedEmails().then(setBlockedEmails).catch(() => null)
+  }, [])
+
+  function startLog(key: string, line: string) {
+    setLog({ key, lines: [line] })
+    setBusyKey(key)
+  }
+  function appendLog(line: string) {
+    setLog(prev => prev ? { ...prev, lines: [...prev.lines, line] } : prev)
     setTimeout(() => { if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight }, 0)
   }
+  function finishLog() { setBusyKey(null) }
 
-  async function runSeed(action: 'seed' | 'clear') {
-    setSeedBusy(true)
+  // ── EXPORT: Ranking CSV ────────────────────────────────────────────────────
+  async function exportRankingCSV() {
+    startLog('rank-csv', 'Carregando ranking…')
+    try {
+      const ranking = await loadRanking(true)
+      const rows = [
+        ['posicao', 'nome', 'pontos', 'placar_exato', 'resultado_correto', 'mata_mata', 'bonus'],
+        ...ranking.map((r, i) => [
+          i + 1,
+          `"${(r.name ?? '').replace(/"/g, '""')}"`,
+          r.pts,
+          r.breakdown?.exact ?? 0,
+          r.breakdown?.result ?? 0,
+          r.breakdown?.ko ?? 0,
+          r.breakdown?.bonus ?? 0,
+        ]),
+      ]
+      const csv = rows.map(r => r.join(',')).join('\n')
+      downloadFile(`bolao2026-ranking-${ts()}.csv`, csv, 'text/csv;charset=utf-8')
+      appendLog(`✓ Exportado: ${ranking.length} entradas`)
+    } catch (e) {
+      appendLog(`✗ Erro: ${String(e)}`)
+    } finally { finishLog() }
+  }
+
+  // ── EXPORT: Bets CSV ───────────────────────────────────────────────────────
+  async function exportBetsCSV() {
+    startLog('bets-csv', 'Carregando apostas de todos os participantes…')
+    try {
+      const users = await loadAllUsersForRanking()
+      appendLog(`✓ ${users.length} participantes carregados`)
+      const header = ['uid', 'nome', 'email', 'jogo_id', 'home', 'away', 'palpite_home', 'palpite_away']
+      const rows: (string | number)[][] = [header]
+      for (const u of users) {
+        for (const gId of GROUP_IDS) {
+          for (const game of generateGroupGames(gId)) {
+            const bet = u.groupBets[game.id]
+            if (!bet || bet.homeGoals === '' || bet.awayGoals === '') continue
+            rows.push([
+              u.uid,
+              `"${(u.profile.name ?? '').replace(/"/g, '""')}"`,
+              u.profile.email ?? '',
+              game.id,
+              game.home, game.away,
+              bet.homeGoals, bet.awayGoals,
+            ])
+          }
+        }
+      }
+      const csv = rows.map(r => r.join(',')).join('\n')
+      downloadFile(`bolao2026-apostas-${ts()}.csv`, csv, 'text/csv;charset=utf-8')
+      appendLog(`✓ Exportado: ${rows.length - 1} apostas individuais`)
+    } catch (e) {
+      appendLog(`✗ Erro: ${String(e)}`)
+    } finally { finishLog() }
+  }
+
+  // ── EXPORT: Full snapshot JSON ─────────────────────────────────────────────
+  async function exportSnapshot() {
+    startLog('snapshot', 'Construindo snapshot completo…')
+    try {
+      const [users, results, ranking, scoring, config, blocked] = await Promise.all([
+        loadAllUsersForRanking(),
+        loadResults(true),
+        loadRanking(true),
+        loadScoringConfig(),
+        loadAdminConfig(),
+        loadBlockedEmails(),
+      ])
+      appendLog(`✓ ${users.length} users · ${ranking.length} no ranking · ${blocked.length} e-mails bloqueados`)
+      const snapshot = {
+        exportedAt: new Date().toISOString(),
+        version: 1,
+        users, results, ranking, scoring, config,
+        blockedEmails: blocked,
+      }
+      downloadFile(
+        `bolao2026-snapshot-${ts()}.json`,
+        JSON.stringify(snapshot, null, 2),
+        'application/json;charset=utf-8',
+      )
+      appendLog('✓ Download iniciado')
+    } catch (e) {
+      appendLog(`✗ Erro: ${String(e)}`)
+    } finally { finishLog() }
+  }
+
+  // ── ANALYSIS: Participation report ─────────────────────────────────────────
+  async function runParticipation() {
+    startLog('participation', 'Calculando participação…')
+    try {
+      const users = await loadAllUsersForRanking()
+      const stats = users.map(u => {
+        const filled = Object.values(u.groupBets).filter(b => b.homeGoals !== '' && b.awayGoals !== '').length
+        return { name: u.profile.name ?? 'Sem nome', filled }
+      })
+      const total = stats.length
+      const filledFull = stats.filter(s => s.filled === TOTAL_GROUP_GAMES).length
+      const filledPartial = stats.filter(s => s.filled > 0 && s.filled < TOTAL_GROUP_GAMES).length
+      const empty = stats.filter(s => s.filled === 0).length
+      const avgFilled = total ? Math.round(stats.reduce((a, s) => a + s.filled, 0) / total) : 0
+      const bottom = stats.filter(s => s.filled < TOTAL_GROUP_GAMES)
+        .sort((a, b) => a.filled - b.filled).slice(0, 5)
+      setParticipation({ total, filledFull, filledPartial, empty, avgFilled, bottom })
+      appendLog(`✓ ${total} participantes analisados`)
+    } catch (e) {
+      appendLog(`✗ Erro: ${String(e)}`)
+    } finally { finishLog() }
+  }
+
+  // ── ANALYSIS: Database diagnostics ─────────────────────────────────────────
+  async function runDiagnostics() {
+    startLog('diag', 'Rodando diagnóstico…')
+    try {
+      const findings: string[] = []
+      const [users, results, ranking] = await Promise.all([
+        loadAllUsersForRanking(), loadResults(true), loadRanking(true),
+      ])
+
+      const usersNoName = users.filter(u => !u.profile.name?.trim())
+      if (usersNoName.length) findings.push(`⚠ ${usersNoName.length} usuário(s) sem nome no perfil`)
+      else findings.push('✓ Todos os usuários têm nome')
+
+      const usersNoEmail = users.filter(u => !u.profile.email?.trim())
+      if (usersNoEmail.length) findings.push(`⚠ ${usersNoEmail.length} usuário(s) sem e-mail no perfil`)
+      else findings.push('✓ Todos os usuários têm e-mail')
+
+      const resultsCount = Object.keys(results.groupStage).length
+      findings.push(`ℹ ${resultsCount}/72 resultados de grupo lançados`)
+      const koResultsCount = Object.keys(results.knockout).length
+      findings.push(`ℹ ${koResultsCount}/32 resultados de mata-mata lançados`)
+
+      const usersInRanking = new Set(ranking.map(r => r.uid))
+      const usersNotInRanking = users.filter(u => !usersInRanking.has(u.uid))
+      if (usersNotInRanking.length) findings.push(`⚠ ${usersNotInRanking.length} usuário(s) não estão no ranking — rode "Recalcular ranking"`)
+      else findings.push('✓ Ranking inclui todos os participantes')
+
+      const rankingButNotUser = ranking.filter(r => !users.find(u => u.uid === r.uid))
+      if (rankingButNotUser.length) findings.push(`⚠ ${rankingButNotUser.length} entrada(s) órfã(s) no ranking (user deletado mas ainda na lista)`)
+      else findings.push('✓ Sem entradas órfãs no ranking')
+
+      setDiagnostics(findings)
+      appendLog('✓ Diagnóstico concluído')
+    } catch (e) {
+      appendLog(`✗ Erro: ${String(e)}`)
+    } finally { finishLog() }
+  }
+
+  // ── ANALYSIS: Popular picks ────────────────────────────────────────────────
+  async function runPopular() {
+    startLog('popular', 'Agregando palpites…')
+    try {
+      const users = await loadAllUsersForRanking()
+      const total = users.length || 1
+
+      const champCount = new Map<string, number>()
+      const sfCount = new Map<string, number>()
+      for (const u of users) {
+        if (u.knockoutBets.champion) {
+          champCount.set(u.knockoutBets.champion, (champCount.get(u.knockoutBets.champion) ?? 0) + 1)
+        }
+        for (const t of u.knockoutBets.sf ?? []) {
+          sfCount.set(t, (sfCount.get(t) ?? 0) + 1)
+        }
+      }
+
+      const toRanking = (m: Map<string, number>) =>
+        [...m.entries()]
+          .map(([team, count]) => ({ team: TEAMS[team]?.name ?? team, count, pct: Math.round((count / total) * 100) }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5)
+
+      setPopular({ champion: toRanking(champCount), finalists: toRanking(sfCount) })
+      appendLog(`✓ ${users.length} apostas agregadas`)
+    } catch (e) {
+      appendLog(`✗ Erro: ${String(e)}`)
+    } finally { finishLog() }
+  }
+
+  // ── BANLIST ────────────────────────────────────────────────────────────────
+  async function handleAddBlocked() {
+    if (!newBlockEmail.trim()) return
+    setBusyKey('ban')
+    try {
+      await addBlockedEmail(newBlockEmail)
+      const list = await loadBlockedEmails()
+      setBlockedEmails(list)
+      setNewBlockEmail('')
+    } finally {
+      setBusyKey(null)
+    }
+  }
+  async function handleRemoveBlocked(email: string) {
+    setBusyKey('ban')
+    try {
+      await removeBlockedEmail(email)
+      const list = await loadBlockedEmails()
+      setBlockedEmails(list)
+    } finally {
+      setBusyKey(null)
+    }
+  }
+
+  // ── DEV: Seed server ───────────────────────────────────────────────────────
+  function runSeed(action: 'seed' | 'clear') {
+    setBusyKey('seed')
     setSeedLog([`→ ${action}…`])
     const es = new EventSource(`${SEED_URL}/api/${action}`)
     es.onmessage = e => setSeedLog(prev => [...prev, e.data as string])
-    es.onerror = () => { setSeedLog(prev => [...prev, '✗ Conexão encerrada']); es.close(); setSeedBusy(false) }
-    es.addEventListener('done', () => { setSeedLog(prev => [...prev, '✓ Concluído']); es.close(); setSeedBusy(false) })
+    es.onerror = () => { setSeedLog(prev => [...prev, '✗ Conexão encerrada']); es.close(); setBusyKey(null) }
+    es.addEventListener('done', () => { setSeedLog(prev => [...prev, '✓ Concluído']); es.close(); setBusyKey(null) })
   }
 
+  // ── DEV: Simulate results ──────────────────────────────────────────────────
   async function handleSimulate() {
-    setSimBusy(true)
-    setSimLog(['Iniciando simulação de resultados…'])
+    startLog('sim', 'Gerando resultados aleatórios para 72 jogos…')
     try {
-      addSimLog('Gerando resultados aleatórios para 72 jogos…')
       const groupResults: Record<string, { homeGoals: string; awayGoals: string }> = {}
-      const groups = ['A','B','C','D','E','F','G','H','I','J','K','L']
-      for (const g of groups) {
+      for (const g of GROUP_IDS) {
         for (let i = 0; i < 6; i++) {
           groupResults[`${g}_${i}`] = {
             homeGoals: String(Math.floor(Math.random() * 5)),
@@ -90,99 +335,264 @@ export function ToolsTab() {
         }
       }
       await saveGroupResults(groupResults)
-      addSimLog(`✓ ${Object.keys(groupResults).length} resultados de grupos salvos`)
-
-      addSimLog('Recalculando ranking…')
-      const scoring = await loadScoringConfig()
-      const [users, results] = await Promise.all([loadAllUsersForRanking(), loadResults(true)])
-      const entries = users.map(u => {
-        const { pts, breakdown } = calculateScore(u.groupBets, u.knockoutBets, results, { ...scoring } as never)
+      appendLog(`✓ ${Object.keys(groupResults).length} resultados salvos`)
+      appendLog('Recalculando ranking…')
+      const [users, results, scoring] = await Promise.all([
+        loadAllUsersForRanking(), loadResults(true), loadScoringConfig(),
+      ])
+      const merged = { ...DEFAULT_SCORING, ...scoring }
+      const entries = users.map((u: UserWithBets) => {
+        const { pts, breakdown } = calculateScore(u.groupBets, u.knockoutBets, results, merged)
         return { uid: u.uid, name: u.profile.name ?? 'Sem nome', pts, breakdown }
       })
       await updateRankingDoc(sortRanking(entries))
-      addSimLog(`✓ Ranking atualizado — ${entries.length} participantes`)
-      addSimLog('✅ Simulação concluída!')
+      appendLog(`✓ Ranking atualizado — ${entries.length} participantes`)
     } catch (e) {
-      addSimLog(`✗ Erro: ${String(e)}`)
-    } finally {
-      setSimBusy(false)
-    }
+      appendLog(`✗ Erro: ${String(e)}`)
+    } finally { finishLog() }
   }
 
+  // ── DANGER: Reset all ──────────────────────────────────────────────────────
   async function handleResetAll() {
-    if (!confirm('⚠️ ATENÇÃO: Isso apagará TODOS os participantes e suas apostas do banco. Esta ação NÃO pode ser desfeita. Continuar?')) return
-    if (!confirm('Tem ABSOLUTA certeza? Digite OK para confirmar.')) return
-    setResetBusy(true)
-    setSimLog(['Iniciando reset completo…'])
+    if (!confirm('⚠️ ATENÇÃO: apaga TODOS os participantes, apostas, resultados e ranking. Esta ação NÃO pode ser desfeita. Continuar?')) return
+    if (!confirm('Tem ABSOLUTA certeza? Esta é a última chance de cancelar.')) return
+    startLog('reset', 'Iniciando reset completo…')
     try {
       const users = await loadAdminUserList()
-      addSimLog(`Apagando ${users.length} usuários…`)
+      appendLog(`Apagando ${users.length} usuários…`)
       for (const u of users) {
         await deleteUserData(u.uid)
-        addSimLog(`  ✓ ${u.name ?? u.uid}`)
+        appendLog(`  ✓ ${u.name ?? u.uid}`)
       }
       await saveGroupResults({})
       await saveKnockoutResults({})
       await updateRankingDoc([])
-      addSimLog('✓ Resultados e ranking limpos')
-      addSimLog('✅ Reset concluído!')
+      appendLog('✅ Reset concluído!')
     } catch (e) {
-      addSimLog(`✗ Erro: ${String(e)}`)
-    } finally {
-      setResetBusy(false)
-    }
+      appendLog(`✗ Erro: ${String(e)}`)
+    } finally { finishLog() }
   }
 
+  const isBusy = busyKey !== null
+
   return (
-    <div className="admin-config-wrap">
+    <div className="tools-wrap">
 
-      {/* ── Feature list ── */}
-      <div className="admin-section-label" style={{ padding: '14px 0 6px' }}>Ferramentas do Sistema</div>
-      {ADMIN_TOOLS.map(({ category, tools }) => (
-        <div key={category} className="tools-category">
-          <div className="tools-category__title">{category}</div>
-          {tools.map(t => (
-            <div key={t.name} className="tools-item">
-              <span className="tools-item__status">{t.status}</span>
-              <div className="tools-item__body">
-                <div className="tools-item__name">{t.name}</div>
-                <div className="tools-item__desc">{t.desc}</div>
-              </div>
+      {/* ═══ Análise & Relatórios ════════════════════════════════════════════ */}
+      <Category label="📊 Análise & Relatórios" />
+
+      <ToolCard
+        icon="📈"
+        title="Relatório de participação"
+        description="Quantos participantes preencheram apostas, quem ainda não apostou, e a média de palpites por usuário."
+        tip="Use antes do primeiro jogo pra avisar quem esqueceu de apostar."
+      >
+        <button className="btn btn-ghost btn-sm" disabled={isBusy} onClick={runParticipation}>
+          {busyKey === 'participation' ? 'Calculando…' : '📊 Gerar relatório'}
+        </button>
+        {participation && (
+          <div className="tool-result">
+            <div className="tool-stat-grid">
+              <div className="tool-stat"><strong>{participation.total}</strong><span>total</span></div>
+              <div className="tool-stat"><strong>{participation.filledFull}</strong><span>completos</span></div>
+              <div className="tool-stat"><strong>{participation.filledPartial}</strong><span>parciais</span></div>
+              <div className="tool-stat"><strong>{participation.empty}</strong><span>sem apostar</span></div>
+              <div className="tool-stat"><strong>{participation.avgFilled}/72</strong><span>média</span></div>
             </div>
-          ))}
-        </div>
-      ))}
+            {participation.bottom.length > 0 && (
+              <>
+                <div className="tool-result__subtitle">Quem precisa de lembrete (menos apostas)</div>
+                <ul className="tool-list">
+                  {participation.bottom.map(u => (
+                    <li key={u.name}><span>{u.name}</span><span className="muted">{u.filled}/72</span></li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        )}
+      </ToolCard>
 
-      {/* ── Seed server ── */}
-      <div className="admin-section-label" style={{ padding: '14px 0 6px' }}>Seed de Dados de Teste</div>
-      <div className="admin-seed-wrap">
-        <div className="admin-seed-wrap__title">Requer seed server em localhost:3001</div>
-        <div className="admin-seed-actions">
-          <button className="btn btn-ghost btn-sm" onClick={() => runSeed('seed')} disabled={seedBusy} aria-label="Seed usuários teste">🌱 Seed</button>
-          <button className="btn btn-ghost btn-sm" onClick={() => runSeed('clear')} disabled={seedBusy} aria-label="Limpar dados teste">🗑 Clear</button>
+      <ToolCard
+        icon="🔍"
+        title="Diagnóstico de integridade"
+        description="Verifica usuários sem perfil/e-mail, entradas órfãs no ranking, e quantidade de resultados lançados."
+        tip="Rode após qualquer reset, importação ou exclusão em massa pra confirmar que o banco está consistente."
+      >
+        <button className="btn btn-ghost btn-sm" disabled={isBusy} onClick={runDiagnostics}>
+          {busyKey === 'diag' ? 'Verificando…' : '🩺 Rodar diagnóstico'}
+        </button>
+        {diagnostics && (
+          <ul className="tool-list tool-list--bare">
+            {diagnostics.map((f, i) => <li key={i}>{f}</li>)}
+          </ul>
+        )}
+      </ToolCard>
+
+      <ToolCard
+        icon="🏆"
+        title="Palpites populares"
+        description="Top 5 times mais escolhidos para Campeão e para Finalistas (semifinais)."
+        tip="Útil pra publicar nas redes: 'X% do bolão acredita no Brasil campeão'."
+      >
+        <button className="btn btn-ghost btn-sm" disabled={isBusy} onClick={runPopular}>
+          {busyKey === 'popular' ? 'Agregando…' : '🎯 Calcular'}
+        </button>
+        {popular && (
+          <div className="tool-result">
+            <div className="tool-result__subtitle">🏆 Campeão</div>
+            <ul className="tool-list">
+              {popular.champion.length === 0 && <li className="muted">Nenhum palpite ainda</li>}
+              {popular.champion.map(p => (
+                <li key={p.team}><span>{p.team}</span><span className="muted">{p.count} ({p.pct}%)</span></li>
+              ))}
+            </ul>
+            <div className="tool-result__subtitle">🥈 Finalistas</div>
+            <ul className="tool-list">
+              {popular.finalists.length === 0 && <li className="muted">Nenhum palpite ainda</li>}
+              {popular.finalists.map(p => (
+                <li key={p.team}><span>{p.team}</span><span className="muted">{p.count} ({p.pct}%)</span></li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </ToolCard>
+
+      {/* ═══ Exportar ════════════════════════════════════════════════════════ */}
+      <Category label="📤 Exportar" />
+
+      <ToolCard
+        icon="📥"
+        title="Snapshot completo do banco (JSON)"
+        description="Backup integral: participantes, apostas, resultados, ranking, config e banlist em um único arquivo."
+        tip="Faça um snapshot ANTES de cada lançamento de resultado importante. Se algo der errado, você consegue voltar ao estado anterior."
+      >
+        <button className="btn btn-gold btn-sm" disabled={isBusy} onClick={exportSnapshot}>
+          {busyKey === 'snapshot' ? 'Construindo…' : '⬇ Baixar snapshot'}
+        </button>
+      </ToolCard>
+
+      <ToolCard
+        icon="📊"
+        title="Ranking em CSV"
+        description="Planilha com posição, nome, pontos e breakdown (placar exato, resultado, mata-mata, bônus)."
+        tip="Abra no Excel ou Google Sheets pra compartilhar com o grupo."
+      >
+        <button className="btn btn-ghost btn-sm" disabled={isBusy} onClick={exportRankingCSV}>
+          {busyKey === 'rank-csv' ? 'Exportando…' : '⬇ Baixar ranking.csv'}
+        </button>
+      </ToolCard>
+
+      <ToolCard
+        icon="🎫"
+        title="Apostas em CSV"
+        description="Todas as apostas de fase de grupos de todos os participantes (1 linha por palpite)."
+        tip="Útil para auditoria, análise estatística ou se um participante reclamar de pontuação."
+      >
+        <button className="btn btn-ghost btn-sm" disabled={isBusy} onClick={exportBetsCSV}>
+          {busyKey === 'bets-csv' ? 'Exportando…' : '⬇ Baixar apostas.csv'}
+        </button>
+      </ToolCard>
+
+      {/* ═══ Moderação ═══════════════════════════════════════════════════════ */}
+      <Category label="🚫 Moderação" />
+
+      <ToolCard
+        icon="📛"
+        title="E-mails bloqueados"
+        description="Lista de e-mails impedidos de se cadastrar. Bloquear aqui é independente de deletar a conta — útil pra impedir recadastro."
+        tip="Fluxo típico: exclua a conta na aba Usuários → bloqueie o e-mail aqui pra evitar que a pessoa volte."
+      >
+        <div className="ban-input-row">
+          <input
+            type="email"
+            className="input"
+            placeholder="exemplo@dominio.com"
+            value={newBlockEmail}
+            onChange={e => setNewBlockEmail(e.target.value)}
+            disabled={busyKey === 'ban'}
+          />
+          <button className="btn btn-danger btn-sm" disabled={!newBlockEmail.trim() || busyKey === 'ban'} onClick={handleAddBlocked}>
+            Bloquear
+          </button>
+        </div>
+        {blockedEmails.length > 0 && (
+          <ul className="tool-list">
+            {blockedEmails.map(email => (
+              <li key={email}>
+                <span>{email}</span>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  disabled={busyKey === 'ban'}
+                  onClick={() => handleRemoveBlocked(email)}
+                  aria-label={`Desbloquear ${email}`}
+                >
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {blockedEmails.length === 0 && (
+          <p className="tool-empty-hint">Nenhum e-mail bloqueado.</p>
+        )}
+      </ToolCard>
+
+      {/* ═══ Testes (DEV) ════════════════════════════════════════════════════ */}
+      <Category label="🧪 Testes (desenvolvimento)" />
+
+      <ToolCard
+        icon="🌱"
+        title="Seed de usuários de teste"
+        description="Cria 10 usuários (teste1@teste.com.br ... teste10) cada um com apostas aleatórias preenchidas."
+        tip="Requer o seed-server rodando: abra um terminal e execute node tools/seed/seed-server.js"
+      >
+        <div className="sg-row">
+          <button className="btn btn-ghost btn-sm" disabled={isBusy} onClick={() => runSeed('seed')}>
+            {busyKey === 'seed' ? 'Conectando…' : '🌱 Seed 10 usuários'}
+          </button>
+          <button className="btn btn-ghost btn-sm" disabled={isBusy} onClick={() => runSeed('clear')}>
+            🗑 Limpar dados de seed
+          </button>
         </div>
         {seedLog.length > 0 && (
           <div className="admin-seed-log">{seedLog.map((l, i) => <div key={i}>{l}</div>)}</div>
         )}
-      </div>
+      </ToolCard>
 
-      {/* ── Simulate ── */}
-      <div className="admin-section-label" style={{ padding: '14px 0 6px' }}>Simulação de Resultados</div>
-      <p className="tools-hint">Gera resultados aleatórios para todos os 72 jogos de grupos e recalcula o ranking. Útil para testar o sistema completo.</p>
-      <button className="btn btn-gold btn-full" onClick={handleSimulate} disabled={simBusy || resetBusy} aria-label="Simular resultados">
-        {simBusy ? 'Simulando…' : '🎲 Simular Resultados + Ranking'}
-      </button>
+      <ToolCard
+        icon="🎲"
+        title="Simular resultados aleatórios"
+        description="Gera placares aleatórios (0–4 gols) para todos os 72 jogos de grupos e recalcula o ranking."
+        tip="Use pra testar o sistema de pontuação ao vivo: depois de simular, abra o Ranking em outra aba e veja a movimentação."
+      >
+        <button className="btn btn-gold btn-sm" disabled={isBusy} onClick={handleSimulate}>
+          {busyKey === 'sim' ? 'Simulando…' : '🎲 Simular + recalcular'}
+        </button>
+      </ToolCard>
 
-      {/* ── Reset ── */}
-      <div className="admin-section-label" style={{ padding: '14px 0 6px' }}>Reset Completo</div>
-      <p className="tools-hint" style={{ color: '#cf6679' }}>⚠️ Apaga TODOS os participantes, apostas, resultados e ranking. Ação irreversível.</p>
-      <button className="btn btn-ghost btn-full" style={{ borderColor: '#cf6679', color: '#cf6679' }} onClick={handleResetAll} disabled={simBusy || resetBusy} aria-label="Reset completo">
-        {resetBusy ? 'Apagando…' : '☢️ Reset Completo do Banco'}
-      </button>
+      {/* ═══ Zona de perigo ══════════════════════════════════════════════════ */}
+      <Category label="⚠️ Zona de perigo" />
 
-      {(simLog.length > 0 || resetBusy) && (
-        <div ref={logRef} className="admin-seed-log" style={{ maxHeight: 160 }} aria-label="Log da simulação">
-          {simLog.map((l, i) => <div key={i}>{l}</div>)}
+      <ToolCard
+        icon="☢️"
+        title="Reset completo do banco"
+        description="Apaga TODOS os participantes, apostas, resultados oficiais, ranking e config. Mantém apenas a estrutura."
+        tip="Antes de usar: BAIXE UM SNAPSHOT (acima em Exportar). Sem ele, não há como reverter."
+        danger
+      >
+        <button className="btn btn-danger btn-sm" disabled={isBusy} onClick={handleResetAll}>
+          {busyKey === 'reset' ? 'Apagando…' : '☢️ Reset completo (confirmação dupla)'}
+        </button>
+      </ToolCard>
+
+      {/* ═══ Live log (apenas pra ações que loggam) ══════════════════════════ */}
+      {log && (
+        <div className="tools-log-wrap">
+          <div className="tools-log-wrap__title">📋 Último log</div>
+          <div ref={logRef} className="admin-seed-log" aria-label="Log da operação">
+            {log.lines.map((l, i) => <div key={i}>{l}</div>)}
+          </div>
         </div>
       )}
     </div>
