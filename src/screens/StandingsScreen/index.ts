@@ -1,0 +1,1 @@
+export { StandingsScreen } from './StandingsScreen'
