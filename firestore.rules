@@ -21,10 +21,16 @@ service cloud.firestore {
       }
 
       match /bets/{doc} {
-        allow read:          if request.auth != null;
-        allow create, update: if request.auth != null && (request.auth.uid == uid || isAdmin())
-                                 && request.resource.data.size() <= 50;
-        allow delete:        if request.auth != null && (request.auth.uid == uid || isAdmin());
+        allow read: if request.auth != null;
+        // Users limited to 100 keys (allows 72 group games + small buffer).
+        // Admin has no size limit — needed for seed/bulk operations.
+        allow create, update:
+          if request.auth != null
+             && (
+                  (request.auth.uid == uid && request.resource.data.size() <= 100)
+                  || isAdmin()
+                );
+        allow delete: if request.auth != null && (request.auth.uid == uid || isAdmin());
       }
     }
 

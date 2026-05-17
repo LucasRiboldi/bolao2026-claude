@@ -6,13 +6,13 @@ import {
   loadScoringConfig, loadAdminConfig, loadRanking,
   loadBlockedEmails, addBlockedEmail, removeBlockedEmail,
 } from '@/lib/firestore'
+import { seedTestData, undoSeedTestData, SEED_PREFIX } from '@/lib/seedTest'
 import { calculateScore, sortRanking } from '@/utils/scoring'
 import { DEFAULT_SCORING } from '@/data/bracket'
 import { TEAMS } from '@/data/teams'
 import { GROUP_IDS, generateGroupGames } from '@/data/groups'
 import type { UserWithBets } from '@/types'
 
-const SEED_URL = 'http://localhost:3001'
 const TOTAL_GROUP_GAMES = 72
 
 // ── File download helper ─────────────────────────────────────────────────────
@@ -72,8 +72,8 @@ export function ToolsTab() {
   const [blockedEmails, setBlockedEmails] = useState<string[]>([])
   const [newBlockEmail, setNewBlockEmail] = useState('')
 
-  // Seed log (separate — runs through SSE)
-  const [seedLog, setSeedLog] = useState<string[]>([])
+  // Seed result summary (count of users created/removed)
+  const [seedSummary, setSeedSummary] = useState<string | null>(null)
 
   // Participation report state
   const [participation, setParticipation] = useState<null | {
@@ -311,14 +311,40 @@ export function ToolsTab() {
     }
   }
 
-  // ── DEV: Seed server ───────────────────────────────────────────────────────
-  function runSeed(action: 'seed' | 'clear') {
-    setBusyKey('seed')
-    setSeedLog([`→ ${action}…`])
-    const es = new EventSource(`${SEED_URL}/api/${action}`)
-    es.onmessage = e => setSeedLog(prev => [...prev, e.data as string])
-    es.onerror = () => { setSeedLog(prev => [...prev, '✗ Conexão encerrada']); es.close(); setBusyKey(null) }
-    es.addEventListener('done', () => { setSeedLog(prev => [...prev, '✓ Concluído']); es.close(); setBusyKey(null) })
+  // ── DEV: Seed test data (in-browser, no external server) ──────────────────
+  async function handleSeedTest() {
+    if (!confirm(
+      'Criar 20 usuários de teste + apostas aleatórias + resultados oficiais aleatórios + recalcular ranking?\n\n' +
+      'Existirá um botão para desfazer toda a operação.'
+    )) return
+    setSeedSummary(null)
+    startLog('seedtest', '▶ Iniciando seed completo…')
+    try {
+      const created = await seedTestData({
+        count: 20,
+        withResults: true,
+        log: line => appendLog(line),
+      })
+      setSeedSummary(`✓ ${created} usuários teste · resultados oficiais aleatórios · ranking recalculado`)
+    } catch (e) {
+      appendLog(`✗ Erro: ${String(e)}`)
+    } finally { finishLog() }
+  }
+
+  async function handleUndoSeed() {
+    if (!confirm(
+      'Desfazer TODO o seed?\n\n' +
+      `Apaga apenas usuários com prefixo "${SEED_PREFIX}", limpa resultados oficiais e recalcula o ranking dos usuários reais restantes.\n\n` +
+      'Usuários REAIS (que se cadastraram normalmente) NÃO são afetados.'
+    )) return
+    setSeedSummary(null)
+    startLog('seedtest', '▶ Iniciando undo do seed…')
+    try {
+      const removed = await undoSeedTestData(line => appendLog(line))
+      setSeedSummary(`✓ ${removed} usuário(s) teste removidos · resultados zerados · ranking recalculado`)
+    } catch (e) {
+      appendLog(`✗ Erro: ${String(e)}`)
+    } finally { finishLog() }
   }
 
   // ── DEV: Simulate results ──────────────────────────────────────────────────
@@ -543,20 +569,22 @@ export function ToolsTab() {
 
       <ToolCard
         icon="🌱"
-        title="Seed de usuários de teste"
-        description="Cria 10 usuários (teste1@teste.com.br ... teste10) cada um com apostas aleatórias preenchidas."
-        tip="Requer o seed-server rodando: abra um terminal e execute node tools/seed/seed-server.js"
+        title="Seed completo (20 usuários + resultados + ranking)"
+        description="Cria 20 participantes de teste com apostas aleatórias, gera resultados oficiais aleatórios para a Copa inteira (grupos + mata-mata) e recalcula o ranking de todos. Roda 100% no navegador — não precisa de servidor externo."
+        tip="Útil pra testar a experiência completa: depois de rodar, abra Ranking / Copa / Apostas em outras abas e veja tudo populado. O botão de desfazer abaixo remove SÓ os usuários teste — usuários reais não são afetados."
       >
         <div className="sg-row">
-          <button className="btn btn-ghost btn-sm" disabled={isBusy} onClick={() => runSeed('seed')}>
-            {busyKey === 'seed' ? 'Conectando…' : '🌱 Seed 10 usuários'}
+          <button className="btn btn-gold btn-sm" disabled={isBusy} onClick={handleSeedTest}>
+            {busyKey === 'seedtest' && log?.lines[0]?.includes('seed') ? 'Seedando…' : '🌱 Criar dados de teste'}
           </button>
-          <button className="btn btn-ghost btn-sm" disabled={isBusy} onClick={() => runSeed('clear')}>
-            🗑 Limpar dados de seed
+          <button className="btn btn-danger btn-sm" disabled={isBusy} onClick={handleUndoSeed}>
+            {busyKey === 'seedtest' && log?.lines[0]?.includes('undo') ? 'Desfazendo…' : '↩ Desfazer seed'}
           </button>
         </div>
-        {seedLog.length > 0 && (
-          <div className="admin-seed-log">{seedLog.map((l, i) => <div key={i}>{l}</div>)}</div>
+        {seedSummary && (
+          <p className="tool-card__tip" style={{ background: 'var(--color-success-soft)', borderLeftColor: 'var(--color-success)', color: 'var(--color-success-text)' }}>
+            {seedSummary}
+          </p>
         )}
       </ToolCard>
 
