@@ -10,33 +10,33 @@ import { auth } from '@/lib/firebase'
 import { loadRanking, loadAdminConfig } from '@/lib/firestore'
 import { nameInitials } from '@/data/teams'
 import { TEAMS } from '@/data/teams'
-import { ALL_GROUP_GAMES } from '@/data/groups'
 import type { RankingEntry } from '@/types'
 import { MatchCard } from './MatchCard'
 import './AuthScreen.css'
 
 type AuthTab = 'login' | 'register'
 
-// Copa 2026 opens June 11 — build sample cards from the real fixture list
-function getTodayCards() {
-  const today = new Date()
-  const samples = Object.values(ALL_GROUP_GAMES).slice(0, 6)
-  return samples.map((g, i) => {
-    const home = TEAMS[g.home]!
-    const away = TEAMS[g.away]!
-    const status = i === 0 ? 'live' as const : i <= 2 ? 'soon' as const : 'done' as const
+// Copa 2026 opening fixtures — all upcoming, no live/done until June 11
+const OPENING_FIXTURES = [
+  { id: 'A_0', home: 'mexico',      away: 'canada',      dateStr: '11 jun', timeStr: '22h00' },
+  { id: 'A_1', home: 'southafrica', away: 'southkorea',  dateStr: '12 jun', timeStr: '16h00' },
+  { id: 'C_0', home: 'brazil',      away: 'morocco',     dateStr: '13 jun', timeStr: '19h00' },
+  { id: 'D_0', home: 'usa',         away: 'paraguay',    dateStr: '13 jun', timeStr: '22h00' },
+  { id: 'E_0', home: 'germany',     away: 'curacao',     dateStr: '14 jun', timeStr: '16h00' },
+  { id: 'I_0', home: 'france',      away: 'senegal',     dateStr: '15 jun', timeStr: '19h00' },
+] as const
+
+function getOpeningCards() {
+  return OPENING_FIXTURES.map(f => {
+    const home = TEAMS[f.home]!
+    const away = TEAMS[f.away]!
     return {
-      id: g.id,
-      homeFlag: home.flag, homeName: home.short,
-      awayFlag: away.flag, awayName: away.short,
-      status,
-      homeGoals: status === 'live' ? 1 : status === 'done' ? 2 : undefined,
-      awayGoals: status === 'live' ? 0 : status === 'done' ? 1 : undefined,
-      minute: status === 'live' ? 67 : undefined,
-      dateStr: status === 'soon'
-        ? `${String(today.getDate() + i).padStart(2,'0')} jun`
-        : `${String(today.getDate() - 1).padStart(2,'0')} jun`,
-      timeStr: `${15 + i * 3}h00`,
+      id: f.id,
+      homeIso: home.iso, homeName: home.name,
+      awayIso: away.iso, awayName: away.name,
+      status: 'soon' as const,
+      dateStr: f.dateStr,
+      timeStr: f.timeStr,
     }
   })
 }
@@ -59,7 +59,7 @@ export function AuthScreen() {
   const [ranking, setRanking] = useState<RankingEntry[]>([])
   const [regOpen, setRegOpen] = useState(true)
 
-  const cards = getTodayCards()
+  const cards = getOpeningCards()
 
   useEffect(() => {
     loadRanking().then(r => setRanking(r.slice(0, 5))).catch(() => null)
@@ -165,7 +165,7 @@ export function AuthScreen() {
       </div>
 
       {/* ── Today's matches ──────────────────────────────────────────── */}
-      <p className="auth-section-label">🔴 Jogos de hoje · Assista ao vivo</p>
+      <p className="auth-section-label">📅 Abertura da Copa · Junho 2026</p>
       <div className="match-scroll" role="list">
         {cards.map(c => <MatchCard key={c.id} {...c} />)}
       </div>

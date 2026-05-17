@@ -1,5 +1,6 @@
 import type { GroupGame, GroupBets } from '@/types'
 import { TEAMS } from '@/data/teams'
+import { Flag } from '@/components/Flag'
 
 interface MatchRowBetProps {
   game: GroupGame
@@ -68,8 +69,8 @@ export function MatchRowBet({ game, bets, locked, onChange }: MatchRowBetProps) 
   return (
     <div className="match-row-bet">
       <div className="match-team-left">
-        <span className="match-team-name">{homeTeam?.short ?? game.home}</span>
-        <span className="match-team-flag">{homeTeam?.flag}</span>
+        <span className="match-team-name">{homeTeam?.name ?? game.home}</span>
+        {homeTeam && <Flag iso={homeTeam.iso} name={homeTeam.name} size="sm" />}
       </div>
 
       <div className="match-score-center">
@@ -89,8 +90,8 @@ export function MatchRowBet({ game, bets, locked, onChange }: MatchRowBetProps) 
       </div>
 
       <div className="match-team-right">
-        <span className="match-team-flag">{awayTeam?.flag}</span>
-        <span className="match-team-name">{awayTeam?.short ?? game.away}</span>
+        {awayTeam && <Flag iso={awayTeam.iso} name={awayTeam.name} size="sm" />}
+        <span className="match-team-name">{awayTeam?.name ?? game.away}</span>
       </div>
     </div>
   )

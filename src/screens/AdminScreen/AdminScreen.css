@@ -299,3 +299,34 @@
   border-radius: 4px;
   padding: 6px 8px;
 }
+
+/* ── Wide modal (edit bets) ──────────────────────────────────────────────────── */
+.admin-modal--wide { max-height: 90vh; }
+.edit-bets-body { overflow-y: auto; padding-bottom: 16px; }
+.edit-group { margin: 0 16px 4px; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.edit-group__title {
+  font-size: .65rem; font-weight: 800; text-transform: uppercase; letter-spacing: .5px;
+  color: var(--text-muted); padding: 6px 10px;
+  background: var(--surface2); border-bottom: 1px solid var(--border);
+}
+.ko-match {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin: 4px 16px;
+  overflow: hidden;
+}
+.ko-slot {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; cursor: pointer;
+  transition: background var(--transition);
+  border-bottom: 1px solid rgba(255,255,255,.04);
+}
+.ko-slot:last-child { border-bottom: none; }
+.ko-slot:hover:not(.ko-slot--empty) { background: var(--surface2); }
+.ko-slot--selected { background: rgba(212,170,44,.08); }
+.ko-slot--selected .ko-slot__name { color: var(--gold); }
+.ko-slot--empty { cursor: default; opacity: .4; }
+.ko-slot .team-flag { width: 22px; height: 16px; border-radius: 2px; }
+.ko-slot__name { flex: 1; font-size: .78rem; font-weight: 600; color: var(--text); }
+.ko-slot__check { color: var(--gold); font-size: .8rem; }

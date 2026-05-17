@@ -12,7 +12,7 @@ const TOTAL_GROUP_GAMES = 72
 export function BetScreen() {
   const { user, profile } = useAuth()
   const locked = profile?.betsLocked ?? false
-  const { bets, loading: gLoading, saving, setBet, save } = useGroupBets(user?.uid, locked)
+  const { bets, loading: gLoading, saving, setBet, savePartial, save } = useGroupBets(user?.uid, locked)
   const { bets: koBets, loading: kLoading, pickWinner, persist } = useKnockoutBets(user?.uid, locked)
 
   const filled = Object.values(bets).filter(b => b.homeGoals !== '' && b.awayGoals !== '').length
@@ -41,6 +41,8 @@ export function BetScreen() {
           bets={bets}
           locked={locked}
           onChange={setBet}
+          onSave={savePartial}
+          saving={saving}
           defaultOpen={i === 0}
         />
       ))}
@@ -59,15 +61,16 @@ export function BetScreen() {
             onClick={handleSave}
             disabled={saving}
           >
-            {saving ? 'Salvando…' : 'Salvar Apostas'}
+            {saving ? 'Salvando…' : '🔒 Finalizar e Salvar Apostas'}
           </button>
+          <div className="bet-save-hint">Finalizar bloqueia as apostas permanentemente</div>
         </div>
       )}
 
       {locked && (
         <div className="bet-save-wrap">
           <div style={{ textAlign: 'center', fontSize: '.75rem', color: 'var(--text-muted)', padding: '8px' }}>
-            🔒 Apostas bloqueadas
+            🔒 Apostas finalizadas
           </div>
         </div>
       )}

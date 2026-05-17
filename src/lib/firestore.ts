@@ -216,6 +216,14 @@ export async function loadAdminUserList(): Promise<Array<UserProfile & { uid: st
   return list
 }
 
+export async function saveGroupBetsForUser(uid: string, bets: GroupBets): Promise<void> {
+  await setDoc(doc(db, 'users', uid, 'bets', 'groupStage'), bets)
+}
+
+export async function saveKnockoutBetsForUser(uid: string, bets: KnockoutBets): Promise<void> {
+  await setDoc(doc(db, 'users', uid, 'bets', 'knockout'), bets)
+}
+
 export async function deleteUserData(uid: string): Promise<void> {
   const batch = writeBatch(db)
   batch.delete(doc(db, 'users', uid, 'profile', 'info'))

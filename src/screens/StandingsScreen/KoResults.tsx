@@ -2,6 +2,7 @@ import type { KnockoutMatch, Results } from '@/types'
 import { TEAMS } from '@/data/teams'
 import { KNOCKOUT_ROUNDS, buildR32, resolveKnockoutRound } from '@/data/bracket'
 import { calcGroupStandings, getQualified } from '@/utils/standings'
+import { Flag } from '@/components/Flag'
 
 interface SlotProps {
   match: KnockoutMatch
@@ -25,7 +26,7 @@ function KoSlot({ match, side, winner }: SlotProps) {
 
   return (
     <div className={`ko-results-slot${isWinner ? ' ko-results-slot--winner' : winner ? ' ko-results-slot--loser' : ''}`}>
-      <span className="ko-results-slot__flag">{team?.flag ?? '🏳'}</span>
+      {team && <Flag iso={team.iso} name={team.name} size="sm" />}
       <span className="ko-results-slot__name">{team?.name ?? teamId}</span>
       {isWinner && <span className="ko-results-slot__badge">✓ avançou</span>}
     </div>

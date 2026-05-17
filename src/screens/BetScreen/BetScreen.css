@@ -56,12 +56,25 @@
   color: var(--text-muted);
   font-weight: 500;
 }
+.group-card__right {
+  display: flex; align-items: center; gap: 8px;
+}
+.group-card__count {
+  font-size: .6rem; color: var(--text-muted); font-weight: 600;
+}
 .group-card__chevron {
   font-size: .75rem;
   color: var(--text-muted);
   transition: transform var(--transition);
 }
 .group-card__chevron--open { transform: rotate(180deg); }
+.group-card__save-row {
+  padding: 6px 10px 10px;
+  display: flex; justify-content: flex-end;
+}
+.btn--saved {
+  color: var(--green) !important; border-color: var(--green) !important;
+}
 
 .group-card__games {
   padding: 0 12px;
@@ -162,57 +175,81 @@
   background: linear-gradient(to top, var(--bg) 70%, transparent);
   pointer-events: none;
 }
+.bet-save-hint {
+  text-align: center; font-size: .62rem; color: var(--text-muted);
+  margin-top: 4px; pointer-events: all;
+}
 .bet-save-wrap .btn { pointer-events: all; }
 
 /* ── Knockout section ──────────────────────────────────────────────────────── */
-.ko-section {
-  padding: 16px 16px 0;
-}
-.ko-section__title {
-  font-size: .62rem;
-  font-weight: 800;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-}
-.ko-section__title:first-child { border-top: none; padding-top: 0; }
+.ko-section { padding: 4px 0 0; }
 
-.ko-match {
+.ko-section-intro {
+  display: flex; flex-direction: column; align-items: flex-start;
+  padding: 14px 16px 8px;
+  font-size: .8rem; font-weight: 800; color: var(--text); letter-spacing: .5px;
+}
+.ko-section-intro__sub {
+  font-size: .62rem; font-weight: 400; color: var(--text-muted); margin-top: 2px;
+}
+
+.ko-round-section { margin-bottom: 8px; }
+.ko-round-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px;
+  border-left: 3px solid var(--border);
+  margin: 0 12px;
+}
+.ko-round-title {
+  font-size: .7rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .8px; color: var(--text);
+}
+.ko-round-badge {
+  font-size: .55rem; font-weight: 700; padding: 2px 6px;
+  border-radius: 20px; color: #fff; opacity: .85;
+}
+
+.ko-round-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 2), 1fr);
+  gap: 4px;
+  padding: 4px 12px 8px;
+}
+.ko-round-col {
+  display: flex; flex-direction: column; gap: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  margin-bottom: 8px;
   overflow: hidden;
 }
-.ko-slot {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+.ko-match-pair { display: flex; flex-direction: column; }
+.ko-match-divider {
+  height: 1px; background: var(--border); margin: 0 8px;
+}
+
+.ko-team-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 8px;
   cursor: pointer;
   transition: background var(--transition);
   border-bottom: 1px solid rgba(255,255,255,.04);
 }
-.ko-slot:last-child { border-bottom: none; }
-.ko-slot:hover:not(.ko-slot--locked):not(.ko-slot--empty) { background: var(--surface2); }
-.ko-slot--selected { background: rgba(212,170,44,.08); }
-.ko-slot--selected .ko-slot__name { color: var(--gold); }
-.ko-slot--empty { cursor: default; opacity: .5; }
-.ko-slot--locked { cursor: default; }
+.ko-team-row:last-child { border-bottom: none; }
+.ko-team-row:hover:not(.ko-team-row--locked):not(.ko-team-row--empty) {
+  background: var(--surface2);
+}
+.ko-team-row--selected {
+  background: rgba(212,170,44,.10);
+}
+.ko-team-row--selected .ko-team-row__name { color: var(--gold); font-weight: 700; }
+.ko-team-row--eliminated { opacity: .4; }
+.ko-team-row--empty { cursor: default; opacity: .4; }
+.ko-team-row--locked { cursor: default; }
 
-.ko-slot__flag { font-size: 1.2rem; }
-.ko-slot__name {
-  flex: 1;
-  font-size: .8rem;
-  font-weight: 600;
-  color: var(--text);
+.ko-team-row .team-flag { width: 22px; height: 16px; border-radius: 2px; flex-shrink: 0; }
+.ko-team-row__name {
+  flex: 1; font-size: .7rem; font-weight: 600; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.ko-slot__label {
-  font-size: .62rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-.ko-slot__check { color: var(--gold); font-size: .85rem; }
+.ko-team-row__check { color: var(--gold); font-size: .75rem; flex-shrink: 0; }
+.ko-team-row__tbd { font-size: .65rem; color: var(--text-muted); }
