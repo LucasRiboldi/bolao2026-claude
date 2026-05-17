@@ -1,11 +1,11 @@
 import {
   doc, collection, collectionGroup,
-  getDoc, getDocs, setDoc,
+  getDoc, getDocs, setDoc, updateDoc, deleteField,
   writeBatch, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from './firebase'
 import type {
-  GroupBets, KnockoutBets, UserProfile, Results,
+  GroupBets, KnockoutBets, UserProfile, Results, GoalBet, TeamId,
   RankingEntry, UserWithBets, AdminConfig, ScoringConfig,
 } from '@/types'
 
@@ -124,6 +124,36 @@ export async function saveGroupResults(results: Results['groupStage']): Promise<
 
 export async function saveKnockoutResults(results: Results['knockout']): Promise<void> {
   await setDoc(doc(db, 'results', 'knockout'), results, { merge: true })
+  invalidateResultsCache()
+}
+
+// Per-game / per-match operations (admin live editing) ────────────────────────
+
+export async function saveSingleGroupResult(gameId: string, result: GoalBet): Promise<void> {
+  await setDoc(doc(db, 'results', 'groupStage'), { [gameId]: result }, { merge: true })
+  invalidateResultsCache()
+}
+
+export async function deleteSingleGroupResult(gameId: string): Promise<void> {
+  await updateDoc(doc(db, 'results', 'groupStage'), { [gameId]: deleteField() })
+  invalidateResultsCache()
+}
+
+export async function saveSingleKnockoutResult(matchId: string, teamId: TeamId): Promise<void> {
+  await setDoc(doc(db, 'results', 'knockout'), { [matchId]: teamId }, { merge: true })
+  invalidateResultsCache()
+}
+
+export async function deleteSingleKnockoutResult(matchId: string): Promise<void> {
+  await updateDoc(doc(db, 'results', 'knockout'), { [matchId]: deleteField() })
+  invalidateResultsCache()
+}
+
+export async function deleteAllResults(): Promise<void> {
+  await Promise.all([
+    setDoc(doc(db, 'results', 'groupStage'), {}),
+    setDoc(doc(db, 'results', 'knockout'), {}),
+  ])
   invalidateResultsCache()
 }
 

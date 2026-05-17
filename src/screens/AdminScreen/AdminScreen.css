@@ -178,6 +178,120 @@
 .admin-results-save {
   padding: 12px 16px 0;
 }
+.admin-results-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+}
+
+/* Per-row save/delete buttons */
+.match-row-bet--admin {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+.ko-match--admin {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ko-match--admin .ko-match__slots {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+}
+.row-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: 4px;
+}
+.row-action {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: .85rem;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+.row-action:hover:not(:disabled) {
+  background: var(--surface2);
+  border-color: var(--accent);
+}
+.row-action:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+.row-action--ok {
+  background: rgba(35, 134, 54, .18);
+  border-color: var(--accent);
+  color: #4ade80;
+}
+.row-action--err {
+  background: rgba(220, 38, 38, .18);
+  border-color: #dc2626;
+  color: #f87171;
+}
+.row-action--danger:hover:not(:disabled) {
+  background: rgba(220, 38, 38, .15);
+  border-color: #dc2626;
+  color: #f87171;
+}
+
+/* Confirm modal */
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+.confirm-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 12px 40px rgba(0,0,0,.5);
+}
+.confirm-modal__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.confirm-modal__msg {
+  font-size: .85rem;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.confirm-modal__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.btn-danger {
+  background: #dc2626;
+  border: 1px solid #b91c1c;
+  color: white;
+}
+.btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+}
 
 /* ── Config section ─────────────────────────────────────────────────────────── */
 .admin-config-wrap {
