@@ -134,6 +134,93 @@
 }
 .standings-header span:nth-child(2) { text-align: left; }
 
+/* ── Blank bracket ──────────────────────────────────────────────────────────── */
+.bracket-blank {
+  margin: 14px 16px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.bracket-blank__header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px 8px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+.bracket-blank__title {
+  font-size: .75rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.bracket-blank__sub {
+  font-size: .6rem;
+  color: var(--text-muted);
+}
+.bracket-blank__section {
+  padding: 8px 14px 4px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+}
+.bracket-blank__section:last-of-type { border-bottom: none; }
+.bracket-blank__round-label {
+  font-size: .6rem;
+  font-weight: 800;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-left: 3px solid var(--border);
+  padding-left: 7px;
+  margin-bottom: 6px;
+}
+.bracket-blank__matches {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+.bracket-blank__match {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface2);
+  border-radius: 5px;
+  padding: 5px 8px;
+  overflow: hidden;
+}
+.bracket-blank__match-num {
+  font-size: .58rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  min-width: 26px;
+}
+.bracket-blank__slot {
+  font-size: .62rem;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bracket-blank__slot--ref {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.bracket-blank__vs {
+  font-size: .58rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.bracket-blank__note {
+  font-size: .6rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 8px 14px 10px;
+  font-style: italic;
+}
+
 /* ── KO results ─────────────────────────────────────────────────────────────── */
 .ko-results-section {
   padding: 0 16px;

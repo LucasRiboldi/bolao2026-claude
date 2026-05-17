@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStandings } from '@/hooks/useStandings'
 import { AllGroupTables } from './GroupTable'
 import { KoResults } from './KoResults'
+import { BracketBlank } from './BracketBlank'
 import './StandingsScreen.css'
 
 type Tab = 'grupos' | 'mata-mata'
@@ -53,11 +54,21 @@ export function StandingsScreen() {
         </div>
       )}
 
-      {!loading && !hasData && <EmptyState error={error} />}
+      {!loading && !hasData && tab === 'grupos' && (
+        <>
+          <EmptyState error={error} />
+          <BracketBlank />
+        </>
+      )}
 
       {!loading && hasData && tab === 'grupos' && (
-        <AllGroupTables groupStandings={groupStandings} results={results.groupStage} />
+        <>
+          <AllGroupTables groupStandings={groupStandings} results={results.groupStage} />
+          <BracketBlank />
+        </>
       )}
+
+      {!loading && tab === 'mata-mata' && !hasData && <EmptyState error={error} />}
 
       {!loading && hasData && tab === 'mata-mata' && (
         <KoResults results={results} />

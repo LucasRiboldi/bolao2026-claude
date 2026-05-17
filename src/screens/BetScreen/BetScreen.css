@@ -209,47 +209,54 @@
   border-radius: 20px; color: #fff; opacity: .85;
 }
 
-.ko-round-grid {
+/* ── Flat chip grid ────────────────────────────────────────────────────────── */
+.ko-chip-grid {
   display: grid;
-  grid-template-columns: repeat(var(--cols, 2), 1fr);
-  gap: 4px;
+  grid-template-columns: repeat(min(var(--ko-cols, 2), 2), 1fr);
+  gap: 3px;
   padding: 4px 12px 8px;
 }
-.ko-round-col {
-  display: flex; flex-direction: column; gap: 0;
+@media (min-width: 481px) {
+  .ko-chip-grid {
+    grid-template-columns: repeat(var(--ko-cols, 2), 1fr);
+  }
+}
+
+.ko-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
   overflow: hidden;
 }
-.ko-match-pair { display: flex; flex-direction: column; }
-.ko-match-divider {
-  height: 1px; background: var(--border); margin: 0 8px;
-}
-
-.ko-team-row {
-  display: flex; align-items: center; gap: 6px;
-  padding: 7px 8px;
-  cursor: pointer;
-  transition: background var(--transition);
-  border-bottom: 1px solid rgba(255,255,255,.04);
-}
-.ko-team-row:last-child { border-bottom: none; }
-.ko-team-row:hover:not(.ko-team-row--locked):not(.ko-team-row--empty) {
-  background: var(--surface2);
-}
-.ko-team-row--selected {
+.ko-chip:hover:not(.ko-chip--locked) { background: var(--surface2); }
+.ko-chip--selected {
   background: rgba(212,170,44,.10);
+  border-color: rgba(212,170,44,.4);
 }
-.ko-team-row--selected .ko-team-row__name { color: var(--gold); font-weight: 700; }
-.ko-team-row--eliminated { opacity: .4; }
-.ko-team-row--empty { cursor: default; opacity: .4; }
-.ko-team-row--locked { cursor: default; }
+.ko-chip--locked { cursor: default; }
 
-.ko-team-row .team-flag { width: 22px; height: 16px; border-radius: 2px; flex-shrink: 0; }
-.ko-team-row__name {
-  flex: 1; font-size: .7rem; font-weight: 600; color: var(--text);
+.ko-chip .team-flag { width: 22px; height: 16px; border-radius: 2px; flex-shrink: 0; }
+.ko-chip__name {
+  flex: 1; font-size: .68rem; font-weight: 600; color: var(--text);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.ko-team-row__check { color: var(--gold); font-size: .75rem; flex-shrink: 0; }
-.ko-team-row__tbd { font-size: .65rem; color: var(--text-muted); }
+.ko-chip--selected .ko-chip__name { color: var(--gold); }
+.ko-chip__check { color: var(--gold); font-size: .7rem; flex-shrink: 0; }
+
+/* ── Finals side-by-side ────────────────────────────────────────────────────── */
+.ko-finals-row {
+  display: flex;
+  gap: 4px;
+  padding: 0 12px 8px;
+}
+.ko-finals-col {
+  flex: 1;
+  min-width: 0;
+}
+.ko-finals-col .ko-round-section { margin-bottom: 0; }

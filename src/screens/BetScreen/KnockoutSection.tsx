@@ -13,11 +13,11 @@ interface KnockoutSectionProps {
 }
 
 const ROUND_COLORS: Record<string, string> = {
-  'Round de 32': '#e74c3c',
-  'Oitavas':     '#e67e22',
-  'Quartas':     '#f39c12',
-  'Semifinais':  '#2ecc71',
-  'Final':       '#d4aa2c',
+  'Round de 32':    '#e74c3c',
+  'Oitavas':        '#e67e22',
+  'Quartas':        '#f39c12',
+  'Semifinais':     '#2ecc71',
+  'Final':          '#d4aa2c',
   'Terceiro Lugar': '#607d8b',
 }
 
@@ -26,86 +26,72 @@ const ROUND_COLS: Record<string, number> = {
   'Oitavas':     4,
   'Quartas':     4,
   'Semifinais':  2,
-  'Final':       2,
-  'Terceiro Lugar': 2,
 }
 
-interface TeamRowProps {
-  teamId: TeamId | null | undefined
-  matchId: string
+type FlatTeam = { teamId: TeamId; matchId: string }
+
+function collectAndSort(matches: KnockoutMatch[]): FlatTeam[] {
+  const result: FlatTeam[] = []
+  for (const m of matches) {
+    if (m.home) result.push({ teamId: m.home as TeamId, matchId: m.id })
+    if (m.away) result.push({ teamId: m.away as TeamId, matchId: m.id })
+  }
+  return result.sort((a, b) =>
+    (TEAMS[a.teamId]?.name ?? '').localeCompare(TEAMS[b.teamId]?.name ?? '', 'pt-BR'),
+  )
+}
+
+function TeamChip({
+  entry, koBets, locked, onPick,
+}: {
+  entry: FlatTeam
   koBets: KnockoutBets
   locked: boolean
   onPick: (matchId: string, teamId: TeamId) => void
-}
-
-function TeamRow({ teamId, matchId, koBets, locked, onPick }: TeamRowProps) {
-  const team = teamId ? TEAMS[teamId] : null
-  const winner = koBets[matchId]
-  const selected = !!teamId && winner === teamId
-  const hasWinner = !!winner
-  const isEmpty = !teamId
-
-  const cls = [
-    'ko-team-row',
-    selected ? 'ko-team-row--selected' : '',
-    !selected && hasWinner && !isEmpty ? 'ko-team-row--eliminated' : '',
-    isEmpty ? 'ko-team-row--empty' : '',
-    locked ? 'ko-team-row--locked' : '',
-  ].filter(Boolean).join(' ')
-
+}) {
+  const team = TEAMS[entry.teamId]
+  if (!team) return null
+  const selected = koBets[entry.matchId] === entry.teamId
   return (
     <div
-      className={cls}
-      onClick={() => { if (!isEmpty && !locked && teamId) onPick(matchId, teamId) }}
-      role={isEmpty || locked ? undefined : 'button'}
-      title={team ? `Escolher ${team.name}` : undefined}
+      className={['ko-chip', selected ? 'ko-chip--selected' : '', locked ? 'ko-chip--locked' : ''].filter(Boolean).join(' ')}
+      onClick={() => { if (!locked) onPick(entry.matchId, entry.teamId) }}
+      role={locked ? undefined : 'button'}
+      title={team.name}
     >
-      {team ? (
-        <>
-          <Flag iso={team.iso} name={team.name} size="sm" />
-          <span className="ko-team-row__name">{team.name}</span>
-          {selected && <span className="ko-team-row__check">✓</span>}
-        </>
-      ) : (
-        <span className="ko-team-row__tbd">A definir</span>
-      )}
+      <Flag iso={team.iso} name={team.name} size="sm" />
+      <span className="ko-chip__name">{team.name}</span>
+      {selected && <span className="ko-chip__check">✓</span>}
     </div>
   )
 }
 
-interface RoundGridProps {
+function FlatRound({
+  name, matches, koBets, locked, onPick, cols,
+}: {
   name: string
   matches: KnockoutMatch[]
   koBets: KnockoutBets
   locked: boolean
   onPick: (matchId: string, teamId: TeamId) => void
-}
-
-function RoundGrid({ name, matches, koBets, locked, onPick }: RoundGridProps) {
+  cols?: number
+}) {
   const color = ROUND_COLORS[name] ?? 'var(--border)'
-  const numCols = ROUND_COLS[name] ?? 2
-  const cols: KnockoutMatch[][] = Array.from({ length: numCols }, () => [])
-  matches.forEach((m, i) => cols[i % numCols]!.push(m))
+  const numCols = cols ?? ROUND_COLS[name] ?? 2
+  const teams = collectAndSort(matches)
+  const picked = matches.filter(m => !!koBets[m.id]).length
 
   return (
     <div className="ko-round-section">
       <div className="ko-round-header" style={{ borderLeftColor: color }}>
         <span className="ko-round-title">{name}</span>
         <span className="ko-round-badge" style={{ background: color }}>
-          {matches.length * 2} times
+          {picked}/{matches.length}
         </span>
       </div>
-      <div className="ko-round-grid" style={{ '--cols': numCols } as React.CSSProperties}>
-        {cols.map((col, ci) => (
-          <div key={ci} className="ko-round-col">
-            {col.map((match, mi) => (
-              <div key={match.id} className="ko-match-pair">
-                {mi > 0 && <div className="ko-match-divider" />}
-                <TeamRow teamId={match.home} matchId={match.id} koBets={koBets} locked={locked} onPick={onPick} />
-                <TeamRow teamId={match.away} matchId={match.id} koBets={koBets} locked={locked} onPick={onPick} />
-              </div>
-            ))}
-          </div>
+      <div className="ko-chip-grid" style={{ '--ko-cols': numCols } as React.CSSProperties}>
+        {teams.map(t => (
+          <TeamChip key={`${t.matchId}-${t.teamId}`} entry={t} koBets={koBets} locked={locked} onPick={onPick} />
         ))}
       </div>
     </div>
@@ -129,14 +115,18 @@ export function KnockoutSection({ groupBets, koBets, locked, onPick }: KnockoutS
     }),
   ]
 
+  const mainRounds = rounds.filter(r => r.name !== 'Final' && r.name !== 'Terceiro Lugar')
+  const finalRound  = rounds.find(r => r.name === 'Final')
+  const thirdRound  = rounds.find(r => r.name === 'Terceiro Lugar')
+
   return (
     <div className="ko-section">
       <div className="ko-section-intro">
         <span>⚡ Mata-Mata</span>
-        <span className="ko-section-intro__sub">Clique nos times que você acha que avançam</span>
+        <span className="ko-section-intro__sub">Selecione os times que você acha que avançam em cada fase</span>
       </div>
-      {rounds.map(round => (
-        <RoundGrid
+      {mainRounds.map(round => (
+        <FlatRound
           key={round.name}
           name={round.name}
           matches={round.matches}
@@ -145,6 +135,20 @@ export function KnockoutSection({ groupBets, koBets, locked, onPick }: KnockoutS
           onPick={onPick}
         />
       ))}
+      {(thirdRound || finalRound) && (
+        <div className="ko-finals-row">
+          {thirdRound && (
+            <div className="ko-finals-col">
+              <FlatRound name="Terceiro Lugar" matches={thirdRound.matches} koBets={koBets} locked={locked} onPick={onPick} cols={1} />
+            </div>
+          )}
+          {finalRound && (
+            <div className="ko-finals-col">
+              <FlatRound name="Final" matches={finalRound.matches} koBets={koBets} locked={locked} onPick={onPick} cols={1} />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
