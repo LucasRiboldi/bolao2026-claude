@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { loadGroupBets, saveGroupBets, lockBets } from '@/lib/firestore'
+import { loadGroupBets, saveGroupBets } from '@/lib/firestore'
 import type { GroupBets } from '@/types'
 
 export function useGroupBets(uid: string | undefined, locked: boolean) {
@@ -19,25 +19,12 @@ export function useGroupBets(uid: string | undefined, locked: boolean) {
     setBets(prev => ({ ...prev, [gameId]: { homeGoals, awayGoals } }))
   }, [locked])
 
-  // Saves current state without locking — for per-group incremental saves
-  const savePartial = useCallback(async () => {
+  const save = useCallback(async () => {
     if (!uid || locked) return
     setSaving(true)
     try { await saveGroupBets(uid, bets) }
     finally { setSaving(false) }
   }, [uid, bets, locked])
 
-  // Final save — persists and locks bets
-  const save = useCallback(async () => {
-    if (!uid || locked) return
-    setSaving(true)
-    try {
-      await saveGroupBets(uid, bets)
-      await lockBets(uid)
-    } finally {
-      setSaving(false)
-    }
-  }, [uid, bets, locked])
-
-  return { bets, loading, saving, setBet, savePartial, save }
+  return { bets, loading, saving, setBet, save }
 }

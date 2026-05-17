@@ -1,15 +1,19 @@
+import { useState } from 'react'
 import type { GroupBets, KnockoutBets, KoArrayKey, KoSingleKey, TeamId } from '@/types'
 import { TEAMS } from '@/data/teams'
 import { buildR32 } from '@/data/bracket'
 import { calcGroupStandings, getQualified } from '@/utils/standings'
 import { Flag } from '@/components/Flag'
+import { KO_ROUND_MAX } from '@/hooks/useKnockoutBets'
 
 interface KnockoutSectionProps {
   groupBets: GroupBets
   koBets: KnockoutBets
   locked: boolean
+  saving: boolean
   onToggle: (round: KoArrayKey, teamId: TeamId) => void
   onSingle: (round: KoSingleKey, teamId: TeamId) => void
+  onSave: () => Promise<void>
 }
 
 const ROUND_COLORS: Record<string, string> = {
@@ -26,18 +30,24 @@ function sortTeams(ids: TeamId[]): TeamId[] {
 }
 
 function TeamChip({
-  teamId, selected, locked, onClick,
+  teamId, selected, locked, blocked, onClick,
 }: {
-  teamId: TeamId; selected: boolean; locked: boolean; onClick: () => void
+  teamId: TeamId; selected: boolean; locked: boolean; blocked: boolean; onClick: () => void
 }) {
   const team = TEAMS[teamId]
   if (!team) return null
+  const disabled = locked || (blocked && !selected)
   return (
     <div
-      className={['ko-chip', selected ? 'ko-chip--selected' : '', locked ? 'ko-chip--locked' : ''].filter(Boolean).join(' ')}
-      onClick={locked ? undefined : onClick}
-      role={locked ? undefined : 'button'}
-      title={team.name}
+      className={[
+        'ko-chip',
+        selected ? 'ko-chip--selected' : '',
+        locked ? 'ko-chip--locked' : '',
+        blocked && !selected ? 'ko-chip--blocked' : '',
+      ].filter(Boolean).join(' ')}
+      onClick={disabled ? undefined : onClick}
+      role={disabled ? undefined : 'button'}
+      title={blocked && !selected ? `Limite atingido — desmarque outro para selecionar este` : team.name}
     >
       <Flag iso={team.iso} name={team.name} size="sm" />
       <span className="ko-chip__name">{team.name}</span>
@@ -60,6 +70,7 @@ interface RoundBlockProps {
 function RoundBlock({ label, colorKey, teams, picked, target, locked, onToggle, cols = 4 }: RoundBlockProps) {
   const color = ROUND_COLORS[colorKey] ?? 'var(--border)'
   const count = picked.length
+  const atMax = count >= target
 
   if (teams.length === 0) {
     return (
@@ -73,12 +84,23 @@ function RoundBlock({ label, colorKey, teams, picked, target, locked, onToggle, 
     )
   }
 
+  const badgeStyle: React.CSSProperties = atMax
+    ? { background: color, boxShadow: '0 0 0 2px rgba(74,222,128,.4)' }
+    : { background: color }
+
   return (
     <div className="ko-round-section">
       <div className="ko-round-header" style={{ borderLeftColor: color }}>
         <span className="ko-round-title">{label}</span>
-        <span className="ko-round-badge" style={{ background: color }}>{count}/{target}</span>
+        <span className="ko-round-badge" style={badgeStyle}>
+          {count}/{target}{atMax ? ' ✓' : ''}
+        </span>
       </div>
+      {atMax && (
+        <div className="ko-round-hint">
+          Limite atingido. Desmarque um time para escolher outro.
+        </div>
+      )}
       <div className="ko-chip-grid" style={{ '--ko-cols': cols } as React.CSSProperties}>
         {teams.map(teamId => (
           <TeamChip
@@ -86,6 +108,7 @@ function RoundBlock({ label, colorKey, teams, picked, target, locked, onToggle, 
             teamId={teamId}
             selected={picked.includes(teamId)}
             locked={locked}
+            blocked={atMax}
             onClick={() => onToggle(teamId)}
           />
         ))}
@@ -94,7 +117,9 @@ function RoundBlock({ label, colorKey, teams, picked, target, locked, onToggle, 
   )
 }
 
-export function KnockoutSection({ groupBets, koBets, locked, onToggle, onSingle }: KnockoutSectionProps) {
+export function KnockoutSection({ groupBets, koBets, locked, saving, onToggle, onSingle, onSave }: KnockoutSectionProps) {
+  const [saved, setSaved] = useState(false)
+
   const standings = calcGroupStandings(groupBets)
   const qualified = getQualified(standings)
   const r32Matches = buildR32(qualified)
@@ -106,8 +131,16 @@ export function KnockoutSection({ groupBets, koBets, locked, onToggle, onSingle 
   const r16Pool = sortTeams(koBets.r32 ?? [])
   const qfPool  = sortTeams(koBets.r16 ?? [])
   const sfPool  = sortTeams(koBets.qf  ?? [])
+  // 3rd-place candidates: 2 teams that lost in SF (i.e. in QF picks but NOT in SF picks)
   const thirdPool = sortTeams((koBets.qf ?? []).filter(t => !(koBets.sf ?? []).includes(t)))
+  // Final candidates: the 2 SF winners (user's picks)
   const finalPool = sortTeams(koBets.sf ?? [])
+
+  async function handleSave() {
+    await onSave()
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
 
   return (
     <div className="ko-section">
@@ -117,41 +150,41 @@ export function KnockoutSection({ groupBets, koBets, locked, onToggle, onSingle 
       </div>
 
       <RoundBlock
-        label="Round de 32 — escolha 16"
+        label={`Round de 32 — escolha ${KO_ROUND_MAX.r32}`}
         colorKey="r32"
         teams={r32Pool}
         picked={koBets.r32 ?? []}
-        target={16}
+        target={KO_ROUND_MAX.r32}
         locked={locked}
         onToggle={t => onToggle('r32', t)}
       />
 
       <RoundBlock
-        label="Oitavas — escolha 8"
+        label={`Oitavas — escolha ${KO_ROUND_MAX.r16}`}
         colorKey="r16"
         teams={r16Pool}
         picked={koBets.r16 ?? []}
-        target={8}
+        target={KO_ROUND_MAX.r16}
         locked={locked}
         onToggle={t => onToggle('r16', t)}
       />
 
       <RoundBlock
-        label="Quartas — escolha 4"
+        label={`Quartas — escolha ${KO_ROUND_MAX.qf}`}
         colorKey="qf"
         teams={qfPool}
         picked={koBets.qf ?? []}
-        target={4}
+        target={KO_ROUND_MAX.qf}
         locked={locked}
         onToggle={t => onToggle('qf', t)}
       />
 
       <RoundBlock
-        label="Semifinais — escolha 2 finalistas"
+        label={`Semifinais — escolha ${KO_ROUND_MAX.sf} finalistas`}
         colorKey="sf"
         teams={sfPool}
         picked={koBets.sf ?? []}
-        target={2}
+        target={KO_ROUND_MAX.sf}
         locked={locked}
         onToggle={t => onToggle('sf', t)}
         cols={2}
@@ -183,6 +216,19 @@ export function KnockoutSection({ groupBets, koBets, locked, onToggle, onSingle 
               cols={1}
             />
           </div>
+        </div>
+      )}
+
+      {!locked && (
+        <div className="ko-section__save-row">
+          <button
+            className={`btn btn-ghost btn-sm${saved ? ' btn--saved' : ''}`}
+            onClick={handleSave}
+            disabled={saving}
+            aria-label="Salvar palpites do mata-mata"
+          >
+            {saved ? '✓ Salvo!' : saving ? 'Salvando…' : '💾 Salvar Mata-Mata'}
+          </button>
         </div>
       )}
     </div>

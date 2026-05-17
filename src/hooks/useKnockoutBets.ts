@@ -2,9 +2,21 @@ import { useState, useEffect, useCallback } from 'react'
 import { loadKnockoutBets, saveKnockoutBets } from '@/lib/firestore'
 import type { KnockoutBets, KoArrayKey, KoSingleKey, TeamId } from '@/types'
 
+/**
+ * Maximum picks per knockout round — equals the number of teams that advance
+ * to the next round (FIFA Art. 12). Selecting beyond this limit is blocked.
+ */
+export const KO_ROUND_MAX: Record<KoArrayKey, number> = {
+  r32: 16, // 16 winners advance to R16
+  r16:  8, //  8 winners advance to QF
+  qf:   4, //  4 winners advance to SF
+  sf:   2, //  2 winners advance to Final
+}
+
 export function useKnockoutBets(uid: string | undefined, locked: boolean) {
   const [bets, setBets] = useState<KnockoutBets>({})
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (!uid) { setLoading(false); return }
@@ -18,9 +30,14 @@ export function useKnockoutBets(uid: string | undefined, locked: boolean) {
     setBets(prev => {
       const arr = prev[round] ?? []
       const has = arr.includes(teamId)
-      if (!has) return { ...prev, [round]: [...arr, teamId] }
 
-      // Remove and cascade to later rounds
+      // Add — blocked if already at round's max
+      if (!has) {
+        if (arr.length >= KO_ROUND_MAX[round]) return prev
+        return { ...prev, [round]: [...arr, teamId] }
+      }
+
+      // Remove + cascade to later rounds
       const next: KnockoutBets = { ...prev, [round]: arr.filter(t => t !== teamId) }
       const order: (KoArrayKey | KoSingleKey)[] = ['r32', 'r16', 'qf', 'sf', 'champion', 'third']
       for (const later of order.slice(order.indexOf(round) + 1)) {
@@ -39,10 +56,12 @@ export function useKnockoutBets(uid: string | undefined, locked: boolean) {
     setBets(prev => ({ ...prev, [round]: prev[round] === teamId ? undefined : teamId }))
   }, [locked])
 
-  const persist = useCallback(async () => {
+  const save = useCallback(async () => {
     if (!uid || locked) return
-    await saveKnockoutBets(uid, bets)
+    setSaving(true)
+    try { await saveKnockoutBets(uid, bets) }
+    finally { setSaving(false) }
   }, [uid, bets, locked])
 
-  return { bets, loading, togglePick, setSingle, persist }
+  return { bets, loading, saving, togglePick, setSingle, save }
 }

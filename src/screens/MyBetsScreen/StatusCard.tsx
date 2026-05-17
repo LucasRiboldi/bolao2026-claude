@@ -1,3 +1,4 @@
+import { useAuth } from '@/contexts/AuthContext'
 import type { UserProfile, GroupBets, KnockoutBets } from '@/types'
 
 interface StatusCardProps {
@@ -19,11 +20,19 @@ function formatDate(iso: string | undefined): string | null {
 }
 
 export function StatusCard({ profile, groupBets, koBets }: StatusCardProps) {
-  const locked = profile?.betsLocked ?? false
+  const { globalLocked } = useAuth()
+  // Lock state is now driven exclusively by the admin's global lock.
+  const locked = globalLocked
   const groupFilled = Object.values(groupBets).filter(
     b => b.homeGoals !== '' && b.awayGoals !== ''
   ).length
-  const koFilled = Object.keys(koBets).length
+  const koFilled =
+    (koBets.r32?.length ?? 0) +
+    (koBets.r16?.length ?? 0) +
+    (koBets.qf?.length  ?? 0) +
+    (koBets.sf?.length  ?? 0) +
+    (koBets.champion ? 1 : 0) +
+    (koBets.third    ? 1 : 0)
   const savedDate = formatDate(profile?.betsSavedAt)
 
   return (
@@ -31,13 +40,13 @@ export function StatusCard({ profile, groupBets, koBets }: StatusCardProps) {
       <div className="mybets-status__icon">{locked ? '🔒' : '🟢'}</div>
       <div className="mybets-status__body">
         <div className="mybets-status__title">
-          {locked ? 'Apostas salvas' : 'Apostas abertas para edição'}
+          {locked ? 'Apostas bloqueadas pelo administrador' : 'Apostas abertas para edição'}
         </div>
         <div className="mybets-status__counts">
           {groupFilled} / 72 grupos · {koFilled} mata-mata
         </div>
         {savedDate && (
-          <div className="mybets-status__date">Salvo em: {savedDate}</div>
+          <div className="mybets-status__date">Último salvamento: {savedDate}</div>
         )}
       </div>
     </div>

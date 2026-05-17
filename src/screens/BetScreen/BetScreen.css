@@ -240,6 +240,12 @@
   border-color: rgba(212,170,44,.4);
 }
 .ko-chip--locked { cursor: default; }
+.ko-chip--blocked {
+  cursor: not-allowed;
+  opacity: .35;
+  filter: grayscale(.6);
+}
+.ko-chip--blocked:hover { background: var(--surface); }
 
 .ko-chip .team-flag { width: 22px; height: 16px; border-radius: 2px; flex-shrink: 0; }
 .ko-chip__name {
@@ -266,6 +272,28 @@
   color: var(--text-muted);
   padding: 6px 16px 8px;
   font-style: italic;
+}
+.ko-round-hint {
+  font-size: .65rem;
+  color: #4ade80;
+  padding: 4px 16px 6px;
+  font-weight: 600;
+}
+.ko-section__save-row {
+  display: flex;
+  justify-content: center;
+  padding: 12px 16px 4px;
+}
+.bet-lock-banner {
+  margin: 8px 16px;
+  padding: 10px 14px;
+  background: rgba(220, 38, 38, .12);
+  border: 1px solid rgba(220, 38, 38, .35);
+  border-radius: var(--radius-sm);
+  font-size: .8rem;
+  font-weight: 600;
+  color: #f87171;
+  text-align: center;
 }
 .ko-round-earned {
   font-size: .62rem;

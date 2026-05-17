@@ -10,17 +10,14 @@ import './BetScreen.css'
 const TOTAL_GROUP_GAMES = 72
 
 export function BetScreen() {
-  const { user, profile } = useAuth()
-  const locked = profile?.betsLocked ?? false
-  const { bets, loading: gLoading, saving, setBet, savePartial, save } = useGroupBets(user?.uid, locked)
-  const { bets: koBets, loading: kLoading, togglePick, setSingle, persist } = useKnockoutBets(user?.uid, locked)
+  const { user, globalLocked } = useAuth()
+  // Bets are editable as long as admin hasn't activated the global lock.
+  // Per-user betsLocked is no longer enforced on the participant's own screen.
+  const locked = globalLocked
+  const { bets, loading: gLoading, saving: gSaving, setBet, save: saveGroups } = useGroupBets(user?.uid, locked)
+  const { bets: koBets, loading: kLoading, saving: kSaving, togglePick, setSingle, save: saveKo } = useKnockoutBets(user?.uid, locked)
 
   const filled = Object.values(bets).filter(b => b.homeGoals !== '' && b.awayGoals !== '').length
-
-  async function handleSave() {
-    await save()
-    await persist()
-  }
 
   if (gLoading || kLoading) {
     return (
@@ -34,6 +31,12 @@ export function BetScreen() {
     <div id="section-groups" role="tabpanel">
       <ProgressBar filled={filled} total={TOTAL_GROUP_GAMES} />
 
+      {locked && (
+        <div className="bet-lock-banner">
+          🔒 Apostas bloqueadas pelo administrador. Edições não permitidas.
+        </div>
+      )}
+
       {GROUP_IDS.map((groupId, i) => (
         <GroupCard
           key={groupId}
@@ -41,8 +44,8 @@ export function BetScreen() {
           bets={bets}
           locked={locked}
           onChange={setBet}
-          onSave={savePartial}
-          saving={saving}
+          onSave={saveGroups}
+          saving={gSaving}
           defaultOpen={i === 0}
         />
       ))}
@@ -51,30 +54,11 @@ export function BetScreen() {
         groupBets={bets}
         koBets={koBets}
         locked={locked}
+        saving={kSaving}
         onToggle={togglePick}
         onSingle={setSingle}
+        onSave={saveKo}
       />
-
-      {!locked && (
-        <div className="bet-save-wrap">
-          <button
-            className="btn btn-primary btn-full"
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving ? 'Salvando…' : '🔒 Finalizar e Salvar Apostas'}
-          </button>
-          <div className="bet-save-hint">Finalizar bloqueia as apostas permanentemente</div>
-        </div>
-      )}
-
-      {locked && (
-        <div className="bet-save-wrap">
-          <div style={{ textAlign: 'center', fontSize: '.75rem', color: 'var(--text-muted)', padding: '8px' }}>
-            🔒 Apostas finalizadas
-          </div>
-        </div>
-      )}
     </div>
   )
 }

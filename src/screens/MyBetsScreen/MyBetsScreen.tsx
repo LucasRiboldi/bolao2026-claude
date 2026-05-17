@@ -50,8 +50,8 @@ function buildWhatsAppText(
 }
 
 export function MyBetsScreen() {
-  const { user, profile } = useAuth()
-  const locked = profile?.betsLocked ?? false
+  const { user, profile, globalLocked } = useAuth()
+  const locked = globalLocked
   const { bets: groupBets, loading: gLoading } = useGroupBets(user?.uid, locked)
   const { bets: koBets, loading: kLoading } = useKnockoutBets(user?.uid, locked)
   const { results, loading: rLoading } = useStandings()
