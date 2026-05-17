@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
+import './styles/design-system.css'   // tokens — must load first
+import './index.css'                   // resets + atomic components
 import App from './App'
 import { AuthProvider } from './contexts/AuthContext'
 
