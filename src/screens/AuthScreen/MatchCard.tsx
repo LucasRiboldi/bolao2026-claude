@@ -1,7 +1,7 @@
 interface MatchCardProps {
-  homeFlag: string
+  homeIso: string
   homeName: string
-  awayFlag: string
+  awayIso: string
   awayName: string
   status: 'live' | 'soon' | 'done'
   homeGoals?: number
@@ -11,8 +11,22 @@ interface MatchCardProps {
   timeStr: string
 }
 
+function FlagImg({ iso, name }: { iso: string; name: string }) {
+  return (
+    <img
+      className="flag-img"
+      src={`https://flagcdn.com/48x36/${iso}.png`}
+      srcSet={`https://flagcdn.com/96x72/${iso}.png 2x`}
+      width={48}
+      height={36}
+      alt={name}
+      onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0' }}
+    />
+  )
+}
+
 export function MatchCard({
-  homeFlag, homeName, awayFlag, awayName,
+  homeIso, homeName, awayIso, awayName,
   status, homeGoals, awayGoals, minute, dateStr, timeStr,
 }: MatchCardProps) {
   const isLive = status === 'live'
@@ -49,7 +63,9 @@ export function MatchCard({
         {/* Teams + score */}
         <div className="match-row">
           <div className="match-team">
-            <div className={`match-flag${isLive ? ' match-flag--live' : ''}`}>{homeFlag}</div>
+            <div className={`match-flag${isLive ? ' match-flag--live' : ''}`}>
+              <FlagImg iso={homeIso} name={homeName} />
+            </div>
             <div className="match-name">{homeName}</div>
           </div>
 
@@ -73,7 +89,9 @@ export function MatchCard({
           </div>
 
           <div className="match-team">
-            <div className={`match-flag${isLive ? ' match-flag--live' : ''}`}>{awayFlag}</div>
+            <div className={`match-flag${isLive ? ' match-flag--live' : ''}`}>
+              <FlagImg iso={awayIso} name={awayName} />
+            </div>
             <div className="match-name">{awayName}</div>
           </div>
         </div>

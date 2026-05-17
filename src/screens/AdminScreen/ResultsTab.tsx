@@ -3,6 +3,7 @@ import { loadResults, saveGroupResults, saveKnockoutResults } from '@/lib/firest
 import type { Results, TeamId, KnockoutMatch } from '@/types'
 import { GROUP_IDS, generateGroupGames, GROUP_COLORS } from '@/data/groups'
 import { TEAMS } from '@/data/teams'
+import { Flag } from '@/components/Flag'
 import { KNOCKOUT_ROUNDS, buildR32, resolveKnockoutRound } from '@/data/bracket'
 import { calcGroupStandings, getQualified } from '@/utils/standings'
 
@@ -67,8 +68,8 @@ function GroupResultCard({ groupId, results, onChange }: {
             return (
               <div key={game.id} className="match-row-bet">
                 <div className="match-team-left">
-                  <span className="match-team-name">{ht?.short ?? game.home}</span>
-                  <span className="match-team-flag">{ht?.flag}</span>
+                  <span className="match-team-name">{ht?.name ?? game.home}</span>
+                  {ht && <Flag iso={ht.iso} name={ht.name} size="sm" />}
                 </div>
                 <div className="match-score-center">
                   <Stepper value={home} onDec={() => adjust(game.id, 'home', -1)} onInc={() => { init(game.id, 'home'); adjust(game.id, 'home', 1) }} />
@@ -76,8 +77,8 @@ function GroupResultCard({ groupId, results, onChange }: {
                   <Stepper value={away} onDec={() => adjust(game.id, 'away', -1)} onInc={() => { init(game.id, 'away'); adjust(game.id, 'away', 1) }} />
                 </div>
                 <div className="match-team-right">
-                  <span className="match-team-flag">{at?.flag}</span>
-                  <span className="match-team-name">{at?.short ?? game.away}</span>
+                  {at && <Flag iso={at.iso} name={at.name} size="sm" />}
+                  <span className="match-team-name">{at?.name ?? game.away}</span>
                 </div>
               </div>
             )
@@ -108,7 +109,7 @@ function KoResultSlot({ match, side, koBets, onPick }: {
       onClick={() => !isEmpty && teamId && onPick(match.id, teamId)}
       role={isEmpty ? undefined : 'button'}
     >
-      <span className="ko-slot__flag">{team?.flag ?? '🏳'}</span>
+      {team && <Flag iso={team.iso} name={team.name} size="sm" />}
       <span className="ko-slot__name">{team?.name ?? (isEmpty ? '—' : teamId)}</span>
       {selected && <span className="ko-slot__check">✓</span>}
       {!selected && !isEmpty && <span className="ko-slot__label">resultado</span>}

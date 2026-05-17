@@ -19,6 +19,15 @@ export function useGroupBets(uid: string | undefined, locked: boolean) {
     setBets(prev => ({ ...prev, [gameId]: { homeGoals, awayGoals } }))
   }, [locked])
 
+  // Saves current state without locking — for per-group incremental saves
+  const savePartial = useCallback(async () => {
+    if (!uid || locked) return
+    setSaving(true)
+    try { await saveGroupBets(uid, bets) }
+    finally { setSaving(false) }
+  }, [uid, bets, locked])
+
+  // Final save — persists and locks bets
   const save = useCallback(async () => {
     if (!uid || locked) return
     setSaving(true)
@@ -30,5 +39,5 @@ export function useGroupBets(uid: string | undefined, locked: boolean) {
     }
   }, [uid, bets, locked])
 
-  return { bets, loading, saving, setBet, save }
+  return { bets, loading, saving, setBet, savePartial, save }
 }

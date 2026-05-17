@@ -2,6 +2,7 @@ import type { GroupBets, KnockoutBets, KnockoutMatch } from '@/types'
 import { TEAMS } from '@/data/teams'
 import { KNOCKOUT_ROUNDS, buildR32, resolveKnockoutRound } from '@/data/bracket'
 import { calcGroupStandings, getQualified } from '@/utils/standings'
+import { Flag } from '@/components/Flag'
 
 function KoSlotView({ match, side, koBets }: {
   match: KnockoutMatch
@@ -23,7 +24,7 @@ function KoSlotView({ match, side, koBets }: {
 
   return (
     <div className={`mybets-ko-slot${isWinner ? ' mybets-ko-slot--winner' : ''}`}>
-      <span className="mybets-ko-slot__flag">{team?.flag ?? '🏳'}</span>
+      {team && <Flag iso={team.iso} name={team.name} size="sm" />}
       <span className="mybets-ko-slot__name">{team?.name ?? teamId}</span>
       {isWinner && <span className="mybets-ko-slot__check">✓</span>}
     </div>

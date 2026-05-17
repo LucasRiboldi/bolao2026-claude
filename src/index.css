@@ -197,6 +197,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 :focus:not(:focus-visible) { outline: none; }
 
+/* ── Flag images ───────────────────────────────────────────────────────────── */
+.team-flag {
+  display: block; object-fit: cover; border-radius: 3px;
+  flex-shrink: 0;
+}
+
 /* ── Reduced motion ────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

@@ -1,6 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { useGroupBets } from '@/hooks/useGroupBets'
 import { useKnockoutBets } from '@/hooks/useKnockoutBets'
+import { useStandings } from '@/hooks/useStandings'
 import { GROUP_IDS, generateGroupGames } from '@/data/groups'
 import { TEAMS } from '@/data/teams'
 import { KNOCKOUT_ROUNDS } from '@/data/bracket'
@@ -25,7 +26,7 @@ function buildWhatsAppText(
       const score = b && b.homeGoals !== '' && b.awayGoals !== ''
         ? `${b.homeGoals}×${b.awayGoals}`
         : '?×?'
-      lines.push(`  ${hTeam?.flag ?? ''} ${hTeam?.short ?? game.home} ${score} ${aTeam?.short ?? game.away} ${aTeam?.flag ?? ''}`)
+      lines.push(`  ${hTeam?.name ?? game.home} ${score} ${aTeam?.name ?? game.away}`)
     }
   }
 
@@ -40,7 +41,7 @@ function buildWhatsAppText(
     lines.push(`\n${round.name}:`)
     for (const teamId of picks) {
       const t = TEAMS[teamId!]
-      lines.push(`  ${t?.flag ?? ''} ${t?.name ?? teamId}`)
+      lines.push(`  ${t?.name ?? teamId}`)
     }
   }
 
@@ -52,8 +53,9 @@ export function MyBetsScreen() {
   const locked = profile?.betsLocked ?? false
   const { bets: groupBets, loading: gLoading } = useGroupBets(user?.uid, locked)
   const { bets: koBets, loading: kLoading } = useKnockoutBets(user?.uid, locked)
+  const { results, loading: rLoading } = useStandings()
 
-  if (gLoading || kLoading) {
+  if (gLoading || kLoading || rLoading) {
     return (
       <div className="spinner-wrap">
         <div className="spinner" aria-label="Carregando apostas…" />
@@ -69,7 +71,7 @@ export function MyBetsScreen() {
   return (
     <div id="section-mybets" role="tabpanel">
       <StatusCard profile={profile} groupBets={groupBets} koBets={koBets} />
-      <GroupBetsView bets={groupBets} />
+      <GroupBetsView bets={groupBets} results={results.groupStage} />
       <KnockoutBetsView groupBets={groupBets} koBets={koBets} />
       <div className="mybets-export-wrap">
         <button className="btn btn-ghost btn-full" onClick={handleWhatsApp}>

@@ -1,6 +1,7 @@
 import type { GroupId, StandingRow, GroupBets } from '@/types'
 import { generateGroupGames, GROUP_IDS } from '@/data/groups'
 import { TEAMS } from '@/data/teams'
+import { Flag } from '@/components/Flag'
 
 function computeWDL(teamId: string, groupId: GroupId, results: GroupBets) {
   let w = 0, d = 0, l = 0
@@ -55,8 +56,8 @@ export function GroupTable({ groupId, rows, results }: GroupTableProps) {
             <div key={row.id} className={`standings-row${qualClass(i)}`}>
               <span className="standings-row__rank">{i + 1}</span>
               <div className="standings-row__team">
-                <span className="standings-row__flag">{team?.flag ?? '🏳'}</span>
-                <span className="standings-row__name">{team?.short ?? row.id}</span>
+                {team && <Flag iso={team.iso} name={team.name} size="sm" />}
+                <span className="standings-row__name">{team?.name ?? row.id}</span>
               </div>
               <span className="standings-col">{row.played}</span>
               <span className="standings-col">{w}</span>
