@@ -1,5 +1,11 @@
 /* ── Max-width shell ────────────────────────────────────────────────────────── */
 :root { --shell-max: 800px; }
+@media (min-width: 901px) {
+  :root {
+    --shell-max: 920px;
+    --nav-h: 64px;  /* bottom-nav grows on desktop */
+  }
+}
 
 /* ── Header ────────────────────────────────────────────────────────────────── */
 .app-header {
@@ -93,6 +99,17 @@
     border-left: 1px solid var(--border);
     border-right: 1px solid var(--border);
   }
+}
+@media (min-width: 901px) {
+  .bnav-icon { font-size: 1.45rem; }
+  .bnav-lbl { font-size: .62rem; }
+  .bnav-copa-btn {
+    width: 56px; height: 56px;
+    font-size: 1.85rem;
+    margin-top: -26px;
+  }
+  .app-header__inner { padding: 14px 18px; }
+  .app-header__brand { font-size: 1rem; }
 }
 
 .bnav-item {

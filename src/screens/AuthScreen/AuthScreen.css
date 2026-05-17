@@ -3,6 +3,16 @@
   min-height: 100vh;
   background: var(--bg);
   overflow-y: auto;
+  max-width: 720px;       /* tablet — buttons & layout stay proportional on desktop */
+  margin: 0 auto;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+@media (max-width: 720px) {
+  .auth-screen {
+    border-left: none;
+    border-right: none;
+  }
 }
 
 .auth-hero {
@@ -98,7 +108,12 @@
   padding: 16px 16px 6px;
 }
 
-/* ── Match cards (horizontal scroll) ──────────────────────────────────────── */
+/* ── Match cards (vertical stack, full-width) ─────────────────────────────── */
+.match-stack {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 0 16px 16px;
+}
+/* Legacy horizontal scroll — kept for back-compat if referenced elsewhere */
 .match-scroll {
   display: flex; gap: 10px;
   padding: 0 16px 16px;
@@ -107,9 +122,11 @@
 .match-scroll::-webkit-scrollbar { display: none; }
 
 .match-card {
-  flex-shrink: 0; width: 240px; border-radius: 14px; overflow: hidden; position: relative;
+  width: 100%; border-radius: 14px; overflow: hidden; position: relative;
   background: linear-gradient(180deg, #0c1318 0%, #0a130d 55%, #090e0a 100%);
 }
+/* When inside the legacy horizontal scroll, keep old fixed width */
+.match-scroll .match-card { flex-shrink: 0; width: 240px; }
 .match-card::before {
   content: '';
   position: absolute; inset: 0; pointer-events: none;
