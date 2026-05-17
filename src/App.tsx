@@ -1,24 +1,12 @@
 import { useAuth } from './contexts/AuthContext'
 import { AuthScreen } from './screens/AuthScreen'
 import { AppShell } from './components/layout/AppShell'
-import type { Section } from './components/layout/AppShell'
-
-// Placeholder screens — replaced as each layout is approved
-function PlaceholderScreen({ section }: { section: Section }) {
-  const labels: Record<Section, string> = {
-    groups:    '⚽ Apostar',
-    mybets:    '📋 Minhas Apostas',
-    standings: '🌐 Classificação Copa',
-    ranking:   '🏆 Ranking',
-    convidar:  '↗ Convidar Amigos',
-    admin:     '⚙️ Admin',
-  }
-  return (
-    <div style={{ padding: '32px 16px', color: 'var(--text-muted)', fontSize: '.875rem', textAlign: 'center' }}>
-      {labels[section]} — em desenvolvimento
-    </div>
-  )
-}
+import { BetScreen } from './screens/BetScreen'
+import { MyBetsScreen } from './screens/MyBetsScreen'
+import { StandingsScreen } from './screens/StandingsScreen'
+import { RankingScreen } from './screens/RankingScreen'
+import { InviteScreen } from './screens/InviteScreen'
+import { AdminScreen } from './screens/AdminScreen'
 
 export default function App() {
   const { user, loading } = useAuth()
@@ -35,7 +23,15 @@ export default function App() {
 
   return (
     <AppShell>
-      {(section) => <PlaceholderScreen section={section} />}
+      {(section) => {
+        if (section === 'groups') return <BetScreen />
+        if (section === 'mybets') return <MyBetsScreen />
+        if (section === 'standings') return <StandingsScreen />
+        if (section === 'ranking') return <RankingScreen />
+        if (section === 'convidar') return <InviteScreen />
+        if (section === 'admin') return <AdminScreen />
+        return null
+      }}
     </AppShell>
   )
 }

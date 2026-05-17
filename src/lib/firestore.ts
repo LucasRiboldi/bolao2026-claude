@@ -1,8 +1,7 @@
 import {
   doc, collection, collectionGroup,
-  getDoc, getDocs, setDoc, deleteDoc,
+  getDoc, getDocs, setDoc,
   writeBatch, serverTimestamp,
-  type Firestore,
 } from 'firebase/firestore'
 import { db } from './firebase'
 import type {
@@ -106,6 +105,16 @@ export async function loadResults(forceRefresh = false): Promise<Results> {
 export function invalidateResultsCache(): void {
   _resultsCache = null
   sessionStorage.removeItem('bolao_results')
+}
+
+export async function saveGroupResults(results: Results['groupStage']): Promise<void> {
+  await setDoc(doc(db, 'results', 'groupStage'), results, { merge: true })
+  invalidateResultsCache()
+}
+
+export async function saveKnockoutResults(results: Results['knockout']): Promise<void> {
+  await setDoc(doc(db, 'results', 'knockout'), results, { merge: true })
+  invalidateResultsCache()
 }
 
 // ── Ranking ───────────────────────────────────────────────────────────────────

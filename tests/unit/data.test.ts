@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { TEAMS, teamDisplayName, teamLabel, nameInitials } from '@/data/teams'
 import { GROUPS, GROUP_IDS, generateGroupGames, ALL_GROUP_GAMES } from '@/data/groups'
-import { KNOCKOUT_SLOTS, KNOCKOUT_ROUNDS, buildR32 } from '@/data/bracket'
+import { KNOCKOUT_SLOTS, buildR32 } from '@/data/bracket'
 import type { QualifiedTeams } from '@/types'
 
 describe('TEAMS', () => {
