@@ -101,7 +101,7 @@ function EntryRow({ entry, pos, isMe }: { entry: RankingEntry; pos: number; isMe
 
 export function RankingScreen() {
   const { user, isAdmin } = useAuth()
-  const { entries, loading, error, refresh } = useRanking(isAdmin)
+  const { entries, loading, error, recomputing, forceRecompute } = useRanking(isAdmin)
 
   const myPos   = user ? entries.findIndex(e => e.uid === user.uid) : -1
   const myEntry = myPos >= 0 ? entries[myPos] : null
@@ -112,10 +112,19 @@ export function RankingScreen() {
   return (
     <div id="section-ranking" role="tabpanel">
       <div className="ranking-header">
-        <span className="ranking-header__title">🏆 Classificação</span>
-        <button className="btn btn-ghost btn-sm" onClick={refresh} disabled={loading}>
-          {loading ? '…' : '🔄 Atualizar'}
-        </button>
+        <span className="ranking-header__title">
+          🏆 Classificação
+          {!loading && !error && (
+            <span className="ranking-live-badge" title="Atualiza em tempo real">
+              <span className="ranking-live-dot" /> ao vivo
+            </span>
+          )}
+        </span>
+        {isAdmin && (
+          <button className="btn btn-ghost btn-sm" onClick={forceRecompute} disabled={recomputing || loading}>
+            {recomputing ? 'Recalculando…' : '🔄 Recalcular'}
+          </button>
+        )}
       </div>
 
       {loading && (

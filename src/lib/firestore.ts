@@ -1,13 +1,15 @@
 import {
   doc, collection, collectionGroup,
   getDoc, getDocs, setDoc, updateDoc, deleteField,
-  writeBatch, serverTimestamp,
+  writeBatch, serverTimestamp, onSnapshot,
 } from 'firebase/firestore'
 import { db } from './firebase'
 import type {
   GroupBets, KnockoutBets, UserProfile, Results, GoalBet, TeamId,
   RankingEntry, UserWithBets, AdminConfig, ScoringConfig,
 } from '@/types'
+import { calculateScore, sortRanking } from '@/utils/scoring'
+import { DEFAULT_SCORING } from '@/data/bracket'
 
 // ── Profile ───────────────────────────────────────────────────────────────────
 
@@ -120,33 +122,41 @@ export function invalidateResultsCache(): void {
 export async function saveGroupResults(results: Results['groupStage']): Promise<void> {
   await setDoc(doc(db, 'results', 'groupStage'), results, { merge: true })
   invalidateResultsCache()
+  scheduleRankingRecompute()
 }
 
 export async function saveKnockoutResults(results: Results['knockout']): Promise<void> {
   await setDoc(doc(db, 'results', 'knockout'), results, { merge: true })
   invalidateResultsCache()
+  scheduleRankingRecompute()
 }
 
 // Per-game / per-match operations (admin live editing) ────────────────────────
+// Every write schedules a debounced ranking recompute (2s) so all participants
+// see updated scores in near-real-time via the subscribeRanking listener.
 
 export async function saveSingleGroupResult(gameId: string, result: GoalBet): Promise<void> {
   await setDoc(doc(db, 'results', 'groupStage'), { [gameId]: result }, { merge: true })
   invalidateResultsCache()
+  scheduleRankingRecompute()
 }
 
 export async function deleteSingleGroupResult(gameId: string): Promise<void> {
   await updateDoc(doc(db, 'results', 'groupStage'), { [gameId]: deleteField() })
   invalidateResultsCache()
+  scheduleRankingRecompute()
 }
 
 export async function saveSingleKnockoutResult(matchId: string, teamId: TeamId): Promise<void> {
   await setDoc(doc(db, 'results', 'knockout'), { [matchId]: teamId }, { merge: true })
   invalidateResultsCache()
+  scheduleRankingRecompute()
 }
 
 export async function deleteSingleKnockoutResult(matchId: string): Promise<void> {
   await updateDoc(doc(db, 'results', 'knockout'), { [matchId]: deleteField() })
   invalidateResultsCache()
+  scheduleRankingRecompute()
 }
 
 export async function deleteAllResults(): Promise<void> {
@@ -155,6 +165,7 @@ export async function deleteAllResults(): Promise<void> {
     setDoc(doc(db, 'results', 'knockout'), {}),
   ])
   invalidateResultsCache()
+  scheduleRankingRecompute()
 }
 
 // ── Ranking ───────────────────────────────────────────────────────────────────
@@ -175,6 +186,73 @@ export async function loadRanking(forceRefresh = false): Promise<RankingEntry[]>
 export async function updateRankingDoc(rankingArray: RankingEntry[]): Promise<void> {
   await setDoc(doc(db, 'ranking', 'current'), { entries: rankingArray })
   sessionStorage.removeItem('bolao_ranking')
+}
+
+/**
+ * Subscribe to real-time updates of the ranking document.
+ * The callback fires immediately with current data and then on every change.
+ * Returns the unsubscribe function — call it to stop listening.
+ */
+export function subscribeRanking(
+  cb: (entries: RankingEntry[]) => void,
+  onError?: (err: unknown) => void,
+): () => void {
+  return onSnapshot(
+    doc(db, 'ranking', 'current'),
+    snap => {
+      const entries = snap.exists()
+        ? ((snap.data() as { entries?: RankingEntry[] }).entries ?? [])
+        : []
+      cb(entries)
+    },
+    err => { if (onError) onError(err) },
+  )
+}
+
+/**
+ * Recompute the entire ranking from scratch: loads all users' bets + current
+ * results + scoring config, calculates everyone's score, sorts, and writes
+ * to ranking/current. All subscribers (subscribeRanking) update automatically.
+ *
+ * Heavy operation — reads N user profiles + 2N bet docs + 2 result docs +
+ * 1 scoring config doc. Use scheduleRankingRecompute() instead of calling
+ * this directly when reacting to admin result entries (it debounces).
+ */
+export async function recomputeRanking(): Promise<void> {
+  const [users, results, scoringOverride] = await Promise.all([
+    loadAllUsersForRanking(),
+    loadResults(true),
+    loadScoringConfig(),
+  ])
+  const scoring: ScoringConfig = { ...DEFAULT_SCORING, ...scoringOverride }
+  const entries = users.map(u => {
+    const { pts, breakdown } = calculateScore(u.groupBets, u.knockoutBets, results, scoring)
+    return {
+      uid:  u.uid,
+      name: u.profile.name ?? 'Sem nome',
+      pts,
+      breakdown,
+    }
+  })
+  const sorted = sortRanking(entries)
+  await updateRankingDoc(sorted)
+}
+
+/**
+ * Debounced ranking recompute. Multiple calls within 2s coalesce into one
+ * recompute — useful when the admin enters several results in quick
+ * succession (e.g. 6 group games of one round). Failures are silenced
+ * (the next call will retry), but logged to console.
+ */
+let _recomputeTimer: ReturnType<typeof setTimeout> | null = null
+const RECOMPUTE_DEBOUNCE_MS = 2000
+
+export function scheduleRankingRecompute(): void {
+  if (_recomputeTimer) clearTimeout(_recomputeTimer)
+  _recomputeTimer = setTimeout(() => {
+    _recomputeTimer = null
+    recomputeRanking().catch(e => console.error('[ranking] auto-recompute failed:', e))
+  }, RECOMPUTE_DEBOUNCE_MS)
 }
 
 export async function loadAllUsersForRanking(): Promise<UserWithBets[]> {

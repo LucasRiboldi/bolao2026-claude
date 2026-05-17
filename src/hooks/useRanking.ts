@@ -1,42 +1,52 @@
-import { useState, useEffect } from 'react'
-import { loadRanking, loadAllUsersForRanking, updateRankingDoc, loadScoringConfig } from '@/lib/firestore'
-import { calculateScore, sortRanking } from '@/utils/scoring'
-import { DEFAULT_SCORING } from '@/data/bracket'
-import type { RankingEntry, ScoringConfig } from '@/types'
+import { useState, useEffect, useCallback } from 'react'
+import { subscribeRanking, recomputeRanking } from '@/lib/firestore'
+import { sortRanking } from '@/utils/scoring'
+import type { RankingEntry } from '@/types'
 
+/**
+ * Real-time ranking via Firestore onSnapshot. Entries update automatically
+ * whenever the admin (or auto-recompute on result save) writes to
+ * ranking/current — no manual refresh needed.
+ *
+ * `forceRecompute` rebuilds the ranking from raw bets + results + scoring
+ * config. Useful when scoring config changes, or to bootstrap an empty
+ * ranking. Available only when the caller is admin (the underlying writes
+ * require admin permissions in firestore.rules).
+ */
 export function useRanking(isAdmin: boolean) {
   const [entries, setEntries] = useState<RankingEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [recomputing, setRecomputing] = useState(false)
 
-  const refresh = async () => {
+  useEffect(() => {
     setLoading(true)
     setError(null)
+    const unsub = subscribeRanking(
+      data => {
+        setEntries(sortRanking(data))
+        setLoading(false)
+      },
+      () => {
+        setError('Erro ao carregar ranking.')
+        setLoading(false)
+      },
+    )
+    return unsub
+  }, [])
+
+  const forceRecompute = useCallback(async () => {
+    if (!isAdmin) return
+    setRecomputing(true)
     try {
-      const scoringOverride = await loadScoringConfig()
-      const scoring: ScoringConfig = { ...DEFAULT_SCORING, ...scoringOverride }
-
-      let data = await loadRanking()
-
-      if (data.length === 0 && isAdmin) {
-        const users = await loadAllUsersForRanking()
-        const computed = users.map(u => {
-          const { pts, breakdown } = calculateScore(u.groupBets, u.knockoutBets, { groupStage: {}, knockout: {} }, scoring)
-          return { uid: u.uid, name: u.profile.name ?? 'Sem nome', pts, breakdown }
-        })
-        data = sortRanking(computed)
-        await updateRankingDoc(data)
-      }
-
-      setEntries(sortRanking(data))
-    } catch (e) {
-      setError('Erro ao carregar ranking.')
+      await recomputeRanking()
+      // subscribeRanking will fire automatically with the new data
+    } catch {
+      setError('Erro ao recalcular ranking.')
     } finally {
-      setLoading(false)
+      setRecomputing(false)
     }
-  }
+  }, [isAdmin])
 
-  useEffect(() => { void refresh() }, [isAdmin]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  return { entries, loading, error, refresh }
+  return { entries, loading, error, recomputing, forceRecompute }
 }
