@@ -9,6 +9,20 @@ export default defineConfig({
       '@': resolve(__dirname, './src'),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        // Keep heavy 3rd-party deps in their own chunks so they cache across
+        // app updates and don't bloat the per-screen chunks.
+        manualChunks: {
+          'firebase-auth':      ['firebase/auth'],
+          'firebase-firestore': ['firebase/firestore'],
+          'react-vendor':       ['react', 'react-dom'],
+        },
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',

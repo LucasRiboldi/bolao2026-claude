@@ -10,6 +10,7 @@ import type {
 } from '@/types'
 import { calculateScore, sortRanking } from '@/utils/scoring'
 import { DEFAULT_SCORING } from '@/data/bracket'
+import { encodeGroupBets, decodeGroupBets, encodeBet } from './compactBets'
 
 // ── Profile ───────────────────────────────────────────────────────────────────
 
@@ -30,12 +31,12 @@ export async function updateUserName(uid: string, name: string): Promise<void> {
 // ── Bets ──────────────────────────────────────────────────────────────────────
 
 export async function saveGroupBets(uid: string, bets: GroupBets): Promise<void> {
-  await setDoc(doc(db, 'users', uid, 'bets', 'groupStage'), bets)
+  await setDoc(doc(db, 'users', uid, 'bets', 'groupStage'), encodeGroupBets(bets))
 }
 
 export async function loadGroupBets(uid: string): Promise<GroupBets> {
   const snap = await getDoc(doc(db, 'users', uid, 'bets', 'groupStage'))
-  return snap.exists() ? (snap.data() as GroupBets) : {}
+  return snap.exists() ? decodeGroupBets(snap.data() as Record<string, unknown>) : {}
 }
 
 export async function saveKnockoutBets(uid: string, bets: KnockoutBets): Promise<void> {
@@ -63,7 +64,7 @@ export async function loadUserBetsForHistory(targetUid: string): Promise<{ group
     knockoutBets = isOldFormat ? {} : (data as KnockoutBets)
   }
   return {
-    groupBets:    gs.exists() ? (gs.data() as GroupBets) : {},
+    groupBets:    gs.exists() ? decodeGroupBets(gs.data() as Record<string, unknown>) : {},
     knockoutBets,
   }
 }
@@ -86,19 +87,50 @@ export async function unlockUserBets(targetUid: string): Promise<void> {
   )
 }
 
+// ── TTL cache helper ─────────────────────────────────────────────────────────
+// Reads sessionStorage with a max-age guard so stale data is auto-discarded.
+// In-memory mirror prevents repeated JSON.parse within the same session.
+
+interface TTLEntry<T> { data: T; ts: number }
+
+function readTTL<T>(key: string, ttlMs: number): T | null {
+  const raw = sessionStorage.getItem(key)
+  if (!raw) return null
+  try {
+    const entry = JSON.parse(raw) as TTLEntry<T>
+    if (Date.now() - entry.ts > ttlMs) {
+      sessionStorage.removeItem(key)
+      return null
+    }
+    return entry.data
+  } catch {
+    return null
+  }
+}
+
+function writeTTL<T>(key: string, data: T): void {
+  sessionStorage.setItem(key, JSON.stringify({ data, ts: Date.now() } satisfies TTLEntry<T>))
+}
+
+const RESULTS_TTL_MS = 30_000
+const RANKING_TTL_MS = 30_000
+
 // ── Results ───────────────────────────────────────────────────────────────────
 
 let _resultsCache: Results | null = null
+let _resultsCacheTs = 0
 
 export async function loadResults(forceRefresh = false): Promise<Results> {
-  if (_resultsCache && !forceRefresh) return _resultsCache
-
-  const cached = sessionStorage.getItem('bolao_results')
-  if (cached && !forceRefresh) {
-    try {
-      _resultsCache = JSON.parse(cached) as Results
-      return _resultsCache
-    } catch { /* ignore */ }
+  if (!forceRefresh && _resultsCache && Date.now() - _resultsCacheTs < RESULTS_TTL_MS) {
+    return _resultsCache
+  }
+  if (!forceRefresh) {
+    const cached = readTTL<Results>('bolao_results', RESULTS_TTL_MS)
+    if (cached) {
+      _resultsCache = cached
+      _resultsCacheTs = Date.now()
+      return cached
+    }
   }
 
   const [gs, ko] = await Promise.all([
@@ -106,21 +138,23 @@ export async function loadResults(forceRefresh = false): Promise<Results> {
     getDoc(doc(db, 'results', 'knockout')),
   ])
   const data: Results = {
-    groupStage: gs.exists() ? (gs.data() as Results['groupStage']) : {},
+    groupStage: gs.exists() ? decodeGroupBets(gs.data() as Record<string, unknown>) : {},
     knockout:   ko.exists() ? (ko.data() as Results['knockout'])   : {},
   }
   _resultsCache = data
-  sessionStorage.setItem('bolao_results', JSON.stringify(data))
+  _resultsCacheTs = Date.now()
+  writeTTL('bolao_results', data)
   return data
 }
 
 export function invalidateResultsCache(): void {
   _resultsCache = null
+  _resultsCacheTs = 0
   sessionStorage.removeItem('bolao_results')
 }
 
 export async function saveGroupResults(results: Results['groupStage']): Promise<void> {
-  await setDoc(doc(db, 'results', 'groupStage'), results, { merge: true })
+  await setDoc(doc(db, 'results', 'groupStage'), encodeGroupBets(results), { merge: true })
   invalidateResultsCache()
   scheduleRankingRecompute()
 }
@@ -136,7 +170,9 @@ export async function saveKnockoutResults(results: Results['knockout']): Promise
 // see updated scores in near-real-time via the subscribeRanking listener.
 
 export async function saveSingleGroupResult(gameId: string, result: GoalBet): Promise<void> {
-  await setDoc(doc(db, 'results', 'groupStage'), { [gameId]: result }, { merge: true })
+  const encoded = encodeBet(result)
+  if (encoded === null) return  // skip empty/invalid input — nothing to write
+  await setDoc(doc(db, 'results', 'groupStage'), { [gameId]: encoded }, { merge: true })
   invalidateResultsCache()
   scheduleRankingRecompute()
 }
@@ -170,16 +206,24 @@ export async function deleteAllResults(): Promise<void> {
 
 // ── Ranking ───────────────────────────────────────────────────────────────────
 
+/**
+ * One-shot read of the cached ranking. Used by pre-auth screens (AuthScreen
+ * public ranking) where onSnapshot can't be used because the user isn't
+ * logged in yet. In-app, prefer subscribeRanking() for real-time updates.
+ *
+ * Cached for RANKING_TTL_MS to reduce Firestore reads when many users open
+ * the auth page in quick succession.
+ */
 export async function loadRanking(forceRefresh = false): Promise<RankingEntry[]> {
   if (!forceRefresh) {
-    const cached = sessionStorage.getItem('bolao_ranking')
-    if (cached) {
-      try { return JSON.parse(cached) as RankingEntry[] } catch { /* ignore */ }
-    }
+    const cached = readTTL<RankingEntry[]>('bolao_ranking', RANKING_TTL_MS)
+    if (cached) return cached
   }
   const snap = await getDoc(doc(db, 'ranking', 'current'))
-  const entries: RankingEntry[] = snap.exists() ? (snap.data() as { entries: RankingEntry[] }).entries : []
-  if (entries.length > 0) sessionStorage.setItem('bolao_ranking', JSON.stringify(entries))
+  const entries: RankingEntry[] = snap.exists()
+    ? ((snap.data() as { entries?: RankingEntry[] }).entries ?? [])
+    : []
+  writeTTL('bolao_ranking', entries)
   return entries
 }
 
@@ -335,7 +379,7 @@ export async function loadAdminUserList(): Promise<Array<UserProfile & { uid: st
 }
 
 export async function saveGroupBetsForUser(uid: string, bets: GroupBets): Promise<void> {
-  await setDoc(doc(db, 'users', uid, 'bets', 'groupStage'), bets)
+  await setDoc(doc(db, 'users', uid, 'bets', 'groupStage'), encodeGroupBets(bets))
 }
 
 export async function saveKnockoutBetsForUser(uid: string, bets: KnockoutBets): Promise<void> {
