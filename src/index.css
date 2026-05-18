@@ -142,10 +142,10 @@ h4 { font-size: var(--text-md);  }
 
 .btn-danger {
   background: var(--color-danger);
-  border-color: #b91c1c;
+  border-color: var(--color-danger-dark);
   color: var(--color-neutral-0);
 }
-.btn-danger:hover:not(:disabled) { background: #b91c1c; }
+.btn-danger:hover:not(:disabled) { background: var(--color-danger-dark); }
 
 .btn-sm   { padding: var(--space-2) var(--space-4); font-size: var(--text-xs); }
 .btn-lg   { padding: var(--space-4) var(--space-6); font-size: var(--text-md); }

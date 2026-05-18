@@ -50,6 +50,7 @@
   --color-warning-soft:   rgba(212, 170, 44, .15);
   --color-warning-text:   #ecc961;
   --color-danger:         #da3633;
+  --color-danger-dark:    #b91c1c;   /* hover state */
   --color-danger-soft:    rgba(218, 54, 51, .15);
   --color-danger-text:    #f87171;
   --color-info:           #58a6ff;
@@ -60,6 +61,13 @@
   --color-podium-gold:    #d4aa2c;
   --color-podium-silver:  #c0c8d8;
   --color-podium-bronze:  #cd7f32;
+
+  /* ── COLOR — Host nation flag accents ─────────────────────── */
+  /* Used in the AuthScreen colorbar to represent the 3 host nations
+     (Mexico, USA, Canada). Decorative — not part of the semantic palette. */
+  --color-host-mexico:    #b5261e;
+  --color-host-usa:       #1a5fb4;
+  --color-host-canada:    #d52b1e;
 
   /* ── COLOR — Semantic surface aliases ─────────────────────── */
   --bg:              var(--color-neutral-950);
@@ -155,7 +163,6 @@
   --shadow-xl:   0 24px 48px rgba(0,0,0,.6);
   --shadow-glow-gold:   0 0 16px rgba(212,170,44,.35);
   --shadow-glow-green:  0 0 16px rgba(74,222,128,.3);
-  --shadow-inset:       inset 0 1px 0 rgba(255,255,255,.05);
   /* legacy */
   --shadow: var(--shadow-md);
 

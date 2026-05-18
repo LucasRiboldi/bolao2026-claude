@@ -162,11 +162,11 @@ export function AuthScreen() {
         <p className="auth-sub">Aposte com amigos · 72 jogos · Seja campeão!</p>
 
         <div className="auth-colorbar" aria-hidden="true">
-          <span style={{ background: '#b5261e', flex: 2 }} />
+          <span style={{ background: 'var(--color-host-mexico)', flex: 2 }} />
           <span style={{ background: 'var(--gold)', flex: 1 }} />
-          <span style={{ background: '#1a5fb4', flex: 2 }} />
+          <span style={{ background: 'var(--color-host-usa)', flex: 2 }} />
           <span style={{ background: 'var(--gold)', flex: 1 }} />
-          <span style={{ background: '#d52b1e', flex: 2 }} />
+          <span style={{ background: 'var(--color-host-canada)', flex: 2 }} />
         </div>
       </div>
 

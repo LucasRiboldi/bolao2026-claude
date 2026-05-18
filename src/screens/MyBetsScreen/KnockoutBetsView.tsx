@@ -3,15 +3,7 @@ import { TEAMS } from '@/data/teams'
 import { buildR32, DEFAULT_SCORING } from '@/data/bracket'
 import { calcGroupStandings, getQualified } from '@/utils/standings'
 import { Flag } from '@/components/Flag'
-
-const ROUND_COLORS: Record<string, string> = {
-  r32:      '#e74c3c',
-  r16:      '#e67e22',
-  qf:       '#f39c12',
-  sf:       '#2ecc71',
-  champion: '#d4aa2c',
-  third:    '#607d8b',
-}
+import { ROUND_COLORS } from '@/data/roundColors'
 
 const ROUND_PTS: Record<string, number> = {
   r32:      DEFAULT_SCORING.r32Winner,

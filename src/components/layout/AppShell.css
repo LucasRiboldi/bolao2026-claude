@@ -78,9 +78,22 @@
 }
 
 /* ── Bottom nav ───────────────────────────────────────────────────────────── */
-/* Items are aligned to the TOP of the nav so every icon sits at the same
-   vertical position as the elevated Copa icon (no more "icons at bottom,
-   Copa floating high" mismatch). */
+/* CONTRACT — DO NOT OVERRIDE FROM SCREEN-LEVEL CSS.
+ * The bottom nav must look identical across every authenticated screen,
+ * every viewport size, and every user role (admin vs participant).
+ * If a screen tab introduces .bottom-nav { ... } or .bnav-* { ... } in its
+ * own CSS, it will desynchronize the navigation — that's a bug.
+ *
+ * Layout invariants:
+ *  - Always position: fixed at the bottom of the viewport
+ *  - Always 5 items (3rd is always Copa, elevated)
+ *  - Items align to TOP so every icon sits at the Copa icon vertical level
+ *  - Width tiers grow with viewport: full (mobile) → 920 → 1080 → 1200 → 1320 */
+
+/* role="tablist" wrapper — display:contents lets the buttons participate
+   in the grid layout while keeping the a11y role. */
+.bottom-nav__list { display: contents; }
+
 .bottom-nav {
   position: fixed;
   bottom: 0;

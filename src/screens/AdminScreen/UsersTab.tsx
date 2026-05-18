@@ -188,7 +188,7 @@ function EditBetsModal({ user, onClose }: { user: AdminUser; onClose: () => void
       <div className="admin-modal admin-modal--wide">
         <div className="admin-modal__header">
           <span className="admin-modal__title">✏️ Editar — {user.name}</span>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="row">
             <button
               className={`btn btn-gold btn-sm${saved ? ' btn--saved' : ''}`}
               onClick={handleSave}

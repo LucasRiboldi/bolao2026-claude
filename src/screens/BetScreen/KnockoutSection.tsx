@@ -5,6 +5,7 @@ import { buildR32 } from '@/data/bracket'
 import { calcGroupStandings, getQualified } from '@/utils/standings'
 import { Flag } from '@/components/Flag'
 import { KO_ROUND_MAX } from '@/hooks/useKnockoutBets'
+import { ROUND_COLORS } from '@/data/roundColors'
 
 interface KnockoutSectionProps {
   groupBets: GroupBets
@@ -14,15 +15,6 @@ interface KnockoutSectionProps {
   onToggle: (round: KoArrayKey, teamId: TeamId) => void
   onSingle: (round: KoSingleKey, teamId: TeamId) => void
   onSave: () => Promise<void>
-}
-
-const ROUND_COLORS: Record<string, string> = {
-  r32:      '#e74c3c',
-  r16:      '#e67e22',
-  qf:       '#f39c12',
-  sf:       '#2ecc71',
-  champion: '#d4aa2c',
-  third:    '#607d8b',
 }
 
 function sortTeams(ids: TeamId[]): TeamId[] {

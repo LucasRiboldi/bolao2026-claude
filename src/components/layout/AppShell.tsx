@@ -74,9 +74,16 @@ export function AppShell({ children, userScore }: AppShellProps) {
         {children(section)}
       </main>
 
-      {/* ── Bottom nav ──────────────────────────────────────────── */}
+      {/* ── Bottom nav ──────────────────────────────────────────── *
+       * Always 5 items, always fixed at the bottom of the viewport.
+       * The 3rd slot is always Copa (elevated). The 5th slot swaps
+       * between "Convidar" (for users) and "Config" (for admin) — but
+       * the structure stays identical so the menu LOOKS the same on
+       * every screen, every viewport, every user role.
+       * `.bottom-nav__list` is a display:contents wrapper that gives
+       * the buttons their tablist role without breaking the grid. */}
       <nav className="bottom-nav" aria-label="Navegação principal">
-      <div role="tablist" style={{ display: 'contents' }}>
+      <div className="bottom-nav__list" role="tablist">
         {visibleItems.map(item => (
           <button
             key={item.id}

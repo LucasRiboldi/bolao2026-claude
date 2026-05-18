@@ -1,4 +1,14 @@
 import { KNOCKOUT_SLOTS, KNOCKOUT_ROUNDS } from '@/data/bracket'
+import { ROUND_COLORS } from '@/data/roundColors'
+
+// Map FIFA round display names → ROUND_COLORS key
+const ROUND_NAME_TO_KEY: Record<string, keyof typeof ROUND_COLORS> = {
+  'Oitavas':        'r16',
+  'Quartas':        'qf',
+  'Semifinais':     'sf',
+  'Final':          'champion',
+  'Terceiro Lugar': 'third',
+}
 
 function slotLabel(slot: string): string {
   // T3_ABCDF → "3° de {A,B,C,D,F}" (Art. 12.6 eligibility)
@@ -30,7 +40,7 @@ export function BracketBlank() {
 
       {/* R32 */}
       <div className="bracket-blank__section">
-        <div className="bracket-blank__round-label" style={{ borderLeftColor: '#e74c3c' }}>
+        <div className="bracket-blank__round-label" style={{ borderLeftColor: ROUND_COLORS.r32 }}>
           Round de 32
         </div>
         <div className="bracket-blank__matches">
@@ -47,12 +57,8 @@ export function BracketBlank() {
 
       {/* R16, QF, SF, Final, 3rd */}
       {KNOCKOUT_ROUNDS.map(round => {
-        const color =
-          round.name === 'Oitavas'        ? '#e67e22' :
-          round.name === 'Quartas'        ? '#f39c12' :
-          round.name === 'Semifinais'     ? '#2ecc71' :
-          round.name === 'Final'          ? '#d4aa2c' :
-          round.name === 'Terceiro Lugar' ? '#607d8b' : 'var(--border)'
+        const key = ROUND_NAME_TO_KEY[round.name]
+        const color = key ? ROUND_COLORS[key] : 'var(--border)'
         return (
           <div key={round.name} className="bracket-blank__section">
             <div className="bracket-blank__round-label" style={{ borderLeftColor: color }}>
