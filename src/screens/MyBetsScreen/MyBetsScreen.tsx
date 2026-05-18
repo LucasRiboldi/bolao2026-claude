@@ -7,6 +7,7 @@ import { TEAMS } from '@/data/teams'
 import { StatusCard } from './StatusCard'
 import { GroupBetsView } from './GroupBetsView'
 import { KnockoutBetsView } from './KnockoutBetsView'
+import { useRanking } from '@/hooks/useRanking'
 import './MyBetsScreen.css'
 
 function buildWhatsAppText(
@@ -50,11 +51,12 @@ function buildWhatsAppText(
 }
 
 export function MyBetsScreen() {
-  const { user, profile, globalLocked } = useAuth()
+  const { user, profile, globalLocked, isAdmin } = useAuth()
   const locked = globalLocked
   const { bets: groupBets, loading: gLoading } = useGroupBets(user?.uid, locked)
   const { bets: koBets, loading: kLoading } = useKnockoutBets(user?.uid, locked)
   const { results, loading: rLoading } = useStandings()
+  const { entries: ranking } = useRanking(isAdmin)
 
   if (gLoading || kLoading || rLoading) {
     return (
@@ -62,6 +64,20 @@ export function MyBetsScreen() {
         <div className="spinner" aria-label="Carregando apostas…" />
       </div>
     )
+  }
+
+  async function handleExportPdf() {
+    // Dynamic import — keeps jsPDF (~180KB) out of the initial bundle.
+    // Only loads when the user clicks "Exportar PDF" for the first time.
+    const { exportBetsPdf } = await import('@/lib/exportBetsPdf')
+    const myEntry = user ? ranking.find(r => r.uid === user.uid) : undefined
+    exportBetsPdf({
+      userName: profile?.name ?? user?.email ?? 'Participante',
+      groupBets,
+      koBets,
+      totalPts: myEntry?.pts,
+      breakdown: myEntry?.breakdown,
+    })
   }
 
   function handleWhatsApp() {
@@ -75,8 +91,11 @@ export function MyBetsScreen() {
       <GroupBetsView bets={groupBets} results={results.groupStage} />
       <KnockoutBetsView groupBets={groupBets} koBets={koBets} koResults={results.knockout as Record<string, import('@/types').TeamId>} />
       <div className="mybets-export-wrap">
-        <button className="btn btn-ghost btn-full" onClick={handleWhatsApp}>
-          📤 Exportar via WhatsApp
+        <button className="btn btn-primary btn-full" onClick={handleExportPdf}>
+          📄 Exportar boletim em PDF
+        </button>
+        <button className="btn btn-ghost btn-sm btn-full" onClick={handleWhatsApp}>
+          💬 Compartilhar texto no WhatsApp
         </button>
       </div>
     </div>

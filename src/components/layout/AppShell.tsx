@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { signOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
+import { VibrantBg } from '@/components/VibrantBg'
 import './AppShell.css'
 
 export type Section = 'groups' | 'mybets' | 'standings' | 'ranking' | 'convidar' | 'admin'
@@ -53,6 +54,9 @@ export function AppShell({ children, userScore }: AppShellProps) {
 
   return (
     <>
+      {/* Vibrant wallpaper behind every internal screen */}
+      <VibrantBg fixed />
+
       {/* ── Header ──────────────────────────────────────────────── */}
       <header className="app-header">
         <div className="app-header__inner">

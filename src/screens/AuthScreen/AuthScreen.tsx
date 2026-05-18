@@ -14,6 +14,7 @@ import { ALL_GROUP_GAMES } from '@/data/groups'
 import { getRelevantMatchDay, getGamesForDay, formatDateShort, formatTimeShort } from '@/data/fixtures'
 import type { RankingEntry, Results } from '@/types'
 import { MatchCard } from './MatchCard'
+import { VibrantBg } from '@/components/VibrantBg'
 import './AuthScreen.css'
 
 type AuthTab = 'login' | 'register'
@@ -142,25 +143,8 @@ export function AuthScreen() {
   return (
     <div className="auth-screen">
 
-      {/* ── Vibrant background — covers the WHOLE screen, fixed wallpaper ── */}
-      {/* Stays in place while user scrolls. Sections below sit on top with
-         semi-transparent surfaces to remain legible. */}
-      <div className="auth-bg" aria-hidden="true">
-        <div className="auth-mesh">
-          <div className="auth-mesh__blob auth-mesh__blob--red" />
-          <div className="auth-mesh__blob auth-mesh__blob--blue" />
-          <div className="auth-mesh__blob auth-mesh__blob--green" />
-          <div className="auth-mesh__blob auth-mesh__blob--yellow" />
-          <div className="auth-mesh__blob auth-mesh__blob--purple" />
-          <div className="auth-mesh__blob auth-mesh__blob--orange" />
-          <div className="auth-mesh__blob auth-mesh__blob--pink" />
-        </div>
-        <div className="auth-confetti">
-          {Array.from({ length: 18 }).map((_, i) => (
-            <span key={i} className={`auth-confetti__dot auth-confetti__dot--${i % 6}`} />
-          ))}
-        </div>
-      </div>
+      {/* Vibrant wallpaper — fills the entire scrollable area + confetti */}
+      <VibrantBg confetti />
 
       {/* Top chevron stripe — "We Are 26" host-nation primaries */}
       <div className="auth-chevron" aria-hidden="true">

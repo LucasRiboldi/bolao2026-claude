@@ -265,6 +265,9 @@
 /* ── WhatsApp export ─────────────────────────────────────────────────────── */
 .mybets-export-wrap {
   padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 /* ── Spreadsheet (planilha) format ───────────────────────────────────────── */
@@ -348,25 +351,16 @@
 }
 .sheet-row:last-child { border-bottom: none; }
 
+/* New layout: name | [flag · score · ⨯ · score · flag] | name
+   Flags now sit ADJACENT to their respective goal numbers in the center
+   cluster, so it reads like "🇧🇷 2 × 1 🇦🇷". */
 .sheet-teams {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: var(--space-2);
   flex: 1;
   min-width: 0;
-}
-.sheet-team {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  min-width: 0;
-}
-.sheet-team--home { flex: 1; justify-content: flex-end; }
-.sheet-team--away { flex: 1; justify-content: flex-start; }
-.sheet-team .team-flag {
-  width: 20px;
-  height: 15px;
-  border-radius: var(--radius-xs);
 }
 .sheet-team__name {
   font-size: var(--text-xs);
@@ -375,30 +369,51 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 80px;
+  min-width: 0;
 }
-.sheet-team--home .sheet-team__name { text-align: right; }
+.sheet-team__name--home { text-align: right; }
+.sheet-team__name--away { text-align: left; }
 @media (min-width: 640px) {
-  .sheet-team__name { max-width: 180px; }
+  .sheet-team__name { font-size: var(--text-sm); }
 }
 
+/* Center cluster: flag + goal + sep + goal + flag */
 .sheet-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   flex-shrink: 0;
-  text-align: center;
-}
-.sheet-score__val {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-bold);
-  color: var(--text);
   background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
-  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
 }
-.sheet-score__empty {
-  font-size: var(--text-xs);
+.sheet-score .team-flag {
+  width: 22px;
+  height: 16px;
+  border-radius: var(--radius-xs);
+  box-shadow: 0 1px 3px rgba(0,0,0,.3);
+}
+.sheet-score__num {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-black);
+  color: var(--text);
+  min-width: 14px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.sheet-score__num--empty {
   color: var(--text-muted);
-  opacity: .5;
+  opacity: .55;
+}
+.sheet-score__sep {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--text-muted);
+}
+@media (min-width: 640px) {
+  .sheet-score__num { font-size: var(--text-md); min-width: 18px; }
+  .sheet-score .team-flag { width: 26px; height: 19px; }
 }
 
 .sheet-meta {

@@ -37,23 +37,28 @@ function MatchSheetRow({ gameId, home, away, bets, results }: RowProps) {
   return (
     <div className="sheet-row">
       <div className="sheet-teams">
-        <div className="sheet-team sheet-team--home">
-          {homeTeam && <Flag iso={homeTeam.iso} name={homeTeam.name} size="sm" />}
-          <TeamName teamId={home} className="sheet-team__name" />
-        </div>
+        {/* Home team name on the far left */}
+        <TeamName teamId={home} className="sheet-team__name sheet-team__name--home" />
 
+        {/* Flag-Score-Flag center cluster: bandeiras adjacentes aos números */}
         <div className="sheet-score">
+          {homeTeam && <Flag iso={homeTeam.iso} name={homeTeam.name} size="sm" />}
           {betFilled ? (
-            <span className="sheet-score__val">{bet!.homeGoals} × {bet!.awayGoals}</span>
+            <span className="sheet-score__num">{bet!.homeGoals}</span>
           ) : (
-            <span className="sheet-score__empty">? × ?</span>
+            <span className="sheet-score__num sheet-score__num--empty">?</span>
           )}
-        </div>
-
-        <div className="sheet-team sheet-team--away">
-          <TeamName teamId={away} className="sheet-team__name" />
+          <span className="sheet-score__sep">×</span>
+          {betFilled ? (
+            <span className="sheet-score__num">{bet!.awayGoals}</span>
+          ) : (
+            <span className="sheet-score__num sheet-score__num--empty">?</span>
+          )}
           {awayTeam && <Flag iso={awayTeam.iso} name={awayTeam.name} size="sm" />}
         </div>
+
+        {/* Away team name on the far right */}
+        <TeamName teamId={away} className="sheet-team__name sheet-team__name--away" />
       </div>
 
       <div className="sheet-meta">
