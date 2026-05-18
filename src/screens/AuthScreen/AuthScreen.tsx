@@ -125,28 +125,10 @@ export function AuthScreen() {
   return (
     <div className="auth-screen">
 
-      {/* ── Hero ─────────────────────────────────────────────────────── */}
-      {/* "We Are 26" inspired — vibrant mesh gradient + floating decorations.
-         Layers (back → front):
-         1. Animated multi-color mesh blobs (host nation palette)
-         2. Confetti dots scattered
-         3. Floating soccer ball (top-right) + trophy emoji (bottom-left)
-         4. Top chevron stripe (red/blue/green/yellow primaries)
-         5. Logo + title + subtitle stack (centered)
-         6. Bottom CTA + colorbar */}
-      <div className="auth-hero">
-
-        {/* Top chevron stripe — "We Are 26" host-nation primaries */}
-        <div className="auth-chevron" aria-hidden="true">
-          <span style={{ background: 'var(--color-wa26-red)' }} />
-          <span style={{ background: 'var(--color-wa26-orange)' }} />
-          <span style={{ background: 'var(--color-wa26-yellow)' }} />
-          <span style={{ background: 'var(--color-wa26-green)' }} />
-          <span style={{ background: 'var(--color-wa26-blue)' }} />
-          <span style={{ background: 'var(--color-wa26-purple)' }} />
-        </div>
-
-        {/* Animated mesh blobs */}
+      {/* ── Vibrant background — covers the WHOLE screen, fixed wallpaper ── */}
+      {/* Stays in place while user scrolls. Sections below sit on top with
+         semi-transparent surfaces to remain legible. */}
+      <div className="auth-bg" aria-hidden="true">
         <div className="auth-mesh">
           <div className="auth-mesh__blob auth-mesh__blob--red" />
           <div className="auth-mesh__blob auth-mesh__blob--blue" />
@@ -154,22 +136,27 @@ export function AuthScreen() {
           <div className="auth-mesh__blob auth-mesh__blob--yellow" />
           <div className="auth-mesh__blob auth-mesh__blob--purple" />
         </div>
-
-        {/* Confetti — primary-color dots scattered */}
-        <div className="auth-confetti" aria-hidden="true">
+        <div className="auth-confetti">
           {Array.from({ length: 18 }).map((_, i) => (
             <span key={i} className={`auth-confetti__dot auth-confetti__dot--${i % 6}`} />
           ))}
         </div>
+      </div>
 
-        {/* Floating SVG icons */}
-        <svg className="auth-float auth-float--ball" viewBox="0 0 64 64" aria-hidden="true">
-          <circle cx="32" cy="32" r="30" fill="#fff" stroke="#0a0a0a" strokeWidth="2.5"/>
-          <path fill="#0a0a0a" d="M32 14l8 6-3 9h-10l-3-9z"/>
-          <path fill="#0a0a0a" d="M14 32l8-3 3 9-5 7-7-3z"/>
-          <path fill="#0a0a0a" d="M50 32l-8-3-3 9 5 7 7-3z"/>
-        </svg>
+      {/* Top chevron stripe — "We Are 26" host-nation primaries */}
+      <div className="auth-chevron" aria-hidden="true">
+        <span style={{ background: 'var(--color-wa26-red)' }} />
+        <span style={{ background: 'var(--color-wa26-orange)' }} />
+        <span style={{ background: 'var(--color-wa26-yellow)' }} />
+        <span style={{ background: 'var(--color-wa26-green)' }} />
+        <span style={{ background: 'var(--color-wa26-blue)' }} />
+        <span style={{ background: 'var(--color-wa26-purple)' }} />
+      </div>
 
+      {/* ── Hero ─────────────────────────────────────────────────────── */}
+      <div className="auth-hero">
+
+        {/* Floating decorations — trophy + stars only */}
         <div className="auth-float auth-float--trophy" aria-hidden="true">🏆</div>
         <div className="auth-float auth-float--star1" aria-hidden="true">✨</div>
         <div className="auth-float auth-float--star2" aria-hidden="true">⭐</div>

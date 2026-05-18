@@ -5,9 +5,11 @@
 
 /* ── Screen container (tablet-max-width) ──────────────────────────────────── */
 .auth-screen {
+  position: relative;
   min-height: 100vh;
-  background: var(--bg);
+  background: #0a0612;        /* deep ink base behind the vibrant bg */
   overflow-y: auto;
+  overflow-x: hidden;
   max-width: 720px;
   margin: 0 auto;
   border-left: 1px solid var(--border);
@@ -20,35 +22,53 @@
   }
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
- * Hero — "We Are 26" vibrant edition
- * Multi-color mesh + floating decorations + bold typography
- * ───────────────────────────────────────────────────────────────────────── */
-
-.auth-hero {
-  position: relative;
+/* ── Vibrant background — fills the ENTIRE screen as wallpaper ──────────── */
+/* Absolute-positioned inside .auth-screen so it spans the full scrollable
+   height. Animated blobs + confetti drift across everything. */
+.auth-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
   overflow: hidden;
-  background: #0a0612;   /* deep ink base — vibrant blobs sit on top */
-  padding: var(--space-12) var(--space-5) var(--space-8);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 580px;
+}
+/* Vignette overlay so cards/text remain legible over the blobs */
+.auth-bg::after {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 90% 50% at 50% 0%,   transparent 0%, rgba(10,6,18,.4) 70%),
+    radial-gradient(ellipse 90% 60% at 50% 100%, transparent 0%, rgba(10,6,18,.55) 80%);
+  pointer-events: none;
 }
 
 /* badgePulse — kept here because the live match ribbon uses it */
 @keyframes badgePulse { 0%,100%{opacity:.4} 50%{opacity:1} }
 
-/* ── Top chevron stripe ─────────────────────────────────────────────────── */
+/* ── Top chevron stripe (sticky-feel — top of the screen) ───────────────── */
 .auth-chevron {
-  position: absolute;
-  top: 0; left: 0; right: 0;
+  position: relative;   /* relative so it doesn't cover content via absolute */
+  z-index: 5;
   height: 8px;
   display: flex;
-  z-index: 5;
 }
 .auth-chevron span { flex: 1; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Hero — "We Are 26" vibrant edition (background now comes from .auth-bg)
+ * ───────────────────────────────────────────────────────────────────────── */
+
+.auth-hero {
+  position: relative;
+  z-index: 1;
+  background: transparent;    /* bg now lives in .auth-bg behind everything */
+  padding: var(--space-10) var(--space-5) var(--space-8);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 540px;
+}
 
 /* ── Animated mesh blobs ────────────────────────────────────────────────── */
 .auth-mesh {
@@ -76,15 +96,7 @@
   66%      { transform: translate(-15px, 20px) scale(.95); }
 }
 
-/* Vignette mask so blobs fade nicely at the edges */
-.auth-hero::after {
-  content: '';
-  position: absolute; inset: 0;
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 50%, transparent 30%, rgba(10,6,18,.6) 100%);
-  pointer-events: none;
-  z-index: 1;
-}
+/* (vignette moved to .auth-bg::after so it covers the whole screen) */
 
 /* ── Confetti dots ──────────────────────────────────────────────────────── */
 .auth-confetti {
@@ -131,12 +143,6 @@
   z-index: 3;
   pointer-events: none;
 }
-.auth-float--ball {
-  width: 56px; height: 56px;
-  top: 60px; right: 32px;
-  animation: floatBall 6s ease-in-out infinite;
-  filter: drop-shadow(0 8px 16px rgba(0,0,0,.4));
-}
 .auth-float--trophy {
   font-size: 44px;
   bottom: 90px; left: 28px;
@@ -152,10 +158,6 @@
   font-size: 18px;
   top: 140px; right: 60px;
   animation: twinkle 4s ease-in-out infinite 1s;
-}
-@keyframes floatBall {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50%      { transform: translateY(-12px) rotate(180deg); }
 }
 @keyframes floatTrophy {
   0%, 100% { transform: translateY(0) rotate(-3deg); }
@@ -358,27 +360,37 @@
 }
 .auth-colorbar span { border-radius: var(--radius-pill); }
 
-/* Section label — promoted to global .section-label in src/index.css */
+/* Section labels float above the vibrant bg — add z-index + text-shadow for legibility */
+.auth-screen .section-label {
+  position: relative;
+  z-index: 1;
+  color: rgba(255,255,255,.9);
+  text-shadow: 0 2px 8px rgba(0,0,0,.6);
+}
 
 /* ──────────────────────────────────────────────────────────────────────────
  * MatchCard — broadcast-style scoreboard
  * ────────────────────────────────────────────────────────────────────────── */
 
 .match-stack {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   padding: 0 var(--space-4) var(--space-4);
 }
 
-/* Main card */
+/* Main card — fluid padding scales with viewport */
 .mc {
   position: relative;
-  background: linear-gradient(180deg, #0a1018 0%, #050a12 100%);
+  background: linear-gradient(180deg, rgba(10,16,24,.9) 0%, rgba(5,10,18,.92) 100%);
+  backdrop-filter: blur(8px);          /* legibility over colorful bg */
   border-radius: var(--radius-lg);
-  padding: var(--space-5) var(--space-3) var(--space-3);
-  overflow: visible;     /* let ribbon stick out */
+  padding: clamp(16px, 4vw, 24px) clamp(8px, 2.5vw, 14px) clamp(10px, 2vw, 14px);
+  overflow: visible;
   box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.05);
   transition: transform var(--duration-base) var(--easing-out);
 }
 .mc:hover { transform: translateY(-2px); }
@@ -417,61 +429,56 @@
   text-shadow: 0 1px 2px rgba(0,0,0,.4);
 }
 
-/* Main row: flag | code | score | code | flag */
+/* Main row: flag | code | score | code | flag — fluid gap */
 .mc-row {
   display: grid;
   grid-template-columns: auto auto 1fr auto auto;
   align-items: center;
-  gap: var(--space-2);
+  gap: clamp(4px, 1.5vw, 12px);
   padding: var(--space-2) 0;
 }
 
-/* Flags — NO border, NO frame, drop shadow only */
+/* Flags — NO border, NO frame, drop shadow only.
+   Fluid sizing: shrinks on narrow viewports, grows on tablet+. */
 .mc-flag-img {
-  width: 56px;
-  height: 42px;
+  width: clamp(40px, 12vw, 64px);
+  height: clamp(30px, 9vw, 48px);
   object-fit: cover;
   border-radius: 4px;
   flex-shrink: 0;
   filter: drop-shadow(0 4px 10px rgba(0,0,0,.5));
 }
-@media (min-width: 480px) {
-  .mc-flag-img { width: 64px; height: 48px; }
-}
 
-/* Country 3-letter codes — bold black slabs */
+/* Country 3-letter codes — fluid font-size + padding */
 .mc-code {
   font-family: var(--font-sans);
-  font-size: var(--text-xl);
+  font-size: clamp(0.95rem, 4.2vw, 1.6rem);
   font-weight: var(--weight-black);
   color: #fff;
   letter-spacing: var(--tracking-tight);
   background: linear-gradient(180deg, #0a0a0a, #1a1a1a);
-  padding: 4px var(--space-2);
+  padding: clamp(2px, .8vw, 5px) clamp(4px, 2vw, 12px);
   border-radius: 4px;
   border: 1px solid rgba(255,255,255,.05);
 }
-@media (min-width: 480px) {
-  .mc-code { font-size: var(--text-2xl); padding: 4px var(--space-3); }
-}
 
-/* Center score */
+/* Center score — fluid width + padding */
 .mc-score {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
+  gap: clamp(4px, 1.5vw, 10px);
   background: linear-gradient(180deg, #1a4fd6 0%, #1235a0 100%);
   border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-3);
+  padding: clamp(4px, 1.5vw, 10px) clamp(6px, 2.5vw, 14px);
   border: 1px solid rgba(255,255,255,.12);
   box-shadow: 0 4px 12px rgba(26,79,214,.35), inset 0 1px 0 rgba(255,255,255,.15);
-  min-width: 84px;
+  min-width: clamp(64px, 18vw, 92px);
   position: relative;
 }
 .mc-score__num {
   font-family: var(--font-sans);
-  font-size: var(--text-2xl);
+  font-size: clamp(1.3rem, 5.5vw, 2.2rem);
   font-weight: var(--weight-black);
   color: #fff;
   line-height: 1;
@@ -480,16 +487,16 @@
 .mc-score__divider {
   color: var(--color-gold-500);
   display: flex; align-items: center; justify-content: center;
-  font-size: var(--text-md);
+  font-size: clamp(0.7rem, 2.8vw, 1rem);
 }
 .mc-score__time {
   font-family: var(--font-sans);
-  font-size: var(--text-lg);
+  font-size: clamp(0.95rem, 4vw, 1.3rem);
   font-weight: var(--weight-black);
   color: #fff;
 }
 .mc-score__date {
-  font-size: var(--text-2xs);
+  font-size: clamp(0.55rem, 1.8vw, 0.75rem);
   font-weight: var(--weight-bold);
   color: rgba(255,255,255,.7);
   text-transform: uppercase;
@@ -587,14 +594,18 @@
 }
 .mc-watch:active { transform: scale(.96); }
 
-/* ── Auth card (login/register) ───────────────────────────────────────────── */
+/* ── Auth card (login/register) — glass over vibrant bg ─────────────────── */
 .auth-card {
+  position: relative;
+  z-index: 1;
   margin: 0 var(--space-4) var(--space-4);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: rgba(22, 27, 34, .82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,.08);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-google {
@@ -712,14 +723,18 @@
   margin-bottom: var(--space-3);
 }
 
-/* ── Public ranking ───────────────────────────────────────────────────────── */
+/* ── Public ranking — glass over vibrant bg ─────────────────────────────── */
 .pub-ranking {
+  position: relative;
+  z-index: 1;
   margin: 0 var(--space-4) var(--space-4);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: rgba(22, 27, 34, .82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,.08);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
 }
 .pub-ranking__row {
   display: flex;
