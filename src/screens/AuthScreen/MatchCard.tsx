@@ -1,114 +1,139 @@
+/**
+ * MatchCard — broadcast-style match preview/live card.
+ *
+ * Layout inspired by FIFA's official scoreboard:
+ *   ┌─────[ CITY ]─────┐
+ *   │  🇩🇪  GER 7 🏆 1 BRA  🇧🇷  │
+ *   │      93:47 [+4]      │
+ *   └──────────────────────┘
+ *
+ * Pre-match: no score, no clock — shows date + time chip + watch link icon.
+ * Live:      pulsing red dot + live score + minute + stoppage chip.
+ * Done:      final score + "FT" badge.
+ */
 interface MatchCardProps {
   homeIso: string
   homeName: string
+  homeShort?: string
   awayIso: string
   awayName: string
+  awayShort?: string
   status: 'live' | 'soon' | 'done'
   homeGoals?: number
   awayGoals?: number
   minute?: number
+  stoppage?: number
   dateStr: string
   timeStr: string
+  city?: string
 }
 
 function FlagImg({ iso, name }: { iso: string; name: string }) {
   return (
     <img
-      className="flag-img"
-      src={`https://flagcdn.com/48x36/${iso}.png`}
-      srcSet={`https://flagcdn.com/96x72/${iso}.png 2x`}
-      width={48}
-      height={36}
+      className="mc-flag-img"
+      src={`https://flagcdn.com/96x72/${iso}.png`}
+      srcSet={`https://flagcdn.com/192x144/${iso}.png 2x`}
+      width={96}
+      height={72}
       alt={name}
       onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0' }}
     />
   )
 }
 
+function inferShort(name: string): string {
+  return name
+    .replace(/[^A-Za-zÀ-ÿ]/g, '')
+    .slice(0, 3)
+    .toUpperCase()
+}
+
 export function MatchCard({
-  homeIso, homeName, awayIso, awayName,
-  status, homeGoals, awayGoals, minute, dateStr, timeStr,
+  homeIso, homeName, homeShort,
+  awayIso, awayName, awayShort,
+  status, homeGoals, awayGoals, minute, stoppage,
+  dateStr, timeStr, city,
 }: MatchCardProps) {
   const isLive = status === 'live'
   const isDone = status === 'done'
+  const isSoon = status === 'soon'
+
+  const homeCode = homeShort ?? inferShort(homeName)
+  const awayCode = awayShort ?? inferShort(awayName)
 
   return (
-    <article className={`match-card${isDone ? ' match-card--done' : ''}`}
-             style={isDone ? { opacity: .65 } : undefined}>
-      <div className="match-card__grass" />
-      <div className="match-card__circle" />
-      <div className="match-card__inner">
+    <article className={`mc${isLive ? ' mc--live' : ''}${isDone ? ' mc--done' : ''}`}>
 
-        {/* Ribbon */}
-        <div className="match-ribbon">
-          {isLive && (
+      {/* Top ribbon — city OR date/time */}
+      {city && (
+        <div className="mc-ribbon">
+          <span className="mc-ribbon__txt">{city}</span>
+        </div>
+      )}
+
+      {/* Main row */}
+      <div className="mc-row">
+        <FlagImg iso={homeIso} name={homeName} />
+        <span className="mc-code mc-code--home">{homeCode}</span>
+
+        <div className="mc-score">
+          {isSoon ? (
             <>
-              <span className="match-live-label">
-                <span className="match-live-dot" />
-                AO VIVO
+              <span className="mc-score__time">{timeStr}</span>
+              <span className="mc-score__divider" aria-hidden="true">⚽</span>
+              <span className="mc-score__date">{dateStr}</span>
+            </>
+          ) : (
+            <>
+              <span className="mc-score__num">{homeGoals ?? 0}</span>
+              <span className="mc-score__divider" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+                  <path d="M7 2v6c0 2.21 1.79 4 4 4h2c2.21 0 4-1.79 4-4V2H7zm12 0v3a3 3 0 0 1-3 3V5h3zM5 5v3a3 3 0 0 1-3-3V2h3v3zM10 14h4v2l-1 4h-2l-1-4v-2z"/>
+                </svg>
               </span>
-              <span className="match-time-chip">{minute}'</span>
+              <span className="mc-score__num">{awayGoals ?? 0}</span>
             </>
           )}
-          {!isLive && (
-            <div className="match-dt">
-              {isDone && <span>✓ Encerrado · {dateStr}</span>}
-              {!isDone && <span>{dateStr}</span>}
-              <div className="match-dt__sep" />
-              <span className="match-dt__hora">{timeStr}</span>
-            </div>
-          )}
         </div>
 
-        {/* Teams + score */}
-        <div className="match-row">
-          <div className="match-team">
-            <div className={`match-flag${isLive ? ' match-flag--live' : ''}`}>
-              <FlagImg iso={homeIso} name={homeName} />
-            </div>
-            <div className="match-name">{homeName}</div>
-          </div>
+        <span className="mc-code mc-code--away">{awayCode}</span>
+        <FlagImg iso={awayIso} name={awayName} />
+      </div>
 
-          <div className={`match-plaque${isLive ? ' match-plaque--live' : ''}`}>
-            {isLive && (
-              <span className="match-score match-score--live">
-                {homeGoals} : {awayGoals}
-              </span>
+      {/* Bottom row — clock + watch button */}
+      <div className="mc-foot">
+        {isLive && (
+          <div className="mc-clock">
+            <span className="mc-clock__time">{String(minute ?? 0).padStart(2, '0')}:00</span>
+            {stoppage !== undefined && stoppage > 0 && (
+              <span className="mc-clock__chip">+{stoppage}</span>
             )}
-            {isDone && (
-              <span className="match-score match-score--done">
-                {homeGoals} : {awayGoals}
-              </span>
-            )}
-            {status === 'soon' && (
-              <span className="match-score match-score--soon">×</span>
-            )}
-            <span className="match-score-sub">
-              {isLive ? 'placar' : isDone ? 'encerrado' : 'em breve'}
-            </span>
+            <span className="mc-live-pill"><span className="mc-live-pill__dot" />AO VIVO</span>
           </div>
-
-          <div className="match-team">
-            <div className={`match-flag${isLive ? ' match-flag--live' : ''}`}>
-              <FlagImg iso={awayIso} name={awayName} />
-            </div>
-            <div className="match-name">{awayName}</div>
+        )}
+        {isDone && (
+          <div className="mc-clock">
+            <span className="mc-clock__final">ENCERRADO · {dateStr}</span>
           </div>
-        </div>
+        )}
+        {isSoon && (
+          <div className="mc-clock mc-clock--soon">
+            <span className="mc-clock__soon">⏱ {dateStr} · {timeStr}</span>
+          </div>
+        )}
 
-        {/* Watch button */}
         <a
-          className="match-watch"
+          className="mc-watch"
           href="https://www.youtube.com/@CazéTV"
           target="_blank"
           rel="noopener noreferrer"
-          style={isDone ? { opacity: .55 } : status === 'soon' ? { background: 'rgba(255,255,255,.04)', borderColor: 'rgba(255,255,255,.08)' } : undefined}
+          aria-label={isLive ? 'Assistir ao vivo' : isDone ? 'Ver replay' : 'Transmissão na CazéTV'}
+          title={isLive ? 'Assistir ao vivo' : isDone ? 'Ver replay' : 'Transmissão CazéTV'}
         >
-          <div className="match-yt-icon"><div className="match-yt-play" /></div>
-          <span className="match-watch-txt">
-            {isLive ? 'Assistir ao vivo' : isDone ? 'Ver replay' : 'Vai transmitir'}
-          </span>
-          <span className="match-watch-sub">CazéTV</span>
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path fill="currentColor" d="M21.58 7.19c-.23-.86-.91-1.54-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42c.86-.23 1.54-.91 1.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM10 15V9l5.2 3-5.2 3z"/>
+          </svg>
         </a>
       </div>
     </article>

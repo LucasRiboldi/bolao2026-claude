@@ -32,11 +32,12 @@ function useDayCards() {
     const away = TEAMS[game.away]!
     return {
       id: f.gameId,
-      homeIso: home.iso, homeName: home.name,
-      awayIso: away.iso, awayName: away.name,
+      homeIso: home.iso, homeName: home.name, homeShort: home.short,
+      awayIso: away.iso, awayName: away.name, awayShort: away.short,
       status: 'soon' as const,
       dateStr,
       timeStr: formatTimeShort(f.time),
+      city: f.city,
     }
   })
   return { day, dateStr, cards }
@@ -125,9 +126,6 @@ export function AuthScreen() {
     <div className="auth-screen">
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
-      {/* Reduced decoration: 1 subtle green orb behind the logo + spotlights.
-          Removed gold/bottom orbs, field grid + center, and the "ao vivo agora"
-          badge dot (was UX-misleading — Copa hasn't started yet). */}
       <div className="auth-hero">
         <div className="auth-orb auth-orb--green" />
 
@@ -147,19 +145,25 @@ export function AuthScreen() {
         </svg>
 
         <div className="auth-badge" aria-hidden="true">
-          <span>⚽ Copa do Mundo · 11 jun 2026</span>
+          <span>🏆 Tô dentro · 11 jun 2026</span>
         </div>
 
         <img
           className="auth-logo"
           src="/img/copa-2026-logo.svg"
           alt="FIFA World Cup 2026"
-          width={100} height={120}
+          width={140} height={170}
           onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
         />
 
-        <h1 className="auth-title">Bolão 2026</h1>
-        <p className="auth-sub">Aposte com amigos · 72 jogos · Seja campeão!</p>
+        <h1 className="auth-title">
+          <span className="auth-title__line1">Bolão da</span>
+          <span className="auth-title__line2">Copa do Mundo</span>
+          <span className="auth-title__line3">2026</span>
+        </h1>
+        <p className="auth-sub">
+          Aposta com a galera · 72 jogos pra cravar · <strong>Quem é o craque do bolão?</strong>
+        </p>
 
         <div className="auth-colorbar" aria-hidden="true">
           <span style={{ background: 'var(--color-host-mexico)', flex: 2 }} />
@@ -173,7 +177,7 @@ export function AuthScreen() {
       {/* ── Day's matches (full-width stack) ─────────────────────────── */}
       {cards.length > 0 && (
         <>
-          <p className="section-label">📅 Jogos do dia {dayLabel ? `· ${dayLabel}` : ''}</p>
+          <p className="section-label">⚽ Rola hoje {dayLabel ? `· ${dayLabel}` : ''}</p>
           <div className="match-stack" role="list">
             {cards.map(c => <MatchCard key={c.id} {...c} />)}
           </div>
@@ -181,7 +185,7 @@ export function AuthScreen() {
       )}
 
       {/* ── Login form ───────────────────────────────────────────────── */}
-      <p className="section-label">🔐 Entre ou crie sua conta</p>
+      <p className="section-label">🚀 Bora começar</p>
       <div className="auth-card">
 
         <button className="btn-google" type="button" onClick={handleGoogle}>
@@ -286,11 +290,11 @@ export function AuthScreen() {
       </div>
 
       {/* ── Public ranking ───────────────────────────────────────────── */}
-      <p className="section-label">🏆 Ranking ao vivo</p>
+      <p className="section-label">👑 Quem manda no bolão</p>
       <div className="pub-ranking">
         {ranking.length === 0 && (
           <p style={{ color: 'var(--text-muted)', fontSize: '.82rem', textAlign: 'center', padding: '8px 0' }}>
-            Nenhum palpite registrado ainda.
+            Seja o primeiro a apostar e dominar o ranking! 🚀
           </p>
         )}
         {ranking.map((entry, i) => {
@@ -312,14 +316,14 @@ export function AuthScreen() {
 
         <div className="pub-ranking-cta">
           <p className="pub-ranking-cta__txt">
-            Dispute com seus amigos o <strong>Bolão Copa 2026</strong>.
-            Acerte placares e avance no ranking!
+            Junta a galera. Aposta. Sobe no ranking.<br />
+            <strong>Quem cravar mais leva a fama.</strong>
           </p>
           <button
             className="btn btn-gold"
             onClick={() => document.querySelector<HTMLElement>('.auth-card')?.scrollIntoView({ behavior: 'smooth' })}
           >
-            🏆 Quero participar!
+            🔥 Tô dentro
           </button>
         </div>
       </div>
