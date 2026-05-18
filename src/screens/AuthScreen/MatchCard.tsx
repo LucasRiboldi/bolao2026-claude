@@ -77,24 +77,17 @@ export function MatchCard({
         <FlagImg iso={homeIso} name={homeName} />
         <span className="mc-code mc-code--home">{homeCode}</span>
 
-        <div className="mc-score">
-          {isSoon ? (
-            <>
-              <span className="mc-score__time">{timeStr}</span>
-              <span className="mc-score__divider" aria-hidden="true">⚽</span>
-              <span className="mc-score__date">{dateStr}</span>
-            </>
-          ) : (
-            <>
-              <span className="mc-score__num">{homeGoals ?? 0}</span>
-              <span className="mc-score__divider" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
-                  <path d="M7 2v6c0 2.21 1.79 4 4 4h2c2.21 0 4-1.79 4-4V2H7zm12 0v3a3 3 0 0 1-3 3V5h3zM5 5v3a3 3 0 0 1-3-3V2h3v3zM10 14h4v2l-1 4h-2l-1-4v-2z"/>
-                </svg>
-              </span>
-              <span className="mc-score__num">{awayGoals ?? 0}</span>
-            </>
-          )}
+        {/* Score plaque always shows numeric goals. Defaults to 0 × 0 for
+            upcoming matches so the layout is identical pre/live/post-match.
+            Live updates flow from subscribeResults() in AuthScreen. */}
+        <div className={`mc-score${isSoon ? ' mc-score--pending' : ''}`}>
+          <span className="mc-score__num">{homeGoals ?? 0}</span>
+          <span className="mc-score__divider" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+              <path d="M7 2v6c0 2.21 1.79 4 4 4h2c2.21 0 4-1.79 4-4V2H7zm12 0v3a3 3 0 0 1-3 3V5h3zM5 5v3a3 3 0 0 1-3-3V2h3v3zM10 14h4v2l-1 4h-2l-1-4v-2z"/>
+            </svg>
+          </span>
+          <span className="mc-score__num">{awayGoals ?? 0}</span>
         </div>
 
         <span className="mc-code mc-code--away">{awayCode}</span>

@@ -7,7 +7,7 @@ import {
   GoogleAuthProvider,
 } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
-import { loadRanking, loadAdminConfig, isEmailBlocked, loadResults } from '@/lib/firestore'
+import { loadRanking, loadAdminConfig, isEmailBlocked, subscribeResults } from '@/lib/firestore'
 import { nameInitials } from '@/data/teams'
 import { TEAMS } from '@/data/teams'
 import { ALL_GROUP_GAMES } from '@/data/groups'
@@ -81,8 +81,10 @@ export function AuthScreen() {
     loadAdminConfig().then(c => {
       if (c.registrationOpen === false) setRegOpen(false)
     }).catch(() => null)
-    // Load official results so visitors see real scores on the day's matches
-    loadResults().then(setResults).catch(() => null)
+    // Subscribe to official results — match cards update LIVE as admin
+    // enters scores, no refresh needed
+    const unsub = subscribeResults(setResults, () => null)
+    return unsub
   }, [])
 
   async function handleGoogle() {
@@ -150,6 +152,8 @@ export function AuthScreen() {
           <div className="auth-mesh__blob auth-mesh__blob--green" />
           <div className="auth-mesh__blob auth-mesh__blob--yellow" />
           <div className="auth-mesh__blob auth-mesh__blob--purple" />
+          <div className="auth-mesh__blob auth-mesh__blob--orange" />
+          <div className="auth-mesh__blob auth-mesh__blob--pink" />
         </div>
         <div className="auth-confetti">
           {Array.from({ length: 18 }).map((_, i) => (

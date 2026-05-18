@@ -254,6 +254,45 @@ export function subscribeRanking(
 }
 
 /**
+ * Real-time subscription to official results. Returns an unsubscribe fn.
+ * Sets up TWO listeners (groupStage + knockout docs) and merges them into
+ * a single Results object on every change — so consumers always receive
+ * the full snapshot.
+ *
+ * Used by AuthScreen so match-card scores update live as the admin enters
+ * results (no page refresh needed). Works without authentication because
+ * /results/{doc} is public-read.
+ */
+export function subscribeResults(
+  cb: (results: Results) => void,
+  onError?: (err: unknown) => void,
+): () => void {
+  let groupStage: Results['groupStage'] = {}
+  let knockout:   Results['knockout']   = {}
+  const emit = () => cb({ groupStage, knockout })
+
+  const unsubGS = onSnapshot(
+    doc(db, 'results', 'groupStage'),
+    snap => {
+      groupStage = snap.exists()
+        ? decodeGroupBets(snap.data() as Record<string, unknown>)
+        : {}
+      emit()
+    },
+    err => { if (onError) onError(err) },
+  )
+  const unsubKO = onSnapshot(
+    doc(db, 'results', 'knockout'),
+    snap => {
+      knockout = snap.exists() ? (snap.data() as Results['knockout']) : {}
+      emit()
+    },
+    err => { if (onError) onError(err) },
+  )
+  return () => { unsubGS(); unsubKO() }
+}
+
+/**
  * Recompute the entire ranking from scratch: loads all users' bets + current
  * results + scoring config, calculates everyone's score, sorts, and writes
  * to ranking/current. All subscribers (subscribeRanking) update automatically.
