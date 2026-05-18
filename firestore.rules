@@ -46,7 +46,10 @@ service cloud.firestore {
     }
 
     match /results/{doc} {
-      allow read:  if request.auth != null;
+      // Public read — AuthScreen renders live scores for visitors who
+      // haven't logged in yet. Results are non-sensitive (already visible
+      // to anyone authenticated). Admin-only write.
+      allow read:  if true;
       allow write: if isAdmin();
     }
 

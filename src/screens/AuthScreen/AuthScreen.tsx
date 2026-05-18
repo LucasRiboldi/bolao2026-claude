@@ -7,22 +7,29 @@ import {
   GoogleAuthProvider,
 } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
-import { loadRanking, loadAdminConfig, isEmailBlocked } from '@/lib/firestore'
+import { loadRanking, loadAdminConfig, isEmailBlocked, loadResults } from '@/lib/firestore'
 import { nameInitials } from '@/data/teams'
 import { TEAMS } from '@/data/teams'
 import { ALL_GROUP_GAMES } from '@/data/groups'
 import { getRelevantMatchDay, getGamesForDay, formatDateShort, formatTimeShort } from '@/data/fixtures'
-import type { RankingEntry } from '@/types'
+import type { RankingEntry, Results } from '@/types'
 import { MatchCard } from './MatchCard'
 import './AuthScreen.css'
 
 type AuthTab = 'login' | 'register'
 
+const EMPTY_RESULTS: Results = { groupStage: {}, knockout: {} }
+
 /**
  * Today's match cards. Picks games for the current Brasília day; if no games
  * scheduled today, returns games for the next upcoming day with fixtures.
+ *
+ * If an official result exists for a game, the card switches to "done"
+ * status with the actual goals scored. Otherwise stays "soon" with kickoff
+ * time. Admin writes results in AdminScreen → Resultados → ranking
+ * auto-recomputes and these cards reflect the new score on next page load.
  */
-function useDayCards() {
+function useDayCards(results: Results) {
   const day = getRelevantMatchDay()
   if (!day) return { day: null as string | null, cards: [] }
   const dateStr = formatDateShort(day)
@@ -30,11 +37,16 @@ function useDayCards() {
     const game = ALL_GROUP_GAMES[f.gameId]!
     const home = TEAMS[game.home]!
     const away = TEAMS[game.away]!
+    const result = results.groupStage[f.gameId]
+    const hasResult = !!result && result.homeGoals !== '' && result.awayGoals !== ''
+
     return {
       id: f.gameId,
       homeIso: home.iso, homeName: home.name, homeShort: home.short,
       awayIso: away.iso, awayName: away.name, awayShort: away.short,
-      status: 'soon' as const,
+      status: hasResult ? ('done' as const) : ('soon' as const),
+      homeGoals: hasResult ? parseInt(result.homeGoals, 10) : undefined,
+      awayGoals: hasResult ? parseInt(result.awayGoals, 10) : undefined,
       dateStr,
       timeStr: formatTimeShort(f.time),
       city: f.city,
@@ -60,14 +72,17 @@ export function AuthScreen() {
   const [loading, setLoading] = useState(false)
   const [ranking, setRanking] = useState<RankingEntry[]>([])
   const [regOpen, setRegOpen] = useState(true)
+  const [results, setResults] = useState<Results>(EMPTY_RESULTS)
 
-  const { dateStr: dayLabel, cards } = useDayCards()
+  const { dateStr: dayLabel, cards } = useDayCards(results)
 
   useEffect(() => {
     loadRanking().then(r => setRanking(r.slice(0, 5))).catch(() => null)
     loadAdminConfig().then(c => {
       if (c.registrationOpen === false) setRegOpen(false)
     }).catch(() => null)
+    // Load official results so visitors see real scores on the day's matches
+    loadResults().then(setResults).catch(() => null)
   }, [])
 
   async function handleGoogle() {
