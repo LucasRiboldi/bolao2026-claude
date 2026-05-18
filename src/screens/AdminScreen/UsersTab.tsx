@@ -42,7 +42,7 @@ function BetHistoryModal({ user, onClose }: { user: AdminUser; onClose: () => vo
           <button className="admin-modal__close" onClick={onClose}>Fechar</button>
         </div>
         {loading
-          ? <div className="spinner-wrap" style={{ padding: 24 }}><div className="spinner" /></div>
+          ? <div className="spinner-wrap spinner-wrap--sm"><div className="spinner" /></div>
           : <>
               <GroupBetsView bets={groupBets} />
               <KnockoutBetsView groupBets={groupBets} koBets={koBets} />
@@ -200,9 +200,9 @@ function EditBetsModal({ user, onClose }: { user: AdminUser; onClose: () => void
           </div>
         </div>
         {loading
-          ? <div className="spinner-wrap" style={{ padding: 24 }}><div className="spinner" /></div>
+          ? <div className="spinner-wrap spinner-wrap--sm"><div className="spinner" /></div>
           : <div className="edit-bets-body">
-              <div className="admin-section-label">Fase de Grupos</div>
+              <div className="section-label">Fase de Grupos</div>
               {GROUP_IDS.map(gId => {
                 const games = generateGroupGames(gId)
                 return (
@@ -233,7 +233,7 @@ function EditBetsModal({ user, onClose }: { user: AdminUser; onClose: () => void
                 )
               })}
 
-              <div className="admin-section-label" style={{ marginTop: 8 }}>Mata-Mata</div>
+              <div className="section-label" style={{ marginTop: 8 }}>Mata-Mata</div>
               <KoRoundEdit label="Round de 32" color="#e74c3c" teams={r32Pool} picked={koBets.r32 ?? []} onToggle={t => toggleKo('r32', t)} />
               <KoRoundEdit label="Oitavas" color="#e67e22" teams={r16Pool} picked={koBets.r16 ?? []} onToggle={t => toggleKo('r16', t)} />
               <KoRoundEdit label="Quartas" color="#f39c12" teams={qfPool} picked={koBets.qf ?? []} onToggle={t => toggleKo('qf', t)} />
@@ -305,7 +305,7 @@ export function UsersTab() {
   const openCount = users.length - lockedCount
 
   if (loading) {
-    return <div className="spinner-wrap" style={{ paddingTop: 32 }}><div className="spinner" aria-label="Carregando usuários…" /></div>
+    return <div className="spinner-wrap spinner-wrap--inline"><div className="spinner" aria-label="Carregando usuários…" /></div>
   }
 
   return (

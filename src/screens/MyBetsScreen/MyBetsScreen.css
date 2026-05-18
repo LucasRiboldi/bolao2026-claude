@@ -40,15 +40,7 @@
   font-style: italic;
 }
 
-/* ── Section label ────────────────────────────────────────────────────────── */
-.mybets-section-label {
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-black);
-  letter-spacing: var(--tracking-ultra);
-  text-transform: uppercase;
-  color: var(--text-muted);
-  padding: var(--space-4) var(--space-4) var(--space-1);
-}
+/* Section label — promoted to global .section-label in src/index.css */
 
 /* ── Read-only group card ────────────────────────────────────────────────── */
 .mybets-group-card {

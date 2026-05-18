@@ -18,7 +18,7 @@ const AdminScreen     = lazy(() => import('./screens/AdminScreen').then(m => ({ 
 
 function ScreenFallback() {
   return (
-    <div className="spinner-wrap" style={{ paddingTop: 48 }}>
+    <div className="spinner-wrap">
       <div className="spinner" aria-label="Carregando tela…" />
     </div>
   )
@@ -29,7 +29,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="spinner-wrap" style={{ minHeight: '100vh' }}>
+      <div className="spinner-wrap spinner-wrap--page">
         <div className="spinner" aria-label="Carregando…" />
       </div>
     )

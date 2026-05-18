@@ -348,15 +348,7 @@
   color: var(--color-gold-500);
 }
 
-/* ── Section label ────────────────────────────────────────────────────────── */
-.admin-section-label {
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-black);
-  letter-spacing: var(--tracking-ultra);
-  text-transform: uppercase;
-  color: var(--text-muted);
-  padding: var(--space-4) var(--space-4) var(--space-2);
-}
+/* Section label — promoted to global .section-label in src/index.css */
 
 /* ── User list ────────────────────────────────────────────────────────────── */
 .admin-user-list {

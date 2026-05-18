@@ -28,7 +28,9 @@
       "Bash(pdftotext \"C:\\\\Users\\\\lucas\\\\Desktop\\\\bolao2026-claude\\\\public\\\\FWC26_regulations_EN.pdf\" -)",
       "Bash(xargs wc -l)",
       "Bash(grep -oE \"#[0-9a-fA-F]{3,8}\")",
-      "Bash(git mv *)"
+      "Bash(git mv *)",
+      "Bash(grep -rn \"#[0-9a-fA-F]\\\\{3,8\\\\}\" src/ --include=\"*.css\")",
+      "Bash(grep -rn \"[: ][0-9]\\\\{2,\\\\}px\" src/ --include=\"*.css\")"
     ]
   }
 }

@@ -128,24 +128,24 @@ export function RankingScreen() {
       </div>
 
       {loading && (
-        <div className="spinner-wrap" style={{ paddingTop: 32 }}>
+        <div className="spinner-wrap spinner-wrap--inline">
           <div className="spinner" aria-label="Carregando ranking…" />
         </div>
       )}
 
       {!loading && error && (
-        <div className="ranking-empty">
-          <div className="ranking-empty__icon">⚠️</div>
-          <div className="ranking-empty__title">Erro ao carregar</div>
-          <div className="ranking-empty__sub">{error}</div>
+        <div className="empty-state">
+          <div className="empty-state__icon">⚠️</div>
+          <div className="empty-state__title">Erro ao carregar</div>
+          <div className="empty-state__sub">{error}</div>
         </div>
       )}
 
       {!loading && !error && entries.length === 0 && (
-        <div className="ranking-empty">
-          <div className="ranking-empty__icon">🏆</div>
-          <div className="ranking-empty__title">Ranking ainda não disponível</div>
-          <div className="ranking-empty__sub">Os pontos serão calculados após o início da Copa.</div>
+        <div className="empty-state">
+          <div className="empty-state__icon">🏆</div>
+          <div className="empty-state__title">Ranking ainda não disponível</div>
+          <div className="empty-state__sub">Os pontos serão calculados após o início da Copa.</div>
         </div>
       )}
 

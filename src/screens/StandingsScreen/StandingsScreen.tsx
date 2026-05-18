@@ -19,7 +19,7 @@ export function StandingsScreen() {
       )}
 
       {loading && (
-        <div className="spinner-wrap" style={{ paddingTop: 32 }}>
+        <div className="spinner-wrap spinner-wrap--inline">
           <div className="spinner" aria-label="Carregando classificação…" />
         </div>
       )}

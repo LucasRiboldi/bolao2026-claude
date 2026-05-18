@@ -228,6 +228,13 @@ h4 { font-size: var(--text-md);  }
   justify-content: center;
   padding: var(--space-12) var(--space-4);
 }
+/* Full-page loader (used while auth resolves) */
+.spinner-wrap--page   { min-height: 100vh; }
+/* Inline loader inside a tab/screen — less padding than the default */
+.spinner-wrap--inline { padding: var(--space-8) var(--space-4); }
+/* Compact loader inside modals or tight contexts */
+.spinner-wrap--sm     { padding: var(--space-6); }
+
 .spinner {
   width: 32px;
   height: 32px;

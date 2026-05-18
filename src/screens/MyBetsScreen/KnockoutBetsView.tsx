@@ -124,7 +124,7 @@ export function KnockoutBetsView({
 
   return (
     <>
-      <div className="mybets-section-label">Mata-Mata</div>
+      <h2 className="section-label">Mata-Mata</h2>
       <div className="mybets-ko-section">
         <ArrayRound
           label="Round de 32"

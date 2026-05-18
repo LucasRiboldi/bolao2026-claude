@@ -46,23 +46,7 @@
   text-align: center;
 }
 
-/* ── Empty state (legacy) ─────────────────────────────────────────────────── */
-.standings-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-12) var(--space-6);
-  text-align: center;
-  color: var(--text-muted);
-}
-.standings-empty__icon  { font-size: 2rem; }
-.standings-empty__title {
-  font-size: var(--text-md);
-  font-weight: var(--weight-bold);
-  color: var(--text);
-}
-.standings-empty__sub   { font-size: var(--text-sm); }
+/* Empty state — use global .empty-state from src/index.css */
 
 /* ── Refresh button container ─────────────────────────────────────────────── */
 .standings-refresh-wrap {

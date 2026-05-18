@@ -147,7 +147,7 @@ function GroupSheetCard({ groupId, bets, results, defaultOpen }: {
 export function GroupBetsView({ bets, results = {} }: { bets: GroupBets; results?: GroupBets }) {
   return (
     <>
-      <div className="mybets-section-label">Fase de Grupos</div>
+      <h2 className="section-label">Fase de Grupos</h2>
       {GROUP_IDS.map((gId, i) => (
         <GroupSheetCard key={gId} groupId={gId} bets={bets} results={results} defaultOpen={i === 0} />
       ))}

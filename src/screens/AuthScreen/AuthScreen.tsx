@@ -173,7 +173,7 @@ export function AuthScreen() {
       {/* ── Day's matches (full-width stack) ─────────────────────────── */}
       {cards.length > 0 && (
         <>
-          <p className="auth-section-label">📅 Jogos do dia {dayLabel ? `· ${dayLabel}` : ''}</p>
+          <p className="section-label">📅 Jogos do dia {dayLabel ? `· ${dayLabel}` : ''}</p>
           <div className="match-stack" role="list">
             {cards.map(c => <MatchCard key={c.id} {...c} />)}
           </div>
@@ -181,7 +181,7 @@ export function AuthScreen() {
       )}
 
       {/* ── Login form ───────────────────────────────────────────────── */}
-      <p className="auth-section-label">🔐 Entre ou crie sua conta</p>
+      <p className="section-label">🔐 Entre ou crie sua conta</p>
       <div className="auth-card">
 
         <button className="btn-google" type="button" onClick={handleGoogle}>
@@ -286,7 +286,7 @@ export function AuthScreen() {
       </div>
 
       {/* ── Public ranking ───────────────────────────────────────────── */}
-      <p className="auth-section-label">🏆 Ranking ao vivo</p>
+      <p className="section-label">🏆 Ranking ao vivo</p>
       <div className="pub-ranking">
         {ranking.length === 0 && (
           <p style={{ color: 'var(--text-muted)', fontSize: '.82rem', textAlign: 'center', padding: '8px 0' }}>

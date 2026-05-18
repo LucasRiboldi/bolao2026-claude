@@ -131,15 +131,7 @@
 }
 .auth-colorbar span { border-radius: var(--radius-pill); }
 
-/* ── Section label ────────────────────────────────────────────────────────── */
-.auth-section-label {
-  color: var(--text-muted);
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-ultra);
-  text-transform: uppercase;
-  padding: var(--space-4) var(--space-4) var(--space-2);
-}
+/* Section label — promoted to global .section-label in src/index.css */
 
 /* ── Match cards (vertical stack, full-width) ─────────────────────────────── */
 .match-stack {

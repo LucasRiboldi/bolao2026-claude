@@ -315,7 +315,7 @@ export function ResultsTab() {
     }),
   ]
 
-  if (loading) return <div className="spinner-wrap" style={{ paddingTop: 32 }}><div className="spinner" /></div>
+  if (loading) return <div className="spinner-wrap spinner-wrap--inline"><div className="spinner" /></div>
 
   return (
     <div className="admin-results-wrap">
