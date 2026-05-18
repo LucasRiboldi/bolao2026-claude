@@ -20,142 +20,341 @@
   }
 }
 
-/* ── Hero ─────────────────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────
+ * Hero — "We Are 26" vibrant edition
+ * Multi-color mesh + floating decorations + bold typography
+ * ───────────────────────────────────────────────────────────────────────── */
+
 .auth-hero {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(
-    160deg,
-    #050d1a 0%,
-    var(--color-green-900) 45%,
-    var(--color-neutral-950) 100%
-  );
-  padding: var(--space-10) var(--space-5) var(--space-8);
+  background: #0a0612;   /* deep ink base — vibrant blobs sit on top */
+  padding: var(--space-12) var(--space-5) var(--space-8);
   text-align: center;
   display: flex;
   flex-direction: column;
-  align-items: center;   /* centralizar TUDO (logo, badge, título) */
+  align-items: center;
+  min-height: 580px;
 }
 
-.auth-orb {
+/* badgePulse — kept here because the live match ribbon uses it */
+@keyframes badgePulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+/* ── Top chevron stripe ─────────────────────────────────────────────────── */
+.auth-chevron {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(55px);
+  top: 0; left: 0; right: 0;
+  height: 8px;
+  display: flex;
+  z-index: 5;
+}
+.auth-chevron span { flex: 1; }
+
+/* ── Animated mesh blobs ────────────────────────────────────────────────── */
+.auth-mesh {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
   pointer-events: none;
 }
-/* Single subtle green orb behind the logo. Gold/bottom orbs removed — they
-   competed with the title shimmer for attention. */
-.auth-orb--green {
-  width: 220px; height: 220px;
-  background: rgba(26,127,55,.35);
-  top: -80px; left: 50%;
-  transform: translateX(-50%);
-  animation: orbFloat 8s ease-in-out infinite;
+.auth-mesh__blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: .55;
+  mix-blend-mode: screen;
 }
-@keyframes orbFloat { 0%,100% { transform: translateX(-50%) translateY(0) } 50% { transform: translateX(-50%) translateY(-8px) } }
+.auth-mesh__blob--red    { width: 320px; height: 320px; background: var(--color-wa26-red);    top: -60px;  left: -80px;  animation: blobFloat 12s ease-in-out infinite; }
+.auth-mesh__blob--blue   { width: 280px; height: 280px; background: var(--color-wa26-blue);   top: 80px;   right: -60px; animation: blobFloat 14s ease-in-out infinite reverse; }
+.auth-mesh__blob--green  { width: 240px; height: 240px; background: var(--color-wa26-green);  bottom: 60px; left: -40px; animation: blobFloat 10s ease-in-out infinite 1s; }
+.auth-mesh__blob--yellow { width: 200px; height: 200px; background: var(--color-wa26-yellow); top: 200px; left: 40%;     animation: blobFloat 16s ease-in-out infinite 2s; opacity: .35; }
+.auth-mesh__blob--purple { width: 260px; height: 260px; background: var(--color-wa26-purple); bottom: -40px; right: 30%; animation: blobFloat 13s ease-in-out infinite 3s; }
 
-.auth-spotlights {
-  position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;
+@keyframes blobFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(20px, -30px) scale(1.08); }
+  66%      { transform: translate(-15px, 20px) scale(.95); }
 }
 
+/* Vignette mask so blobs fade nicely at the edges */
+.auth-hero::after {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 50%, transparent 30%, rgba(10,6,18,.6) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Confetti dots ──────────────────────────────────────────────────────── */
+.auth-confetti {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+.auth-confetti__dot {
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  opacity: .85;
+  animation: confettiFall 8s linear infinite;
+}
+.auth-confetti__dot--0 { background: var(--color-wa26-red);    left: 12%;  top: -8px;  animation-delay: 0s;   animation-duration: 9s; }
+.auth-confetti__dot--1 { background: var(--color-wa26-blue);   left: 22%;  top: -8px;  animation-delay: 1.5s; animation-duration: 11s; }
+.auth-confetti__dot--2 { background: var(--color-wa26-green);  left: 32%;  top: -8px;  animation-delay: 3s;   animation-duration: 10s; }
+.auth-confetti__dot--3 { background: var(--color-wa26-yellow); left: 42%;  top: -8px;  animation-delay: 4.5s; animation-duration: 8s; }
+.auth-confetti__dot--4 { background: var(--color-wa26-purple); left: 52%;  top: -8px;  animation-delay: 1s;   animation-duration: 12s; }
+.auth-confetti__dot--5 { background: var(--color-wa26-orange); left: 62%;  top: -8px;  animation-delay: 2.5s; animation-duration: 9.5s; }
+.auth-confetti__dot--0:nth-child(7)  { left: 72%; animation-delay: 5s; }
+.auth-confetti__dot--1:nth-child(8)  { left: 82%; animation-delay: 6s; }
+.auth-confetti__dot--2:nth-child(9)  { left: 92%; animation-delay: 7s; }
+.auth-confetti__dot--3:nth-child(10) { left: 8%;  animation-delay: 2s; }
+.auth-confetti__dot--4:nth-child(11) { left: 18%; animation-delay: 4s; }
+.auth-confetti__dot--5:nth-child(12) { left: 28%; animation-delay: 6s; }
+.auth-confetti__dot--0:nth-child(13) { left: 38%; animation-delay: 3.5s; }
+.auth-confetti__dot--1:nth-child(14) { left: 48%; animation-delay: 5.5s; }
+.auth-confetti__dot--2:nth-child(15) { left: 58%; animation-delay: 7.5s; }
+.auth-confetti__dot--3:nth-child(16) { left: 68%; animation-delay: 0.5s; }
+.auth-confetti__dot--4:nth-child(17) { left: 78%; animation-delay: 2.5s; }
+.auth-confetti__dot--5:nth-child(18) { left: 88%; animation-delay: 4.5s; }
+@keyframes confettiFall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 0; }
+  10%  { opacity: .85; }
+  90%  { opacity: .85; }
+  100% { transform: translateY(620px) rotate(360deg); opacity: 0; }
+}
+
+/* ── Floating decorative SVG/emoji ──────────────────────────────────────── */
+.auth-float {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+}
+.auth-float--ball {
+  width: 56px; height: 56px;
+  top: 60px; right: 32px;
+  animation: floatBall 6s ease-in-out infinite;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,.4));
+}
+.auth-float--trophy {
+  font-size: 44px;
+  bottom: 90px; left: 28px;
+  animation: floatTrophy 5s ease-in-out infinite;
+  filter: drop-shadow(0 6px 12px rgba(250,204,21,.5));
+}
+.auth-float--star1 {
+  font-size: 22px;
+  top: 40px; left: 24px;
+  animation: twinkle 3s ease-in-out infinite;
+}
+.auth-float--star2 {
+  font-size: 18px;
+  top: 140px; right: 60px;
+  animation: twinkle 4s ease-in-out infinite 1s;
+}
+@keyframes floatBall {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-12px) rotate(180deg); }
+}
+@keyframes floatTrophy {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50%      { transform: translateY(-8px) rotate(3deg); }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: .3; transform: scale(.8); }
+  50%      { opacity: 1;  transform: scale(1.2); }
+}
+
+/* ── Badge (vibrant version) ────────────────────────────────────────────── */
 .auth-badge {
-  position: relative; z-index: 2;
+  position: relative; z-index: 4;
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.2);
   border-radius: var(--radius-pill);
   padding: 5px var(--space-3);
   margin-bottom: var(--space-4);
-  color: rgba(255,255,255,.7);
+  color: #fff;
   font-size: var(--text-2xs);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-wide);
+  font-weight: var(--weight-black);
+  letter-spacing: var(--tracking-ultra);
   text-transform: uppercase;
+  backdrop-filter: blur(8px);
 }
-/* badgePulse keyframe kept here because match-card live ribbon still uses it */
-@keyframes badgePulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+.auth-badge--vibrant {
+  background: linear-gradient(
+    90deg,
+    rgba(230,57,70,.25),
+    rgba(29,78,216,.25),
+    rgba(22,163,74,.25)
+  );
+  border-color: rgba(255,255,255,.3);
+  box-shadow:
+    0 4px 16px rgba(0,0,0,.3),
+    inset 0 1px 0 rgba(255,255,255,.2);
+}
+.auth-badge__pulse {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--color-wa26-yellow);
+  box-shadow: 0 0 8px var(--color-wa26-yellow);
+  animation: badgePulse 1.5s infinite;
+}
 
+/* ── Logo ──────────────────────────────────────────────────────────────── */
 .auth-logo {
   display: block;
   margin: 0 auto var(--space-4);
-  position: relative; z-index: 2;
-  animation: orbFloat 4s ease-in-out infinite;
+  position: relative; z-index: 4;
+  animation: floatLogo 5s ease-in-out infinite;
   filter:
-    drop-shadow(0 0 24px rgba(212,170,44,.55))
-    drop-shadow(0 0 60px rgba(212,170,44,.25));
+    drop-shadow(0 0 28px rgba(250,204,21,.6))
+    drop-shadow(0 0 60px rgba(168,85,247,.3));
 }
-.auth-logo-fallback {
-  position: relative; z-index: 2;
-  font-size: var(--text-3xl);
-  margin-bottom: var(--space-3);
-  filter: drop-shadow(0 0 16px rgba(212,170,44,.5));
-  animation: orbFloat 4s ease-in-out infinite;
+@keyframes floatLogo {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
 }
 
-/* Title — uses official FIFA 26 typography, stacked on 3 lines */
+/* ── Title — Inter Black, bold ───────────────────────────────────────────── */
 .auth-title {
-  position: relative; z-index: 2;
+  position: relative; z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  font-family: var(--font-fifa);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-tight);
-  line-height: var(--leading-tight);
-  margin: 0;
+  gap: 4px;
+  font-family: var(--font-sans);
+  margin: 0 0 var(--space-3);
   text-align: center;
 }
-.auth-title__line1 {
-  font-size: var(--text-md);
-  color: rgba(255,255,255,.7);
+.auth-title__kicker {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: rgba(255,255,255,.6);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
+  letter-spacing: var(--tracking-ultra);
 }
-.auth-title__line2 {
-  font-size: var(--text-2xl);
-  color: var(--color-neutral-0);
+.auth-title__main {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-black);
+  color: #fff;
   text-transform: uppercase;
   letter-spacing: var(--tracking-tight);
-  text-shadow: 0 2px 16px rgba(212,170,44,.4);
+  line-height: 1;
+  text-shadow:
+    0 2px 16px rgba(168,85,247,.4),
+    0 4px 32px rgba(29,78,216,.3);
 }
-.auth-title__line3 {
+@media (min-width: 380px) {
+  .auth-title__main { font-size: var(--text-2xl); }
+}
+.auth-title__year {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: 4px;
+}
+.auth-title__year-num {
   font-size: var(--text-3xl);
+  font-weight: var(--weight-black);
+  line-height: 1;
+  letter-spacing: -0.02em;
   background: linear-gradient(
     90deg,
-    var(--color-gold-300),
-    var(--color-gold-500) 35%,
-    #fff 65%,
-    var(--color-gold-500)
+    var(--color-wa26-red) 0%,
+    var(--color-wa26-yellow) 33%,
+    var(--color-wa26-green) 66%,
+    var(--color-wa26-blue) 100%
   );
   background-size: 300%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: shimmer 4s linear infinite;
-  font-weight: var(--weight-black);
-  line-height: 1;
+  animation: rainbowShift 6s linear infinite;
+  text-shadow: 0 0 60px rgba(250,204,21,.25);
 }
-@keyframes shimmer { 0%{background-position:0%} 100%{background-position:300%} }
+@keyframes rainbowShift { 0%{background-position:0%} 100%{background-position:300%} }
+.auth-title__year-star {
+  font-size: var(--text-xl);
+  color: var(--color-wa26-yellow);
+  animation: spin 6s linear infinite, twinkle 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px var(--color-wa26-yellow));
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .auth-sub {
-  position: relative; z-index: 2;
-  color: rgba(255,255,255,.55);
+  position: relative; z-index: 4;
+  color: rgba(255,255,255,.75);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
-  margin-top: var(--space-1);
+  margin: 0 0 var(--space-5);
+  line-height: var(--leading-snug);
+  max-width: 320px;
 }
+.auth-sub strong { color: var(--color-wa26-yellow); font-weight: var(--weight-black); }
 
+/* ── Hero CTA — vibrant gradient pill button ────────────────────────────── */
+.auth-hero-cta {
+  position: relative; z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border: none;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  font-weight: var(--weight-black);
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(
+    135deg,
+    var(--color-wa26-red) 0%,
+    var(--color-wa26-orange) 50%,
+    var(--color-wa26-yellow) 100%
+  );
+  background-size: 200%;
+  box-shadow:
+    0 8px 24px rgba(230,57,70,.45),
+    0 4px 12px rgba(255,122,26,.3),
+    inset 0 1px 0 rgba(255,255,255,.25);
+  transition:
+    transform var(--duration-base) var(--easing-bounce),
+    box-shadow var(--duration-base) var(--easing-out),
+    background-position var(--duration-slow) var(--easing-out);
+  margin-bottom: var(--space-5);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+.auth-hero-cta:hover {
+  transform: translateY(-2px) scale(1.03);
+  background-position: 100%;
+  box-shadow:
+    0 12px 32px rgba(230,57,70,.55),
+    0 6px 16px rgba(255,122,26,.4),
+    inset 0 1px 0 rgba(255,255,255,.3);
+}
+.auth-hero-cta:active { transform: translateY(0) scale(.98); }
+.auth-hero-cta__arrow {
+  display: inline-block;
+  transition: transform var(--duration-base) var(--easing-out);
+}
+.auth-hero-cta:hover .auth-hero-cta__arrow { transform: translateX(4px); }
+
+/* ── Colorbar at the bottom (host nation stripes) ───────────────────────── */
 .auth-colorbar {
-  position: relative; z-index: 2;
+  position: relative; z-index: 4;
   display: flex;
-  height: 3px;
+  height: 4px;
   border-radius: var(--radius-pill);
   overflow: hidden;
-  margin: var(--space-4) var(--space-6) 0;
+  margin: 0 var(--space-6);
   gap: 2px;
+  width: calc(100% - var(--space-12));
+  max-width: 320px;
 }
 .auth-colorbar span { border-radius: var(--radius-pill); }
 
@@ -242,7 +441,7 @@
 
 /* Country 3-letter codes — bold black slabs */
 .mc-code {
-  font-family: var(--font-fifa);
+  font-family: var(--font-sans);
   font-size: var(--text-xl);
   font-weight: var(--weight-black);
   color: #fff;
@@ -271,7 +470,7 @@
   position: relative;
 }
 .mc-score__num {
-  font-family: var(--font-fifa);
+  font-family: var(--font-sans);
   font-size: var(--text-2xl);
   font-weight: var(--weight-black);
   color: #fff;
@@ -284,7 +483,7 @@
   font-size: var(--text-md);
 }
 .mc-score__time {
-  font-family: var(--font-fifa);
+  font-family: var(--font-sans);
   font-size: var(--text-lg);
   font-weight: var(--weight-black);
   color: #fff;
@@ -313,7 +512,7 @@
   justify-content: center;
 }
 .mc-clock__time {
-  font-family: var(--font-fifa);
+  font-family: var(--font-sans);
   font-size: var(--text-lg);
   font-weight: var(--weight-black);
   color: #fff;

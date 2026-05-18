@@ -1,12 +1,3 @@
-/* ── FIFA World Cup 26 official font ──────────────────────────────────────── */
-/* Limited use: title/branding only. Body text continues with Inter. */
-@font-face {
-  font-family: 'FIFA 26';
-  src: url('/fifa-26.otf.woff2') format('woff2');
-  font-display: swap;
-  font-weight: 700;
-}
-
 /**
  * Bolão Copa 2026 — Design System Tokens
  *
@@ -78,6 +69,19 @@
   --color-host-usa:       #1a5fb4;
   --color-host-canada:    #d52b1e;
 
+  /* ── COLOR — "We Are 26" vibrant palette ──────────────────── */
+  /* Bold, saturated colors inspired by the official FIFA World Cup 2026
+     poster (USA/Canada/Mexico). Use for hero backgrounds, confetti,
+     vibrant CTAs and decorative chevrons. */
+  --color-wa26-red:     #e63946;   /* Mexican red / energy */
+  --color-wa26-blue:    #1d4ed8;   /* USA royal blue */
+  --color-wa26-green:   #16a34a;   /* Mexico/Canada green */
+  --color-wa26-yellow:  #facc15;   /* Trophy gold */
+  --color-wa26-purple:  #a855f7;   /* Festival purple */
+  --color-wa26-orange:  #ff7a1a;   /* Vivid sunset */
+  --color-wa26-lime:    #c3e956;   /* Lime accent */
+  --color-wa26-pink:    #ff79a3;   /* Hot pink */
+
   /* ── COLOR — Semantic surface aliases ─────────────────────── */
   --bg:              var(--color-neutral-950);
   --surface:         var(--color-neutral-900);
@@ -134,7 +138,6 @@
   /* ── TYPOGRAPHY ───────────────────────────────────────────── */
   --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono:  ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-  --font-fifa:  'FIFA 26', 'Inter', sans-serif;  /* official Copa typography — titles only */
 
   /* Modular scale, base 15px */
   --text-2xs:   0.625rem;    /* 10px */

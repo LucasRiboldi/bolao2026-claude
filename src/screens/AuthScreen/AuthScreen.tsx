@@ -126,26 +126,58 @@ export function AuthScreen() {
     <div className="auth-screen">
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
+      {/* "We Are 26" inspired — vibrant mesh gradient + floating decorations.
+         Layers (back → front):
+         1. Animated multi-color mesh blobs (host nation palette)
+         2. Confetti dots scattered
+         3. Floating soccer ball (top-right) + trophy emoji (bottom-left)
+         4. Top chevron stripe (red/blue/green/yellow primaries)
+         5. Logo + title + subtitle stack (centered)
+         6. Bottom CTA + colorbar */}
       <div className="auth-hero">
-        <div className="auth-orb auth-orb--green" />
 
-        <svg className="auth-spotlights" preserveAspectRatio="none" viewBox="0 0 400 260" aria-hidden="true">
-          <defs>
-            <radialGradient id="asl" cx="15%" cy="0%" r="55%">
-              <stop offset="0%" stopColor="rgba(200,220,255,.1)" />
-              <stop offset="100%" stopColor="transparent" />
-            </radialGradient>
-            <radialGradient id="asr" cx="85%" cy="0%" r="55%">
-              <stop offset="0%" stopColor="rgba(200,220,255,.1)" />
-              <stop offset="100%" stopColor="transparent" />
-            </radialGradient>
-          </defs>
-          <rect width="400" height="260" fill="url(#asl)" />
-          <rect width="400" height="260" fill="url(#asr)" />
+        {/* Top chevron stripe — "We Are 26" host-nation primaries */}
+        <div className="auth-chevron" aria-hidden="true">
+          <span style={{ background: 'var(--color-wa26-red)' }} />
+          <span style={{ background: 'var(--color-wa26-orange)' }} />
+          <span style={{ background: 'var(--color-wa26-yellow)' }} />
+          <span style={{ background: 'var(--color-wa26-green)' }} />
+          <span style={{ background: 'var(--color-wa26-blue)' }} />
+          <span style={{ background: 'var(--color-wa26-purple)' }} />
+        </div>
+
+        {/* Animated mesh blobs */}
+        <div className="auth-mesh">
+          <div className="auth-mesh__blob auth-mesh__blob--red" />
+          <div className="auth-mesh__blob auth-mesh__blob--blue" />
+          <div className="auth-mesh__blob auth-mesh__blob--green" />
+          <div className="auth-mesh__blob auth-mesh__blob--yellow" />
+          <div className="auth-mesh__blob auth-mesh__blob--purple" />
+        </div>
+
+        {/* Confetti — primary-color dots scattered */}
+        <div className="auth-confetti" aria-hidden="true">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <span key={i} className={`auth-confetti__dot auth-confetti__dot--${i % 6}`} />
+          ))}
+        </div>
+
+        {/* Floating SVG icons */}
+        <svg className="auth-float auth-float--ball" viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="32" cy="32" r="30" fill="#fff" stroke="#0a0a0a" strokeWidth="2.5"/>
+          <path fill="#0a0a0a" d="M32 14l8 6-3 9h-10l-3-9z"/>
+          <path fill="#0a0a0a" d="M14 32l8-3 3 9-5 7-7-3z"/>
+          <path fill="#0a0a0a" d="M50 32l-8-3-3 9 5 7 7-3z"/>
         </svg>
 
-        <div className="auth-badge" aria-hidden="true">
-          <span>🏆 Tô dentro · 11 jun 2026</span>
+        <div className="auth-float auth-float--trophy" aria-hidden="true">🏆</div>
+        <div className="auth-float auth-float--star1" aria-hidden="true">✨</div>
+        <div className="auth-float auth-float--star2" aria-hidden="true">⭐</div>
+
+        {/* Content */}
+        <div className="auth-badge auth-badge--vibrant" aria-hidden="true">
+          <span className="auth-badge__pulse" />
+          <span>WE ARE 26 · 11 JUN 2026</span>
         </div>
 
         <img
@@ -157,13 +189,25 @@ export function AuthScreen() {
         />
 
         <h1 className="auth-title">
-          <span className="auth-title__line1">Bolão da</span>
-          <span className="auth-title__line2">Copa do Mundo</span>
-          <span className="auth-title__line3">2026</span>
+          <span className="auth-title__kicker">Bolão da</span>
+          <span className="auth-title__main">COPA DO MUNDO</span>
+          <span className="auth-title__year">
+            <span className="auth-title__year-num">2026</span>
+            <span className="auth-title__year-star" aria-hidden="true">★</span>
+          </span>
         </h1>
         <p className="auth-sub">
-          Aposta com a galera · 72 jogos pra cravar · <strong>Quem é o craque do bolão?</strong>
+          48 seleções · 104 jogos · 3 países · <strong>1 campeão do bolão</strong>
         </p>
+
+        {/* Inline CTA */}
+        <button
+          className="auth-hero-cta"
+          onClick={() => document.querySelector<HTMLElement>('.auth-card')?.scrollIntoView({ behavior: 'smooth' })}
+        >
+          🔥 Tô dentro
+          <span className="auth-hero-cta__arrow" aria-hidden="true">→</span>
+        </button>
 
         <div className="auth-colorbar" aria-hidden="true">
           <span style={{ background: 'var(--color-host-mexico)', flex: 2 }} />
